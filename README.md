@@ -19,6 +19,102 @@ This is the ultimate [Next.js](https://nextjs.org/) SAAS starter kit that includ
 - Tailwind CSS/shadcn
 - Stripe webhooks/ API hook to get customer current plan
 
+## 🤖 AI Agent Tools (MCP Servers)
+
+This project has Model Context Protocol (MCP) servers configured for AI coding assistants:
+
+### Available MCP Servers:
+- **Stripe MCP** - Direct Stripe API integration for managing customers, subscriptions, payments, and more
+- **Supabase MCP** - Direct Supabase integration for database operations, auth, and more
+
+### Capabilities:
+AI agents can directly:
+- Create and manage Stripe customers, products, prices, and subscriptions
+- Query and modify Supabase database tables
+- Execute SQL migrations
+- Deploy Supabase Edge Functions
+- Search Stripe and Supabase documentation
+
+These tools are available to AI assistants like Claude, Windsurf, and others that support MCP.
+
+## 📋 Development Standards
+
+### Feature Documentation & Testing (MANDATORY)
+
+All features MUST follow these requirements:
+
+#### 1. Feature Documentation
+- **Every feature folder** must have a `README.md` file
+- Location: `/components/features/[feature-name]/README.md`
+- **Must be updated** every time the feature is modified
+- Includes: Purpose, components, usage examples, props/API, dependencies
+
+#### 2. Unit Tests
+- **Every feature component** must have unit tests
+- Location: Adjacent to component (e.g., `component.test.tsx`)
+- **Must be updated** every time a component is modified
+- Framework: Jest + React Testing Library
+- Coverage: Rendering, interactions, edge cases, error states
+
+#### 3. Workflow
+When working on features:
+1. Develop/modify feature code
+2. Update feature README.md ⚠️ **REQUIRED**
+3. Update/create unit tests ⚠️ **REQUIRED**
+4. Run tests and verify they pass
+5. Only then is work considered complete
+
+**📚 See `/FEATURE_GUIDELINES.md` for comprehensive documentation and testing guidelines.**
+
+**Example:** `/components/features/auth/README.md`
+
+## 🎨 Modern UI & Theme System
+
+### Shadcn UI (2026)
+
+This project uses **Shadcn UI** - a modern component library with:
+- Beautiful, accessible components
+- Easy light/dark mode switching
+- Modern 2026 design system
+- Built on Radix UI and Tailwind CSS
+
+### Installing Components
+
+**Always use the Shadcn CLI:**
+```bash
+npx shadcn@latest add button
+npx shadcn@latest add card input label dialog
+```
+
+### Theme Features
+
+- **🌗 Easy Theme Toggle** - Light/Dark/System modes
+- **🎨 Modern Colors** - Vibrant 2026 color palette
+- **✨ Smooth Transitions** - 300ms theme switching
+- **📱 Responsive** - Works on all devices
+- **♿ Accessible** - High contrast, WCAG compliant
+- **🎯 Custom Scrollbars** - Styled for modern look
+
+### Theme Toggle
+
+```tsx
+import { ThemeToggle } from '@/components/theme-toggle'
+
+<ThemeToggle />  // Dropdown: Light/Dark/System
+```
+
+### Available Theme Colors
+
+Use theme-aware colors in your components:
+- `bg-background` / `text-foreground`
+- `bg-primary` / `text-primary-foreground`
+- `bg-success` / `bg-warning` / `bg-destructive`
+- `bg-card`, `bg-muted`, `bg-accent`, etc.
+
+**📚 Complete Guide:** `/SHADCN_UI_GUIDE.md`
+
+**⚠️ AI Agent Rules:** Always use Shadcn CLI, always use theme colors, always test both modes!
+
 ## Getting Started
 
 As we will be setting up both dev and prod environments, simply use `.env.local` to develop locally and `.env` for production environments

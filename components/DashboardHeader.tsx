@@ -1,18 +1,18 @@
 import { Bell, Menu, Search } from "lucide-react"
 import Link from "next/link"
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import Image from 'next/image'
-import { createClient } from '@/utils/supabase/server'
-import DashboardHeaderProfileDropdown from "./DashboardHeaderProfileDropdown"
-import { Badge } from "@/components/ui/badge"
-import { getStripePlan } from "@/utils/stripe/api"
-import { Suspense } from "react"
-import { Skeleton } from "@/components/ui/skeleton"
+import { createServerSupabaseClient } from '@/lib/supabase-server'
+import DashboardHeaderProfileDropdown from './DashboardHeaderProfileDropdown'
+import { Badge } from '@/components/ui/badge'
+import { getStripePlan } from '@/lib/stripe'
+import { Suspense } from 'react'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default async function DashboardHeader() {
-    const supabase = createClient()
+    const supabase = await createServerSupabaseClient()
     const { data: { user }, error } = await supabase.auth.getUser()
     // Get the user's plan from Stripe
     const stripePlan = getStripePlan(user!.email!)

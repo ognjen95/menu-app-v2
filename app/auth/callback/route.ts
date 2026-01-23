@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server'
-// The client you created from the Server-Side Auth instructions
-import { createClient } from '@/utils/supabase/server'
-import { createStripeCustomer } from '@/utils/stripe/api'
-import { db } from '@/utils/db/db'
-import { usersTable } from '@/utils/db/schema'
-import { eq } from "drizzle-orm";
+import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createStripeCustomer } from '@/lib/stripe'
+import { db } from '@/lib/db'
+import { usersTable } from '@/lib/schema'
+import { eq } from 'drizzle-orm'
 
 export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url)
@@ -13,7 +12,7 @@ export async function GET(request: Request) {
     const next = searchParams.get('next') ?? '/'
 
     if (code) {
-        const supabase = createClient()
+        const supabase = await createServerSupabaseClient()
         const { error } = await supabase.auth.exchangeCodeForSession(code)
         if (!error) {
             const {
