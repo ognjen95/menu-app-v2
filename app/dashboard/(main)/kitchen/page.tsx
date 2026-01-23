@@ -1,0 +1,397 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { apiGet, apiPatch } from '@/lib/api'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Clock,
+  ChefHat,
+  CheckCircle2,
+  Bell,
+  RefreshCw,
+  Timer,
+  UtensilsCrossed,
+  Loader2,
+  Volume2,
+  VolumeX,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+import type { Order, OrderItem, Location } from '@/lib/types'
+
+type OrderWithItems = Order & {
+  items: (OrderItem & { menu_item?: { name: string; image_urls?: string[] } })[]
+  table?: { id: string; name: string; zone?: string }
+  location?: { id: string; name: string }
+}
+
+type KitchenOrder = {
+  id: string
+  order_number: string
+  type: string
+  status: string
+  table_name?: string
+  table_zone?: string
+  location_name: string
+  customer_name?: string
+  items: {
+    id: string
+    name: string
+    quantity: number
+    notes?: string
+    status: string
+    options: { name: string; price: number }[]
+  }[]
+  placed_at: string
+  time_elapsed: number
+}
+
+const STATUS_CONFIG = {
+  placed: { label: 'New', color: 'bg-blue-500', icon: Bell },
+  accepted: { label: 'Accepted', color: 'bg-yellow-500', icon: Clock },
+  preparing: { label: 'Preparing', color: 'bg-orange-500', icon: ChefHat },
+  ready: { label: 'Ready', color: 'bg-green-500', icon: CheckCircle2 },
+}
+
+function formatTimeElapsed(minutes: number): string {
+  if (minutes < 1) return 'Just now'
+  if (minutes < 60) return `${Math.floor(minutes)}m`
+  const hours = Math.floor(minutes / 60)
+  const mins = Math.floor(minutes % 60)
+  return `${hours}h ${mins}m`
+}
+
+function getTimerColor(minutes: number): string {
+  if (minutes < 10) return 'text-green-500'
+  if (minutes < 20) return 'text-yellow-500'
+  return 'text-red-500'
+}
+
+export default function KitchenPage() {
+  const queryClient = useQueryClient()
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('')
+  const [soundEnabled, setSoundEnabled] = useState(true)
+  const [lastOrderCount, setLastOrderCount] = useState(0)
+
+  // Fetch locations
+  const { data: locationsData } = useQuery({
+    queryKey: ['locations'],
+    queryFn: () => apiGet<{ data: { locations: Location[] } }>('/locations'),
+  })
+  const locations = locationsData?.data?.locations || []
+
+  // Auto-select first location
+  useEffect(() => {
+    if (!selectedLocationId && locations.length > 0) {
+      setSelectedLocationId(locations[0].id)
+    }
+  }, [locations, selectedLocationId])
+
+  // Fetch active orders
+  const { data: ordersData, isLoading, refetch } = useQuery({
+    queryKey: ['kitchen-orders', selectedLocationId],
+    queryFn: () => apiGet<{ data: { orders: OrderWithItems[] } }>('/orders/active', 
+      selectedLocationId ? { location_id: selectedLocationId } : undefined
+    ),
+    enabled: true,
+    refetchInterval: 10000, // Auto-refresh every 10 seconds
+  })
+
+  const orders = ordersData?.data?.orders || []
+
+  // Play sound when new orders arrive
+  useEffect(() => {
+    if (soundEnabled && orders.length > lastOrderCount && lastOrderCount > 0) {
+      // Play notification sound
+      const audio = new Audio('/sounds/notification.mp3')
+      audio.play().catch(() => {}) // Ignore errors if sound can't play
+    }
+    setLastOrderCount(orders.length)
+  }, [orders.length, lastOrderCount, soundEnabled])
+
+  // Transform orders for display
+  const kitchenOrders: KitchenOrder[] = orders.map(order => ({
+    id: order.id,
+    order_number: order.order_number || order.id.slice(-6).toUpperCase(),
+    type: order.type,
+    status: order.status,
+    table_name: order.table?.name,
+    table_zone: order.table?.zone || undefined,
+    location_name: order.location?.name || '',
+    customer_name: order.customer_name || undefined,
+    items: order.items?.map(item => ({
+      id: item.id,
+      name: item.item_name,
+      quantity: item.quantity,
+      notes: item.notes || undefined,
+      status: item.status,
+      options: item.selected_options || [],
+    })) || [],
+    placed_at: order.placed_at || order.created_at,
+    time_elapsed: order.placed_at 
+      ? (Date.now() - new Date(order.placed_at).getTime()) / 60000 
+      : 0,
+  }))
+
+  // Group orders by status
+  const ordersByStatus = {
+    placed: kitchenOrders.filter(o => o.status === 'placed'),
+    accepted: kitchenOrders.filter(o => o.status === 'accepted'),
+    preparing: kitchenOrders.filter(o => o.status === 'preparing'),
+    ready: kitchenOrders.filter(o => o.status === 'ready'),
+  }
+
+  // Update order status mutation
+  const updateStatus = useMutation({
+    mutationFn: ({ orderId, status }: { orderId: string; status: string }) =>
+      apiPatch(`/orders/${orderId}/status`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['kitchen-orders'] })
+    },
+  })
+
+  const handleStatusChange = (orderId: string, newStatus: string) => {
+    updateStatus.mutate({ orderId, status: newStatus })
+  }
+
+  const getNextStatus = (currentStatus: string): string | null => {
+    const flow = ['placed', 'accepted', 'preparing', 'ready', 'served']
+    const currentIndex = flow.indexOf(currentStatus)
+    return currentIndex < flow.length - 1 ? flow[currentIndex + 1] : null
+  }
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b bg-background">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <ChefHat className="h-6 w-6" />
+            <h1 className="text-xl font-bold">Kitchen View</h1>
+          </div>
+          <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select location" />
+            </SelectTrigger>
+            <SelectContent>
+              {locations.map((loc) => (
+                <SelectItem key={loc.id} value={loc.id}>
+                  {loc.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSoundEnabled(!soundEnabled)}
+            title={soundEnabled ? 'Disable sound' : 'Enable sound'}
+          >
+            {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+          </Button>
+          <Button variant="outline" onClick={() => refetch()} disabled={isLoading}>
+            <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      {/* Order columns */}
+      <div className="flex-1 overflow-auto p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 min-h-full">
+          {/* New Orders */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 sticky top-0 bg-background py-2">
+              <div className={cn("h-3 w-3 rounded-full", STATUS_CONFIG.placed.color)} />
+              <h2 className="font-semibold">New Orders</h2>
+              <Badge variant="secondary">{ordersByStatus.placed.length}</Badge>
+            </div>
+            {ordersByStatus.placed.map((order) => (
+              <OrderCard
+                key={order.id}
+                order={order}
+                onStatusChange={handleStatusChange}
+                nextStatus="accepted"
+                isUpdating={updateStatus.isPending}
+              />
+            ))}
+            {ordersByStatus.placed.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No new orders</p>
+              </div>
+            )}
+          </div>
+
+          {/* Accepted */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 sticky top-0 bg-background py-2">
+              <div className={cn("h-3 w-3 rounded-full", STATUS_CONFIG.accepted.color)} />
+              <h2 className="font-semibold">Accepted</h2>
+              <Badge variant="secondary">{ordersByStatus.accepted.length}</Badge>
+            </div>
+            {ordersByStatus.accepted.map((order) => (
+              <OrderCard
+                key={order.id}
+                order={order}
+                onStatusChange={handleStatusChange}
+                nextStatus="preparing"
+                isUpdating={updateStatus.isPending}
+              />
+            ))}
+            {ordersByStatus.accepted.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No accepted orders</p>
+              </div>
+            )}
+          </div>
+
+          {/* Preparing */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 sticky top-0 bg-background py-2">
+              <div className={cn("h-3 w-3 rounded-full", STATUS_CONFIG.preparing.color)} />
+              <h2 className="font-semibold">Preparing</h2>
+              <Badge variant="secondary">{ordersByStatus.preparing.length}</Badge>
+            </div>
+            {ordersByStatus.preparing.map((order) => (
+              <OrderCard
+                key={order.id}
+                order={order}
+                onStatusChange={handleStatusChange}
+                nextStatus="ready"
+                isUpdating={updateStatus.isPending}
+              />
+            ))}
+            {ordersByStatus.preparing.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <ChefHat className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>Nothing cooking</p>
+              </div>
+            )}
+          </div>
+
+          {/* Ready */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 sticky top-0 bg-background py-2">
+              <div className={cn("h-3 w-3 rounded-full", STATUS_CONFIG.ready.color)} />
+              <h2 className="font-semibold">Ready to Serve</h2>
+              <Badge variant="secondary">{ordersByStatus.ready.length}</Badge>
+            </div>
+            {ordersByStatus.ready.map((order) => (
+              <OrderCard
+                key={order.id}
+                order={order}
+                onStatusChange={handleStatusChange}
+                nextStatus="served"
+                isUpdating={updateStatus.isPending}
+              />
+            ))}
+            {ordersByStatus.ready.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <CheckCircle2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No orders ready</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface OrderCardProps {
+  order: KitchenOrder
+  onStatusChange: (orderId: string, status: string) => void
+  nextStatus: string
+  isUpdating: boolean
+}
+
+function OrderCard({ order, onStatusChange, nextStatus, isUpdating }: OrderCardProps) {
+  const statusConfig = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG]
+  const timerColor = getTimerColor(order.time_elapsed)
+
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="font-mono font-bold text-lg">#{order.order_number}</span>
+            {order.table_name && (
+              <Badge variant="outline">
+                {order.table_zone && `${order.table_zone} - `}
+                {order.table_name}
+              </Badge>
+            )}
+          </div>
+          <div className={cn("flex items-center gap-1 font-mono text-sm", timerColor)}>
+            <Timer className="h-4 w-4" />
+            {formatTimeElapsed(order.time_elapsed)}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Badge variant="secondary" className="text-xs">
+            {order.type === 'dine_in' ? 'Dine In' : order.type === 'takeaway' ? 'Takeaway' : 'Delivery'}
+          </Badge>
+          {order.customer_name && <span>{order.customer_name}</span>}
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {/* Items */}
+        <div className="space-y-2 mb-4">
+          {order.items.map((item) => (
+            <div
+              key={item.id}
+              className="flex items-start gap-2 p-2 bg-muted/50 rounded-lg"
+            >
+              <span className="font-bold text-primary min-w-[24px]">{item.quantity}x</span>
+              <div className="flex-1">
+                <p className="font-medium">{item.name}</p>
+                {item.options.length > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    + {item.options.map(o => o.name).join(', ')}
+                  </p>
+                )}
+                {item.notes && (
+                  <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">
+                    📝 {item.notes}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Action button */}
+        <Button
+          className="w-full"
+          size="lg"
+          onClick={() => onStatusChange(order.id, nextStatus)}
+          disabled={isUpdating}
+        >
+          {isUpdating ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <>
+              {nextStatus === 'accepted' && 'Accept Order'}
+              {nextStatus === 'preparing' && 'Start Preparing'}
+              {nextStatus === 'ready' && 'Mark Ready'}
+              {nextStatus === 'served' && 'Mark Served'}
+            </>
+          )}
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}

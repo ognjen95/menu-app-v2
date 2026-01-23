@@ -1,8 +1,12 @@
-import { db } from '@/lib/db'
-import { usersTable } from '@/lib/schema'
 import { stripe } from '@/lib/stripe'
-import { eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
+
+// Use service role client for webhook (no user context)
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 export async function POST(req: Request) {
   try {
@@ -33,28 +37,52 @@ export async function POST(req: Request) {
     // Handle the event
     switch (event.type) {
       case 'customer.subscription.created':
-        console.log('Subscription created:', event.id)
-        await db
-          .update(usersTable)
-          .set({ plan: event.data.object.id })
-          .where(eq(usersTable.stripe_id, event.data.object.customer as string))
-        break
-
       case 'customer.subscription.updated':
-        console.log('Subscription updated:', event.id)
-        await db
-          .update(usersTable)
-          .set({ plan: event.data.object.id })
-          .where(eq(usersTable.stripe_id, event.data.object.customer as string))
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as { 
+          id: string
+          customer: string
+          status: string
+          items?: { data: { price?: { id: string } }[] }
+        }
+        const customerId = subscription.customer
+        
+        if (event.type === 'customer.subscription.deleted') {
+          console.log('Subscription deleted:', event.id)
+          await supabaseAdmin
+            .from('tenants')
+            .update({ 
+              subscription_status: 'cancelled',
+              plan: 'basic'
+            })
+            .eq('stripe_customer_id', customerId)
+        } else {
+          console.log(`Subscription ${event.type === 'customer.subscription.created' ? 'created' : 'updated'}:`, event.id)
+          await supabaseAdmin
+            .from('tenants')
+            .update({ 
+              stripe_subscription_id: subscription.id,
+              subscription_status: subscription.status === 'active' ? 'active' : subscription.status,
+              plan: getPlanFromPrice(subscription.items?.data[0]?.price?.id)
+            })
+            .eq('stripe_customer_id', customerId)
+        }
+        break
+      }
+
+      case 'invoice.payment_succeeded':
+        console.log('Payment succeeded:', event.id)
         break
 
-      case 'customer.subscription.deleted':
-        console.log('Subscription deleted:', event.id)
-        await db
-          .update(usersTable)
-          .set({ plan: 'none' })
-          .where(eq(usersTable.stripe_id, event.data.object.customer as string))
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as { customer: string }
+        console.log('Payment failed:', event.id)
+        await supabaseAdmin
+          .from('tenants')
+          .update({ subscription_status: 'past_due' })
+          .eq('stripe_customer_id', invoice.customer)
         break
+      }
 
       default:
         console.log(`Unhandled event type: ${event.type}`)
@@ -68,4 +96,13 @@ export async function POST(req: Request) {
       { status: 400 }
     )
   }
+}
+
+// Helper to map Stripe price ID to plan name
+function getPlanFromPrice(priceId?: string): string {
+  const priceMap: Record<string, string> = {
+    'price_1Ssi3OHiAr1sa2neKVkkMkUk': 'basic',  // Basic Plan €5
+    'price_1Ssi5iHiAr1sa2neiDd95ff6': 'pro',    // Pro Plan €15
+  }
+  return priceMap[priceId || ''] || 'basic'
 }

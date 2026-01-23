@@ -10,7 +10,7 @@ import { Bell, ReceiptText, User, Settings, HelpCircle, LogOut } from "lucide-re
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { } from "@supabase/supabase-js"
-import { createClient } from '@/utils/supabase/server'
+import { createClient } from '@/lib/supabase-server'
 import { logout } from '@/app/auth/actions'
 import { generateStripeBillingPortalLink } from "@/utils/stripe/api"
 

@@ -1,3 +1,98 @@
+# QR Menu SaaS - Multi-Tenant Digital Menu Platform
+
+A modern, multi-tenant SaaS platform for restaurants and small businesses to create digital menus, manage orders, and build websites.
+
+## Features
+
+### For Restaurant Owners
+- **Digital Menu Management** - Create categories, items, variants, and extras
+- **QR Code Generation** - Generate unique QR codes for tables and locations
+- **Order Management** - Track orders from placement to completion
+- **Inventory Tracking** - Monitor stock levels and get low-stock alerts
+- **Analytics Dashboard** - Track revenue, orders, and popular items
+- **Website Builder** - Create a simple website for your business
+- **Multi-location Support** - Manage multiple locations from one dashboard
+
+### For Customers
+- **Scan & Order** - Scan QR code to view menu and place orders
+- **Search & Filter** - Find items by name or dietary preferences
+- **Allergen Information** - View allergens for each menu item
+- **Cart & Checkout** - Add items to cart with customization options
+
+### Subscription Plans
+- **Basic Plan** (€5/month) - Menu management, orders, basic analytics
+- **Pro Plan** (€15/month) - AI translations, advanced analytics, inventory, multiple locations
+
+## Tech Stack
+
+- **Frontend**: Next.js 14, React 18, TailwindCSS, shadcn/ui
+- **Backend**: Next.js API Routes, Supabase
+- **Database**: PostgreSQL (Supabase)
+- **Authentication**: Supabase Auth
+- **Payments**: Stripe
+- **State Management**: TanStack React Query
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+
+- Supabase account
+- Stripe account (for payments)
+
+### Environment Variables
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+STRIPE_SECRET_KEY=your_stripe_secret_key
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### Installation
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Run database migrations (via Supabase dashboard or MCP)
+```
+
+### Project Structure
+
+```
+/app
+├── api/              # API routes
+├── dashboard/        # Restaurant dashboard
+├── m/[slug]/         # Public menu pages
+└── onboarding/       # New tenant setup
+
+/components
+├── features/         # Feature-specific components
+└── ui/              # shadcn/ui components
+
+/lib
+├── api/             # API utilities
+├── hooks/           # React Query hooks
+└── types.ts         # TypeScript types
+
+/docs
+├── ARCHITECTURE.md  # System architecture
+├── DATABASE_SCHEMA.md # Database documentation
+└── PROGRESS.md      # Development progress
+```
+
+## Documentation
+
+- [Architecture Overview](/docs/ARCHITECTURE.md)
+- [Database Schema](/docs/DATABASE_SCHEMA.md)
+- [Development Progress](/docs/PROGRESS.md)
+- [Shadcn UI Guide](/SHADCN_UI_GUIDE.md)
+
+---
+
 # NextJs SaaS Starter Template
 
 <img width="1122" alt="image" src="https://github.com/user-attachments/assets/63e761c4-aece-47c2-a320-f1cc18bf916b">

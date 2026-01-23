@@ -1,6 +1,6 @@
 import StripePricingTable from "@/components/StripePricingTable";
 import Image from "next/image"
-import { createClient } from '@/utils/supabase/server'
+import { createClient } from '@/lib/supabase-server'
 import { createStripeCheckoutSession } from "@/utils/stripe/api";
 export default async function Subscribe() {
     const supabase = createClient()

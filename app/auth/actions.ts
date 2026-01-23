@@ -3,9 +3,6 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createStripeCustomer } from '@/lib/stripe'
-import { db } from '@/lib/db'
-import { usersTable } from '@/lib/schema'
-import { eq } from 'drizzle-orm'
 
 
 const PUBLIC_URL = process.env.NEXT_PUBLIC_WEBSITE_URL || "http://localhost:3000"
@@ -54,20 +51,12 @@ export async function signup(currentState: { message: string }, formData: FormDa
         name: formData.get('name') as string,
     }
 
-    // Check if user exists in our database first
-    const existingDBUser = await db.select().from(usersTable).where(eq(usersTable.email, data.email))
-    
-    if (existingDBUser.length > 0) {
-        return { message: "An account with this email already exists. Please login instead." }
-    }
-
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
             emailRedirectTo: `${PUBLIC_URL}/auth/callback`,
             data: {
-                email_confirm: process.env.NODE_ENV !== 'production',
                 full_name: data.name
             }
         }
@@ -84,25 +73,22 @@ export async function signup(currentState: { message: string }, formData: FormDa
         return { message: "Failed to create user" }
     }
 
+    // Create Stripe customer for this user
     try {
-        // create Stripe Customer Record using signup response data
-        const stripeID = await createStripeCustomer(signUpData.user.id, signUpData.user.email!, data.name)
+        const stripeCustomerId = await createStripeCustomer(signUpData.user.id, signUpData.user.email!, data.name)
         
-        // Create record in DB
-        await db.insert(usersTable).values({ 
-            id: signUpData.user.id,
-            name: data.name, 
-            email: signUpData.user.email!, 
-            stripe_id: stripeID, 
-            plan: 'none' 
+        // Store stripe_customer_id in user metadata (will be used when creating tenant)
+        await supabase.auth.updateUser({
+            data: { stripe_customer_id: stripeCustomerId }
         })
     } catch (err) {
-        console.error("Error in signup:", err instanceof Error ? err.message : "Unknown error")
-        return { message: "Failed to setup user account" }
+        console.error("Error creating Stripe customer:", err instanceof Error ? err.message : "Unknown error")
+        // Continue anyway - Stripe customer can be created later
     }
 
     revalidatePath("/", "layout")
-    redirect("/subscribe")
+    // Redirect to onboarding to create their business
+    redirect("/onboarding")
 }
 
 

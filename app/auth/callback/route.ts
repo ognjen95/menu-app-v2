@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { createStripeCustomer } from '@/lib/stripe'
-import { db } from '@/lib/db'
-import { usersTable } from '@/lib/schema'
-import { eq } from 'drizzle-orm'
 
 export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url)
@@ -19,25 +16,39 @@ export async function GET(request: Request) {
                 data: { user },
             } = await supabase.auth.getUser()
 
-            // check to see if user already exists in db
-            const checkUserInDB = await db.select().from(usersTable).where(eq(usersTable.email, user!.email!))
-            const isUserInDB = checkUserInDB.length > 0 ? true : false
-            if (!isUserInDB) {
-                // create Stripe customers
-                const stripeID = await createStripeCustomer(user!.id, user!.email!, user!.user_metadata.full_name)
-                // Create record in DB
-                await db.insert(usersTable).values({ id: user!.id, name: user!.user_metadata.full_name, email: user!.email!, stripe_id: stripeID, plan: 'none' })
-            }
+            if (user) {
+                // Check if user has a tenant (business) yet
+                const { data: tenantUser } = await supabase
+                    .from('tenant_users')
+                    .select('tenant_id')
+                    .eq('user_id', user.id)
+                    .single()
 
-            const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
-            const isLocalEnv = process.env.NODE_ENV === 'development'
-            if (isLocalEnv) {
-                // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
-                return NextResponse.redirect(`${origin}${next}`)
-            } else if (forwardedHost) {
-                return NextResponse.redirect(`https://${forwardedHost}${next}`)
-            } else {
-                return NextResponse.redirect(`${origin}${next}`)
+                // If user doesn't have a Stripe customer ID, create one
+                if (!user.user_metadata?.stripe_customer_id) {
+                    try {
+                        const stripeID = await createStripeCustomer(user.id, user.email!, user.user_metadata?.full_name)
+                        await supabase.auth.updateUser({
+                            data: { stripe_customer_id: stripeID }
+                        })
+                    } catch (err) {
+                        console.error('Error creating Stripe customer:', err)
+                    }
+                }
+
+                // Redirect to onboarding if no tenant, otherwise to dashboard
+                const redirectPath = tenantUser ? '/dashboard' : '/onboarding'
+                
+                const forwardedHost = request.headers.get('x-forwarded-host')
+                const isLocalEnv = process.env.NODE_ENV === 'development'
+                
+                if (isLocalEnv) {
+                    return NextResponse.redirect(`${origin}${redirectPath}`)
+                } else if (forwardedHost) {
+                    return NextResponse.redirect(`https://${forwardedHost}${redirectPath}`)
+                } else {
+                    return NextResponse.redirect(`${origin}${redirectPath}`)
+                }
             }
         }
     }

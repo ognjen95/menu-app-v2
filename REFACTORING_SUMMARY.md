@@ -175,7 +175,7 @@ All files updated to use new `/lib` structure:
 **Pattern Changed:**
 ```typescript
 // Old
-import { createClient } from '@/utils/supabase/server'
+import { createClient } from '@/lib/supabase-server'
 import { db } from '@/utils/db/db'
 import { usersTable } from '@/utils/db/schema'
 
