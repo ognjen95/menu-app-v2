@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { unstable_noStore as noStore } from 'next/cache'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { PublicMenuView } from '@/components/features/public-menu/public-menu-view'
 
@@ -8,15 +9,13 @@ type PageProps = {
 }
 
 async function getTenantData(slug: string) {
+  noStore() // Disable caching to get fresh data
   const supabase = await createServerSupabaseClient()
 
   // Get tenant by slug
   const { data: tenant, error: tenantError } = await supabase
     .from('tenants')
-    .select(`
-      *,
-      website:websites(*)
-    `)
+    .select('*')
     .eq('slug', slug)
     .in('subscription_status', ['active', 'trialing'])
     .single()
@@ -24,6 +23,14 @@ async function getTenantData(slug: string) {
   if (tenantError || !tenant) {
     return null
   }
+
+  // Fetch website separately (RLS requires is_published = true for public access)
+  const { data: website } = await supabase
+    .from('websites')
+    .select('*')
+    .eq('tenant_id', tenant.id)
+    .eq('is_published', true)
+    .single()
 
   // Get active menus with categories and items
   const { data: menus, error: menusError } = await supabase
@@ -72,7 +79,7 @@ async function getTenantData(slug: string) {
     menus: menus || [],
     locations: locations || [],
     allergens: allergens || [],
-    website: tenant.website?.[0] || null,
+    website: website || null,
   }
 }
 
@@ -81,6 +88,8 @@ export default async function PublicMenuPage({ params, searchParams }: PageProps
   const { table, location } = await searchParams
 
   const data = await getTenantData(slug)
+
+  console.log(data)
 
   if (!data) {
     notFound()
