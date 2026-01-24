@@ -103,14 +103,13 @@ npm run dev
 <img width="1141" alt="image" src="https://github.com/user-attachments/assets/06559a5a-ca19-40bb-bf00-d3d2cbd94ee1">
 
 
-This is the ultimate [Next.js](https://nextjs.org/) SAAS starter kit that includes a landing page, integrations with Supabase auth(Oauth, forget password, etc), PostgresDB with DrizzleORM and Stripe to collect payments, setup subscriptions and allow users to edit subscriptions/payment options.
+This is the ultimate [Next.js](https://nextjs.org/) SAAS starter kit that includes a landing page, integrations with Supabase auth(Oauth, forget password, etc), and Stripe to collect payments, setup subscriptions and allow users to edit subscriptions/payment options.
 
 - Full sign up/ sign in/ logout/ forget password/ password reset flow
 - Oauth with Google and Github
 - Utilize Stripe Pricing Table and Stripe Checkout to setup customer billing
 - Integration with Stripe Customer Portal to allow users to manage billing settings
 - Protected routes under /dashboard
-- Drizzle ORM/Postgres integration
 - Tailwind CSS/shadcn
 - Stripe webhooks/ API hook to get customer current plan
 

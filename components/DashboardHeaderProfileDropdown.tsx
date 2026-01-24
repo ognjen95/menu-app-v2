@@ -10,12 +10,12 @@ import { Bell, ReceiptText, User, Settings, HelpCircle, LogOut } from "lucide-re
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { } from "@supabase/supabase-js"
-import { createClient } from '@/lib/supabase-server'
 import { logout } from '@/app/auth/actions'
-import { generateStripeBillingPortalLink } from "@/utils/stripe/api"
+import { generateStripeBillingPortalLink } from "@/lib/stripe"
+import { createServerSupabaseClient } from "@/lib/supabase-server"
 
 export default async function DashboardHeaderProfileDropdown() {
-    const supabase = createClient()
+    const supabase = await createServerSupabaseClient()
     const { data: { user }, error } = await supabase.auth.getUser()
     const billingPortalURL = await generateStripeBillingPortalLink(user!.email!)
     return (

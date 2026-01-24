@@ -1,12 +1,13 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { XCircle, ArrowLeft, RefreshCw } from 'lucide-react'
+import { XCircle, ArrowLeft, RefreshCw, Loader2 } from 'lucide-react'
 
-export default function OrderCancelPage() {
+function OrderCancelContent() {
   const searchParams = useSearchParams()
   const orderId = searchParams.get('order_id')
 
@@ -52,5 +53,17 @@ export default function OrderCancelPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function OrderCancelPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <OrderCancelContent />
+    </Suspense>
   )
 }
