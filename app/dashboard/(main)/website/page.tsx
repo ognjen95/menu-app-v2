@@ -312,8 +312,8 @@ export default function WebsitePage() {
   }
 
   const isLocalDev = process.env.NODE_ENV === 'development'
-  const isStaging = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')
-  
+  const isStaging = process.env.NODE_ENV === 'test'
+
   const websiteUrl = website?.custom_domain 
     ? `https://${website.custom_domain}`
     : website?.subdomain 
