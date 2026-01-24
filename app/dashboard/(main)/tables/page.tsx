@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiGet, apiPost, apiDelete } from '@/lib/api'
+import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/dialog'
 import {
   Plus,
-  QrCode,
   Download,
   Trash2,
   Edit,
@@ -27,14 +26,24 @@ import {
   Copy,
   ExternalLink,
   Loader2,
+  Eye,
+  Check,
+  QrCode as QrCodeIcon,
+  Palette,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
+import { QRCodeSVG } from 'qrcode.react'
 import type { Table, QrCode as QrCodeType, Location } from '@/lib/types'
 
 export default function TablesPage() {
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [previewQr, setPreviewQr] = useState<QrCodeType | null>(null)
+  const [editQr, setEditQr] = useState<QrCodeType | null>(null)
+  const [qrStyle, setQrStyle] = useState({ color: '#000000', background: '#ffffff' })
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const qrRef = useRef<HTMLDivElement>(null)
   const [formData, setFormData] = useState({
     name: '',
     capacity: '4',
@@ -48,7 +57,7 @@ export default function TablesPage() {
     queryFn: () => apiGet<{ data: { locations: Location[] } }>(`/locations`),
   })
 
-  const locations = locationsData?.data?.locations || []
+  const locations = useMemo(() => locationsData?.data?.locations || [], [locationsData])
 
   // Auto-select first location
   useEffect(() => {
@@ -86,8 +95,63 @@ export default function TablesPage() {
     return qrCodes.find(qr => qr.table_id === tableId)
   }
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  const generateQrCode = useMutation({
+    mutationFn: (tableId: string) => apiPost<{ qr_code: QrCodeType }>('/qr-codes', {
+      location_id: selectedLocationId,
+      table_id: tableId,
+      type: 'table',
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qr-codes', selectedLocationId] })
+    },
+  })
+
+  const updateQrStyle = useMutation({
+    mutationFn: ({ id, style }: { id: string; style: { color: string; background: string } }) => 
+      apiPut<{ qr_code: QrCodeType }>(`/qr-codes/${id}`, { style }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qr-codes', selectedLocationId] })
+      setEditQr(null)
+    },
+  })
+
+  const deleteQrCode = useMutation({
+    mutationFn: (id: string) => apiDelete(`/qr-codes/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qr-codes', selectedLocationId] })
+    },
+  })
+
+  const deleteTable = useMutation({
+    mutationFn: (id: string) => apiDelete(`/tables/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tables', selectedLocationId] })
+    },
+  })
+
+  const downloadQr = (qrCode: QrCodeType) => {
+    const svg = document.getElementById(`qr-${qrCode.id}`)
+    if (!svg) return
+    const svgData = new XMLSerializer().serializeToString(svg)
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    const img = new Image()
+    img.onload = () => {
+      canvas.width = 512
+      canvas.height = 512
+      ctx?.drawImage(img, 0, 0, 512, 512)
+      const link = document.createElement('a')
+      link.download = `qr-${qrCode.code}.png`
+      link.href = canvas.toDataURL('image/png')
+      link.click()
+    }
+    img.src = 'data:image/svg+xml;base64,' + btoa(svgData)
   }
 
   const createTable = useMutation({
@@ -224,16 +288,32 @@ export default function TablesPage() {
                       <CardContent className="space-y-3">
                         {/* QR Code preview */}
                         {qrCode ? (
-                          <div className="aspect-square bg-muted rounded-lg flex items-center justify-center p-4">
-                            <div className="text-center">
-                              <QrCode className="h-16 w-16 mx-auto text-muted-foreground" />
-                              <p className="text-xs mt-2 font-mono">{qrCode.code}</p>
-                            </div>
+                          <div 
+                            className="aspect-square bg-white rounded-lg flex items-center justify-center p-3 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                            onClick={() => setPreviewQr(qrCode)}
+                          >
+                            <QRCodeSVG
+                              id={`qr-${qrCode.id}`}
+                              value={qrCode.url}
+                              size={120}
+                              fgColor={qrCode.style?.color || '#000000'}
+                              bgColor={qrCode.style?.background || '#ffffff'}
+                              level="M"
+                            />
                           </div>
                         ) : (
                           <div className="aspect-square bg-muted rounded-lg flex items-center justify-center">
-                            <Button variant="outline" size="sm">
-                              <QrCode className="h-4 w-4 mr-2" />
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => generateQrCode.mutate(table.id)}
+                              disabled={generateQrCode.isPending}
+                            >
+                              {generateQrCode.isPending ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              ) : (
+                                <QrCodeIcon className="h-4 w-4 mr-2" />
+                              )}
                               Generate QR
                             </Button>
                           </div>
@@ -247,18 +327,28 @@ export default function TablesPage() {
                                 size="icon" 
                                 variant="ghost" 
                                 className="h-8 w-8"
-                                onClick={() => copyToClipboard(qrCode.url)}
+                                onClick={() => copyToClipboard(qrCode.url, qrCode.id)}
                                 title="Copy URL"
                               >
-                                <Copy className="h-4 w-4" />
+                                {copiedId === qrCode.id ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                               </Button>
                               <Button 
                                 size="icon" 
                                 variant="ghost" 
                                 className="h-8 w-8"
+                                onClick={() => downloadQr(qrCode)}
                                 title="Download QR"
                               >
                                 <Download className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                className="h-8 w-8"
+                                onClick={() => { setEditQr(qrCode); setQrStyle({ color: qrCode.style?.color || '#000000', background: qrCode.style?.background || '#ffffff' }) }}
+                                title="Edit Style"
+                              >
+                                <Palette className="h-4 w-4" />
                               </Button>
                               <Button 
                                 size="icon" 
@@ -272,10 +362,12 @@ export default function TablesPage() {
                             </>
                           )}
                           <div className="flex-1" />
-                          <Button size="icon" variant="ghost" className="h-8 w-8">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive">
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-8 w-8 text-destructive"
+                            onClick={() => { if (confirm('Delete this table?')) deleteTable.mutate(table.id) }}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -350,6 +442,118 @@ export default function TablesPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* QR Code Preview Dialog */}
+      <Dialog open={!!previewQr} onOpenChange={() => setPreviewQr(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>QR Code Preview</DialogTitle>
+            <DialogDescription>Scan this QR code to open the menu</DialogDescription>
+          </DialogHeader>
+          {previewQr && (
+            <div className="space-y-4">
+              <div className="flex justify-center p-6 bg-white rounded-lg" ref={qrRef}>
+                <QRCodeSVG
+                  id={`qr-preview-${previewQr.id}`}
+                  value={previewQr.url}
+                  size={256}
+                  fgColor={previewQr.style?.color || '#000000'}
+                  bgColor={previewQr.style?.background || '#ffffff'}
+                  level="H"
+                  includeMargin
+                />
+              </div>
+              <div className="text-center space-y-2">
+                <p className="text-sm font-mono text-muted-foreground">{previewQr.code}</p>
+                <p className="text-xs text-muted-foreground break-all">{previewQr.url}</p>
+              </div>
+              <DialogFooter className="flex-row gap-2 sm:justify-center">
+                <Button variant="outline" onClick={() => copyToClipboard(previewQr.url, previewQr.id)}>
+                  {copiedId === previewQr.id ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+                  Copy URL
+                </Button>
+                <Button onClick={() => downloadQr(previewQr)}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+                <Button variant="outline" onClick={() => window.open(previewQr.url, '_blank')}>
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Open
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* QR Code Edit Dialog */}
+      <Dialog open={!!editQr} onOpenChange={() => setEditQr(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit QR Code Style</DialogTitle>
+            <DialogDescription>Customize the colors of your QR code</DialogDescription>
+          </DialogHeader>
+          {editQr && (
+            <div className="space-y-6">
+              <div className="flex justify-center p-6 bg-white rounded-lg">
+                <QRCodeSVG
+                  value={editQr.url}
+                  size={200}
+                  fgColor={qrStyle.color}
+                  bgColor={qrStyle.background}
+                  level="M"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="qr-color">QR Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="qr-color"
+                      type="color"
+                      value={qrStyle.color}
+                      onChange={(e) => setQrStyle({ ...qrStyle, color: e.target.value })}
+                      className="w-12 h-10 p-1 cursor-pointer"
+                    />
+                    <Input
+                      value={qrStyle.color}
+                      onChange={(e) => setQrStyle({ ...qrStyle, color: e.target.value })}
+                      className="flex-1 font-mono"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="qr-bg">Background</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="qr-bg"
+                      type="color"
+                      value={qrStyle.background}
+                      onChange={(e) => setQrStyle({ ...qrStyle, background: e.target.value })}
+                      className="w-12 h-10 p-1 cursor-pointer"
+                    />
+                    <Input
+                      value={qrStyle.background}
+                      onChange={(e) => setQrStyle({ ...qrStyle, background: e.target.value })}
+                      className="flex-1 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditQr(null)}>Cancel</Button>
+                <Button 
+                  onClick={() => updateQrStyle.mutate({ id: editQr.id, style: qrStyle })}
+                  disabled={updateQrStyle.isPending}
+                >
+                  {updateQrStyle.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Save Style
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

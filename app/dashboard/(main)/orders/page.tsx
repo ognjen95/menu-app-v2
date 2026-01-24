@@ -16,6 +16,8 @@ import {
   User,
   MoreVertical,
   RefreshCw,
+  Car,
+  Table,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { OrderStatus, OrderWithRelations } from '@/lib/types'
@@ -33,7 +35,7 @@ const statusConfig: Record<OrderStatus, { label: string; color: string; icon: Re
 
 const typeIcons = {
   dine_in: Store,
-  takeaway: User,
+  takeaway: Car,
   delivery: Truck,
 }
 
@@ -42,7 +44,7 @@ export default function OrdersPage() {
   const { data, isLoading, refetch } = useActiveOrders()
   const updateStatus = useUpdateOrderStatus()
 
-  const orders = data?.orders || []
+  const orders = data?.data?.orders || []
   
   const filteredOrders = selectedStatus === 'all' 
     ? orders 
@@ -147,7 +149,7 @@ export default function OrdersPage() {
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-bold">{order.order_number}</span>
                       <Badge variant="outline" className="gap-1">
-                        <TypeIcon className="h-3 w-3" />
+                        <TypeIcon className="h-5 w-5" />
                         {order.type.replace('_', ' ')}
                       </Badge>
                     </div>
@@ -156,8 +158,8 @@ export default function OrdersPage() {
                     </Button>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    {order.table_id && <span>Table {order.table?.name}</span>}
-                    {order.customer_name && <span>{order.customer_name}</span>}
+                    {order.table_id && <Badge className="flex items-center gap-2"><Table className="h-4 w-4" /> {`${order.table?.name}, ${order?.table?.zone}`}</Badge>}
+                    {order.customer_name && <Badge className="flex items-center gap-2"><User className="h-4 w-4" /> {order.customer_name}</Badge>}
                   </div>
                 </CardHeader>
 

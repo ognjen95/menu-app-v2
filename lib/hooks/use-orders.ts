@@ -25,14 +25,16 @@ export interface OrderFilters {
   limit?: number
 }
 
-type OrdersResponse = { 
+type OrdersResponseData = { 
   orders: OrderWithRelations[]
   total: number
   page: number
   limit: number
 }
 
-type OrderResponse = { order: OrderWithRelations }
+type OrdersResponse = { data: OrdersResponseData }
+
+type OrderResponse = { data: { order: OrderWithRelations } }
 
 type CreateOrderInput = {
   location_id: string

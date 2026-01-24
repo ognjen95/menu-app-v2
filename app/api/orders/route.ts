@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       .from('orders')
       .select(`
         *,
-        table:tables(id, name, zone),
+        table:tables!orders_table_id_fkey(id, name, zone),
         location:locations(id, name),
         items:order_items(
           *,

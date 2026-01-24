@@ -52,6 +52,12 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
 
+  // Hide layout for full-screen builder
+  const isBuilderPage = pathname === '/dashboard/website/builder'
+  if (isBuilderPage) {
+    return <>{children}</>
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile sidebar backdrop */}

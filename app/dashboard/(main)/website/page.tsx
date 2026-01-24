@@ -336,6 +336,12 @@ export default function WebsitePage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500">
+            <a href="/dashboard/website/builder">
+              <Layout className="h-4 w-4 mr-2" />
+              Visual Builder
+            </a>
+          </Button>
           {websiteUrl && (
             <Button variant="outline" asChild>
               <a href={websiteUrl} target="_blank" rel="noopener noreferrer">

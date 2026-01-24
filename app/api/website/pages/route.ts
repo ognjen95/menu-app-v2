@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         title,
         slug,
         sort_order: sortOrder,
-        is_published: false,
+        is_published: true,
         is_in_navigation: true,
       })
       .select()

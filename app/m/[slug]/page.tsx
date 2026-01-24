@@ -18,7 +18,7 @@ async function getTenantData(slug: string) {
       website:websites(*)
     `)
     .eq('slug', slug)
-    .eq('subscription_status', 'active')
+    .in('subscription_status', ['active', 'trialing'])
     .single()
 
   if (tenantError || !tenant) {
