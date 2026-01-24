@@ -66,6 +66,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { THEME_PRESETS, FONT_OPTIONS, BLOCK_TYPES } from '@/lib/constants/website'
+import { getWebsiteUrl } from '@/utils/urls'
 
 // Types
 type Website = {
@@ -234,7 +235,7 @@ export default function WebsitePage() {
   })
 
   const createBlock = useMutation({
-    mutationFn: (data: { page_id: string; type: string }) => 
+    mutationFn: (data: { page_id: string; type: string }) =>
       apiPost(`/website/pages/${data.page_id}/blocks`, { type: data.type }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['website-blocks'] })
@@ -311,18 +312,7 @@ export default function WebsitePage() {
     )
   }
 
-  const isLocalDev = process.env.NODE_ENV === 'development'
-  const isStaging = process.env.NODE_ENV === 'test'
-
-  const websiteUrl = website?.custom_domain 
-    ? `https://${website.custom_domain}`
-    : website?.subdomain 
-      ? isLocalDev 
-        ? `http://localhost:3000/site/${website.subdomain}`
-        : isStaging
-          ? `${window.location.origin}/site/${website.subdomain}`
-          : `https://${website.subdomain}.qrmenu.app`
-      : null
+  const websiteUrl = getWebsiteUrl(website)
 
   return (
     <div className="space-y-6">
@@ -349,7 +339,7 @@ export default function WebsitePage() {
               </a>
             </Button>
           )}
-          <Button 
+          <Button
             onClick={() => publishWebsite.mutate()}
             disabled={publishWebsite.isPending}
             variant={website?.is_published ? 'outline' : 'default'}
@@ -430,17 +420,17 @@ export default function WebsitePage() {
                 <p className="text-sm font-medium text-muted-foreground mb-3">Dark Themes</p>
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
                   {THEME_PRESETS.filter(p => p.isDark).slice(0, showAllThemes ? undefined : 6).map((preset) => {
-                    const isSelected = website?.primary_color === preset.primary && 
-                                      website?.background_color === preset.background &&
-                                      website?.accent_color === preset.accent
+                    const isSelected = website?.primary_color === preset.primary &&
+                      website?.background_color === preset.background &&
+                      website?.accent_color === preset.accent
                     return (
                       <button
                         key={preset.name}
                         onClick={() => handleThemePreset(preset)}
                         className={cn(
                           "p-3 rounded-xl border-2 transition-all text-left relative overflow-hidden group",
-                          isSelected 
-                            ? "border-primary ring-2 ring-primary/20" 
+                          isSelected
+                            ? "border-primary ring-2 ring-primary/20"
                             : "border-transparent hover:border-primary/50"
                         )}
                         style={{ backgroundColor: preset.background }}
@@ -466,17 +456,17 @@ export default function WebsitePage() {
                 <p className="text-sm font-medium text-muted-foreground mb-3">Light Themes</p>
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
                   {THEME_PRESETS.filter(p => !p.isDark).slice(0, showAllThemes ? undefined : 6).map((preset) => {
-                    const isSelected = website?.primary_color === preset.primary && 
-                                      website?.background_color === preset.background &&
-                                      website?.accent_color === preset.accent
+                    const isSelected = website?.primary_color === preset.primary &&
+                      website?.background_color === preset.background &&
+                      website?.accent_color === preset.accent
                     return (
                       <button
                         key={preset.name}
                         onClick={() => handleThemePreset(preset)}
                         className={cn(
                           "p-3 rounded-xl border-2 transition-all text-left relative overflow-hidden group",
-                          isSelected 
-                            ? "border-primary ring-2 ring-primary/20" 
+                          isSelected
+                            ? "border-primary ring-2 ring-primary/20"
                             : "border-transparent hover:border-primary/50"
                         )}
                         style={{ backgroundColor: preset.background }}
@@ -500,8 +490,8 @@ export default function WebsitePage() {
               {/* View More Button */}
               {THEME_PRESETS.length > 12 && (
                 <div className="flex justify-center pt-2">
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="sm"
                     onClick={() => setShowAllThemes(!showAllThemes)}
                   >
@@ -686,7 +676,7 @@ export default function WebsitePage() {
                         </Badge>
                         <Switch
                           checked={page.is_in_navigation}
-                          onCheckedChange={() => {}}
+                          onCheckedChange={() => { }}
                         />
                         <span className="text-sm text-muted-foreground">In Nav</span>
                         <Button
@@ -759,7 +749,7 @@ export default function WebsitePage() {
                 </Button>
               </div>
             </div>
-            <Button 
+            <Button
               onClick={() => setIsAddBlockOpen(true)}
               disabled={!selectedPageId}
             >
@@ -829,7 +819,7 @@ export default function WebsitePage() {
                           </Button>
                           <Switch
                             checked={block.is_visible}
-                            onCheckedChange={(checked) => 
+                            onCheckedChange={(checked) =>
                               updateBlock.mutate({ blockId: block.id, is_visible: checked })
                             }
                           />
@@ -956,7 +946,7 @@ export default function WebsitePage() {
                   <Input
                     value={settingsForm.social_facebook}
                     onChange={(e) => setSettingsForm(prev => ({ ...prev, social_facebook: e.target.value }))}
-                    onBlur={() => settingsForm.social_facebook !== website?.social_links?.facebook && updateWebsite.mutate({ 
+                    onBlur={() => settingsForm.social_facebook !== website?.social_links?.facebook && updateWebsite.mutate({
                       social_links: { ...website?.social_links, facebook: settingsForm.social_facebook }
                     })}
                     placeholder="https://facebook.com/yourpage"
@@ -969,7 +959,7 @@ export default function WebsitePage() {
                   <Input
                     value={settingsForm.social_instagram}
                     onChange={(e) => setSettingsForm(prev => ({ ...prev, social_instagram: e.target.value }))}
-                    onBlur={() => settingsForm.social_instagram !== website?.social_links?.instagram && updateWebsite.mutate({ 
+                    onBlur={() => settingsForm.social_instagram !== website?.social_links?.instagram && updateWebsite.mutate({
                       social_links: { ...website?.social_links, instagram: settingsForm.social_instagram }
                     })}
                     placeholder="https://instagram.com/yourpage"
@@ -982,7 +972,7 @@ export default function WebsitePage() {
                   <Input
                     value={settingsForm.social_twitter}
                     onChange={(e) => setSettingsForm(prev => ({ ...prev, social_twitter: e.target.value }))}
-                    onBlur={() => settingsForm.social_twitter !== website?.social_links?.twitter && updateWebsite.mutate({ 
+                    onBlur={() => settingsForm.social_twitter !== website?.social_links?.twitter && updateWebsite.mutate({
                       social_links: { ...website?.social_links, twitter: settingsForm.social_twitter }
                     })}
                     placeholder="https://twitter.com/yourpage"
@@ -995,7 +985,7 @@ export default function WebsitePage() {
                   <Input
                     value={settingsForm.social_tiktok}
                     onChange={(e) => setSettingsForm(prev => ({ ...prev, social_tiktok: e.target.value }))}
-                    onBlur={() => settingsForm.social_tiktok !== website?.social_links?.tiktok && updateWebsite.mutate({ 
+                    onBlur={() => settingsForm.social_tiktok !== website?.social_links?.tiktok && updateWebsite.mutate({
                       social_links: { ...website?.social_links, tiktok: settingsForm.social_tiktok }
                     })}
                     placeholder="https://tiktok.com/@yourpage"
@@ -1019,8 +1009,8 @@ export default function WebsitePage() {
               <Label>Page Title</Label>
               <Input
                 value={newPageForm.title}
-                onChange={(e) => setNewPageForm(prev => ({ 
-                  ...prev, 
+                onChange={(e) => setNewPageForm(prev => ({
+                  ...prev,
                   title: e.target.value,
                   slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-')
                 }))}
@@ -1031,8 +1021,8 @@ export default function WebsitePage() {
               <Label>URL Slug</Label>
               <Input
                 value={newPageForm.slug}
-                onChange={(e) => setNewPageForm(prev => ({ 
-                  ...prev, 
+                onChange={(e) => setNewPageForm(prev => ({
+                  ...prev,
                   slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')
                 }))}
                 placeholder="about-us"
@@ -1043,7 +1033,7 @@ export default function WebsitePage() {
             <Button variant="outline" onClick={() => setIsAddPageOpen(false)}>
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={() => createPage.mutate(newPageForm)}
               disabled={createPage.isPending || !newPageForm.title}
             >
@@ -1096,7 +1086,7 @@ export default function WebsitePage() {
             <DialogDescription>Customize this block&apos;s content</DialogDescription>
           </DialogHeader>
           {editingBlock && (
-            <BlockEditor 
+            <BlockEditor
               block={editingBlock}
               onSave={(content) => {
                 updateBlock.mutate({ blockId: editingBlock.id, content })
@@ -1111,11 +1101,11 @@ export default function WebsitePage() {
 }
 
 // Image Upload Component
-function ImageUpload({ 
-  value, 
-  onChange, 
-  label = 'Image' 
-}: { 
+function ImageUpload({
+  value,
+  onChange,
+  label = 'Image'
+}: {
   value: string
   onChange: (url: string) => void
   label?: string
@@ -1199,10 +1189,10 @@ function ImageUpload({
 }
 
 // Multi Image Upload for Gallery
-function MultiImageUpload({ 
-  images, 
-  onChange 
-}: { 
+function MultiImageUpload({
+  images,
+  onChange
+}: {
   images: string[]
   onChange: (images: string[]) => void
 }) {
@@ -1292,10 +1282,10 @@ function MultiImageUpload({
 }
 
 // Menu Items Selector Component
-function MenuItemsSelector({ 
-  selectedItems, 
-  onChange 
-}: { 
+function MenuItemsSelector({
+  selectedItems,
+  onChange
+}: {
   selectedItems: string[]
   onChange: (items: string[]) => void
 }) {
@@ -1375,9 +1365,9 @@ function MenuItemsSelector({
                   />
                   {item.image_urls?.[0] && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img 
-                      src={item.image_urls[0]} 
-                      alt={item.name} 
+                    <img
+                      src={item.image_urls[0]}
+                      alt={item.name}
                       className="w-10 h-10 rounded object-cover"
                     />
                   )}
@@ -1399,11 +1389,11 @@ function MenuItemsSelector({
 }
 
 // Block Editor Component
-function BlockEditor({ 
-  block, 
-  onSave, 
-  isPending 
-}: { 
+function BlockEditor({
+  block,
+  onSave,
+  isPending
+}: {
   block: WebsiteBlock
   onSave: (content: Record<string, unknown>) => void
   isPending: boolean

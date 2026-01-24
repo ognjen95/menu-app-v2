@@ -26,6 +26,7 @@ import {
 import { cn } from '@/lib/utils'
 import { BlockEditor } from '@/components/features/website-builder/BlockEditorComponents'
 import { THEME_PRESETS, FONT_OPTIONS, BLOCK_TYPES } from '@/lib/constants/website'
+import { getWebsiteUrl } from '@/utils/urls'
 
 // Types
 type Website = {
@@ -142,12 +143,12 @@ export default function WebsiteBuilderPage() {
 
   // Toggle page publish status
   const togglePagePublish = useMutation({
-    mutationFn: ({ pageId, is_published }: { pageId: string; is_published: boolean }) => 
+    mutationFn: ({ pageId, is_published }: { pageId: string; is_published: boolean }) =>
       apiPatch(`/website/pages/${pageId}`, { is_published }),
     onMutate: async ({ pageId, is_published }) => {
       await queryClient.cancelQueries({ queryKey: ['website-pages'] })
       const prev = queryClient.getQueryData<PagesCache>(['website-pages'])
-      queryClient.setQueryData<PagesCache>(['website-pages'], (old) => 
+      queryClient.setQueryData<PagesCache>(['website-pages'], (old) =>
         old?.data?.pages ? { data: { pages: old.data.pages.map(p => p.id === pageId ? { ...p, is_published } : p) } } : old
       )
       return { prev }
@@ -240,8 +241,9 @@ export default function WebsiteBuilderPage() {
 
   if (isLoading) return <div className="fixed inset-0 flex items-center justify-center bg-zinc-950"><Loader2 className="h-8 w-8 animate-spin text-zinc-500" /></div>
 
-  const websiteUrl = website?.subdomain ? (process.env.NODE_ENV === 'development' ? `http://localhost:3000/site/${website.subdomain}` : `https://${website.subdomain}.qrmenu.app`) : null
+  // const websiteUrl = website?.subdomain ? (process.env.NODE_ENV === 'development' ? `http://localhost:3000/site/${website.subdomain}` : `https://${website.subdomain}.qrmenu.app`) : null
   const previewWidth = previewMode === 'desktop' ? '100%' : previewMode === 'tablet' ? '768px' : '375px'
+  const websiteUrl = getWebsiteUrl(website)
 
   return (
     <div className="fixed inset-0 flex overflow-hidden bg-zinc-950">
@@ -300,17 +302,17 @@ export default function WebsiteBuilderPage() {
                 <h3 className="text-sm font-medium text-white">Dark Themes</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {THEME_PRESETS.filter(p => p.isDark).slice(0, showAllThemes ? undefined : 4).map((preset) => {
-                    const isSelected = website?.primary_color === preset.primary && 
-                                      website?.background_color === preset.background &&
-                                      website?.accent_color === preset.accent
+                    const isSelected = website?.primary_color === preset.primary &&
+                      website?.background_color === preset.background &&
+                      website?.accent_color === preset.accent
                     return (
-                      <button 
-                        key={preset.name} 
-                        onClick={() => updateWebsite.mutate({ primary_color: preset.primary, secondary_color: preset.secondary, background_color: preset.background, foreground_color: preset.foreground, accent_color: preset.accent })} 
+                      <button
+                        key={preset.name}
+                        onClick={() => updateWebsite.mutate({ primary_color: preset.primary, secondary_color: preset.secondary, background_color: preset.background, foreground_color: preset.foreground, accent_color: preset.accent })}
                         className={cn(
                           "p-2.5 rounded-lg border-2 text-left relative transition-all",
                           isSelected ? "border-primary ring-1 ring-primary/30" : "border-transparent hover:border-white/20"
-                        )} 
+                        )}
                         style={{ backgroundColor: preset.background }}
                       >
                         {isSelected && (
@@ -332,17 +334,17 @@ export default function WebsiteBuilderPage() {
                 <h3 className="text-sm font-medium text-white">Light Themes</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {THEME_PRESETS.filter(p => !p.isDark).slice(0, showAllThemes ? undefined : 4).map((preset) => {
-                    const isSelected = website?.primary_color === preset.primary && 
-                                      website?.background_color === preset.background &&
-                                      website?.accent_color === preset.accent
+                    const isSelected = website?.primary_color === preset.primary &&
+                      website?.background_color === preset.background &&
+                      website?.accent_color === preset.accent
                     return (
-                      <button 
-                        key={preset.name} 
-                        onClick={() => updateWebsite.mutate({ primary_color: preset.primary, secondary_color: preset.secondary, background_color: preset.background, foreground_color: preset.foreground, accent_color: preset.accent })} 
+                      <button
+                        key={preset.name}
+                        onClick={() => updateWebsite.mutate({ primary_color: preset.primary, secondary_color: preset.secondary, background_color: preset.background, foreground_color: preset.foreground, accent_color: preset.accent })}
                         className={cn(
                           "p-2.5 rounded-lg border-2 text-left relative transition-all",
                           isSelected ? "border-primary ring-1 ring-primary/30" : "border-transparent hover:border-zinc-300"
-                        )} 
+                        )}
                         style={{ backgroundColor: preset.background }}
                       >
                         {isSelected && (
@@ -359,7 +361,7 @@ export default function WebsiteBuilderPage() {
                     )
                   })}
                 </div>
-                <button 
+                <button
                   onClick={() => setShowAllThemes(!showAllThemes)}
                   className="w-full text-xs text-zinc-400 hover:text-white py-1"
                 >
@@ -420,8 +422,8 @@ export default function WebsiteBuilderPage() {
                           onClick={(e) => { e.stopPropagation(); togglePagePublish.mutate({ pageId: page.id, is_published: !page.is_published }) }}
                           className={cn(
                             "px-2 py-0.5 text-xs font-medium rounded-full border transition-all hover:scale-105",
-                            page.is_published 
-                              ? "border-green-500/50 bg-green-500/20 text-green-400 hover:bg-green-500/30" 
+                            page.is_published
+                              ? "border-green-500/50 bg-green-500/20 text-green-400 hover:bg-green-500/30"
                               : "border-zinc-500/50 bg-zinc-500/20 text-zinc-400 hover:bg-zinc-500/30 hover:border-green-500/50 hover:text-green-400"
                           )}
                           title={page.is_published ? "Click to unpublish" : "Click to publish"}
