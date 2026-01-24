@@ -159,11 +159,16 @@ export function useMenuItem(id: string) {
   })
 }
 
+type CreateMenuItemInput = Partial<MenuItem> & { 
+  categoryId: string
+  allergen_ids?: string[]
+}
+
 export function useCreateMenuItem() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ categoryId, ...data }: Partial<MenuItem> & { categoryId: string }) =>
+    mutationFn: ({ categoryId, ...data }: CreateMenuItemInput) =>
       apiPost<ItemResponse>(`/menu/categories/${categoryId}/items`, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: menuKeys.items(variables.categoryId) })
@@ -171,11 +176,17 @@ export function useCreateMenuItem() {
   })
 }
 
+type UpdateMenuItemInput = Partial<MenuItem> & { 
+  id: string
+  categoryId: string
+  allergen_ids?: string[]
+}
+
 export function useUpdateMenuItem() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, categoryId, ...data }: Partial<MenuItem> & { id: string; categoryId: string }) =>
+    mutationFn: ({ id, categoryId, ...data }: UpdateMenuItemInput) =>
       apiPut<ItemResponse>(`/menu/items/${id}`, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: menuKeys.items(variables.categoryId) })

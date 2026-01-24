@@ -188,6 +188,11 @@ export interface MenuItem {
   sort_order: number
   created_at: string
   updated_at: string
+  // Relations (when fetched with joins)
+  item_allergens?: {
+    allergen_id: string
+    allergens: Allergen
+  }[]
 }
 
 export interface ItemVariant {

@@ -1,11 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useMenus, useCategories, useMenuItems, useCreateMenu, useCreateCategory, useCreateMenuItem, useDeleteMenuItem } from '@/lib/hooks/use-menu'
+import { useMenus, useCategories, useMenuItems, useCreateMenu, useCreateCategory, useCreateMenuItem, useUpdateMenuItem, useDeleteMenuItem, useAllergens } from '@/lib/hooks/use-menu'
+import type { MenuItem } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Switch } from '@/components/ui/switch'
+import { Checkbox } from '@/components/ui/checkbox'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Dialog,
   DialogContent,
@@ -23,7 +29,6 @@ import {
 } from '@/components/ui/select'
 import {
   Plus,
-  MoreVertical,
   Edit,
   Trash2,
   Eye,
@@ -38,6 +43,12 @@ import {
   Loader2,
   Upload,
   X,
+  Clock,
+  Flame,
+  Leaf,
+  AlertTriangle,
+  Sparkles,
+  Tag,
 } from 'lucide-react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
@@ -50,28 +61,47 @@ export default function MenuPage() {
   // Dialog states
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false)
   const [isCreateCategoryOpen, setIsCreateCategoryOpen] = useState(false)
-  const [isCreateItemOpen, setIsCreateItemOpen] = useState(false)
+  const [isItemDialogOpen, setIsItemDialogOpen] = useState(false)
+  const [editingItem, setEditingItem] = useState<MenuItem | null>(null)
   
   // Form states
   const [menuForm, setMenuForm] = useState({ name: '', description: '' })
   const [categoryForm, setCategoryForm] = useState({ name: '', description: '' })
-  const [itemForm, setItemForm] = useState({ name: '', description: '', base_price: '', category_id: '', image_url: '' })
+  const [itemForm, setItemForm] = useState({
+    name: '',
+    description: '',
+    base_price: '',
+    compare_price: '',
+    category_id: '',
+    image_url: '',
+    preparation_time: '',
+    calories: '',
+    is_featured: false,
+    is_new: false,
+    is_active: true,
+    dietary_tags: [] as string[],
+    allergen_ids: [] as string[],
+  })
   const [isUploading, setIsUploading] = useState(false)
+
+  // Dietary tag options
+  const dietaryTagOptions = ['vegetarian', 'vegan', 'gluten-free', 'halal', 'kosher', 'dairy-free', 'nut-free']
 
   const { data: menusData, isLoading: menusLoading } = useMenus()
   const { data: categoriesData, isLoading: categoriesLoading } = useCategories(selectedMenuId || '')
   const { data: itemsData, isLoading: itemsLoading } = useMenuItems(selectedCategoryId || '')
+  const { data: allergensData } = useAllergens()
   
   const createMenu = useCreateMenu()
   const createCategory = useCreateCategory()
   const createItem = useCreateMenuItem()
+  const updateItem = useUpdateMenuItem()
   const deleteItem = useDeleteMenuItem()
 
   const menus = menusData?.data?.menus || []
+  const allergens = allergensData?.data?.allergens || []
   const categories = categoriesData?.data?.categories || []
   const items = itemsData?.data?.items || []
-
-  console.log({menusData, categoriesData, itemsData})
 
   // Auto-select first menu if none selected
   useEffect(() => {
@@ -135,22 +165,89 @@ export default function MenuPage() {
     }
   }
 
-  const handleCreateItem = (e: React.FormEvent) => {
+  const resetItemForm = () => {
+    setItemForm({
+      name: '',
+      description: '',
+      base_price: '',
+      compare_price: '',
+      category_id: '',
+      image_url: '',
+      preparation_time: '',
+      calories: '',
+      is_featured: false,
+      is_new: false,
+      is_active: true,
+      dietary_tags: [],
+      allergen_ids: [],
+    })
+    setEditingItem(null)
+  }
+
+  const openEditDialog = (item: MenuItem) => {
+    setEditingItem(item)
+    setItemForm({
+      name: item.name,
+      description: item.description || '',
+      base_price: item.base_price.toString(),
+      compare_price: item.compare_price?.toString() || '',
+      category_id: item.category_id,
+      image_url: item.image_urls?.[0] || '',
+      preparation_time: item.preparation_time?.toString() || '',
+      calories: item.calories?.toString() || '',
+      is_featured: item.is_featured,
+      is_new: item.is_new,
+      is_active: item.is_active,
+      dietary_tags: item.dietary_tags || [],
+      allergen_ids: item.item_allergens?.map(ia => ia.allergen_id) || [],
+    })
+    setIsItemDialogOpen(true)
+  }
+
+  const handleSubmitItem = (e: React.FormEvent) => {
     e.preventDefault()
     const categoryId = itemForm.category_id || selectedCategoryId
     if (!categoryId) return
-    createItem.mutate({ 
-      categoryId, 
+
+    const itemData = {
       name: itemForm.name, 
       description: itemForm.description,
       base_price: parseFloat(itemForm.base_price) || 0,
-      image_urls: itemForm.image_url ? [itemForm.image_url] : []
-    }, {
-      onSuccess: () => {
-        setIsCreateItemOpen(false)
-        setItemForm({ name: '', description: '', base_price: '', category_id: '', image_url: '' })
-      }
-    })
+      compare_price: itemForm.compare_price ? parseFloat(itemForm.compare_price) : undefined,
+      image_urls: itemForm.image_url ? [itemForm.image_url] : [],
+      preparation_time: itemForm.preparation_time ? parseInt(itemForm.preparation_time) : undefined,
+      calories: itemForm.calories ? parseInt(itemForm.calories) : undefined,
+      is_featured: itemForm.is_featured,
+      is_new: itemForm.is_new,
+      is_active: itemForm.is_active,
+      dietary_tags: itemForm.dietary_tags,
+      allergen_ids: itemForm.allergen_ids,
+    }
+
+    if (editingItem) {
+      // Update existing item
+      updateItem.mutate({ 
+        id: editingItem.id,
+        categoryId,
+        ...itemData,
+      }, {
+        onSuccess: () => {
+          setIsItemDialogOpen(false)
+          resetItemForm()
+        }
+      })
+    } else {
+      // Create new item
+      createItem.mutate({ 
+        categoryId,
+        ...itemData,
+      }, {
+        onSuccess: () => {
+          setIsItemDialogOpen(false)
+          resetItemForm()
+        }
+      })
+    }
   }
 
   return (
@@ -168,7 +265,7 @@ export default function MenuPage() {
             <Filter className="h-4 w-4 mr-2" />
             Filter
           </Button>
-          <Button onClick={() => setIsCreateItemOpen(true)}>
+          <Button onClick={() => setIsItemDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Add Item
           </Button>
@@ -291,7 +388,7 @@ export default function MenuPage() {
                     {items.length} {items.length === 1 ? 'item' : 'items'}
                   </CardDescription>
                 </div>
-                <Button size="sm" disabled={!selectedCategoryId} onClick={() => setIsCreateItemOpen(true)}>
+                <Button size="sm" disabled={!selectedCategoryId} onClick={() => setIsItemDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-1" />
                   Add Item
                 </Button>
@@ -309,7 +406,7 @@ export default function MenuPage() {
                 <div className="text-center py-16">
                   <UtensilsCrossed className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
                   <p className="text-lg text-muted-foreground mb-4">No items in this category</p>
-                  <Button onClick={() => setIsCreateItemOpen(true)}>
+                  <Button onClick={() => setIsItemDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add First Item
                   </Button>
@@ -344,6 +441,9 @@ export default function MenuPage() {
                           {item.is_featured && (
                             <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                           )}
+                          {item.is_new && (
+                            <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded">New</span>
+                          )}
                           {!item.is_active && (
                             <span className="text-xs px-1.5 py-0.5 bg-muted rounded">Hidden</span>
                           )}
@@ -351,7 +451,7 @@ export default function MenuPage() {
                         <p className="text-sm text-muted-foreground truncate">
                           {item.description || 'No description'}
                         </p>
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
                           {item.dietary_tags?.map((tag) => (
                             <span
                               key={tag}
@@ -360,6 +460,24 @@ export default function MenuPage() {
                               {tag}
                             </span>
                           ))}
+                          {item.item_allergens && item.item_allergens.length > 0 && (
+                            <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300 rounded flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              {item.item_allergens.length} allergens
+                            </span>
+                          )}
+                          {item.preparation_time && (
+                            <span className="text-xs px-1.5 py-0.5 bg-muted rounded flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {item.preparation_time}min
+                            </span>
+                          )}
+                          {item.calories && (
+                            <span className="text-xs px-1.5 py-0.5 bg-muted rounded flex items-center gap-1">
+                              <Flame className="h-3 w-3" />
+                              {item.calories}kcal
+                            </span>
+                          )}
                         </div>
                       </div>
 
@@ -377,10 +495,32 @@ export default function MenuPage() {
 
                       {/* Actions */}
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button size="icon" variant="ghost" className="h-8 w-8">
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openEditDialog(item)
+                          }}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button size="icon" variant="ghost" className="h-8 w-8">
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (selectedCategoryId) {
+                              updateItem.mutate({ 
+                                id: item.id, 
+                                categoryId: selectedCategoryId,
+                                is_active: !item.is_active 
+                              })
+                            }
+                          }}
+                        >
                           {item.is_active ? (
                             <EyeOff className="h-4 w-4" />
                           ) : (
@@ -391,7 +531,10 @@ export default function MenuPage() {
                           size="icon" 
                           variant="ghost" 
                           className="h-8 w-8 text-destructive"
-                          onClick={() => selectedCategoryId && deleteItem.mutate({ id: item.id, categoryId: selectedCategoryId })}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            selectedCategoryId && deleteItem.mutate({ id: item.id, categoryId: selectedCategoryId })
+                          }}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -485,124 +628,308 @@ export default function MenuPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Create Item Dialog */}
-      <Dialog open={isCreateItemOpen} onOpenChange={setIsCreateItemOpen}>
-        <DialogContent>
+      {/* Create/Edit Item Dialog */}
+      <Dialog open={isItemDialogOpen} onOpenChange={(open) => { setIsItemDialogOpen(open); if (!open) resetItemForm() }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>Create Menu Item</DialogTitle>
-            <DialogDescription>Add a new item to your menu</DialogDescription>
+            <DialogTitle>{editingItem ? 'Edit Menu Item' : 'Create Menu Item'}</DialogTitle>
+            <DialogDescription>
+              {editingItem ? 'Update the details of this menu item' : 'Add a new item to your menu with all details'}
+            </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleCreateItem} className="space-y-4">
-            {/* Show category selector if no category is selected */}
-            {!selectedCategoryId && (
-              <div className="space-y-2">
-                <Label>Category *</Label>
-                <Select
-                  value={itemForm.category_id}
-                  onValueChange={(value) => setItemForm(prev => ({ ...prev, category_id: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {categories.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    No categories available. Create a category first.
-                  </p>
-                )}
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="item-name">Item Name *</Label>
-              <Input
-                id="item-name"
-                value={itemForm.name}
-                onChange={(e) => setItemForm(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Margherita Pizza"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="item-description">Description</Label>
-              <Input
-                id="item-description"
-                value={itemForm.description}
-                onChange={(e) => setItemForm(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Fresh tomatoes, mozzarella, and basil"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Image</Label>
-              {itemForm.image_url ? (
-                <div className="relative w-32 h-32 rounded-lg overflow-hidden border">
-                  <Image
-                    src={itemForm.image_url}
-                    alt="Item preview"
-                    fill
-                    className="object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setItemForm(prev => ({ ...prev, image_url: '' }))}
-                    className="absolute top-1 right-1 p-1 bg-background/80 rounded-full hover:bg-background"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/50 transition-colors">
-                  {isUploading ? (
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      <span className="text-sm">Uploading...</span>
+          <form onSubmit={handleSubmitItem} className="flex-1 overflow-hidden flex flex-col">
+            <Tabs defaultValue="basic" className="flex-1 flex flex-col overflow-hidden">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                <TabsTrigger value="details">Details</TabsTrigger>
+                <TabsTrigger value="dietary">Dietary & Allergens</TabsTrigger>
+              </TabsList>
+              
+              <ScrollArea className="flex-1 pr-4">
+                <TabsContent value="basic" className="space-y-4 mt-4">
+                  {/* Category selector - only show when creating and no category selected */}
+                  {!editingItem && !selectedCategoryId && (
+                    <div className="space-y-2">
+                      <Label>Category *</Label>
+                      <Select
+                        value={itemForm.category_id}
+                        onValueChange={(value) => setItemForm(prev => ({ ...prev, category_id: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((cat) => (
+                            <SelectItem key={cat.id} value={cat.id}>
+                              {cat.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  ) : (
-                    <>
-                      <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                      <span className="text-sm text-muted-foreground">Click to upload image</span>
-                      <span className="text-xs text-muted-foreground">PNG, JPG, WebP up to 5MB</span>
-                    </>
                   )}
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                    disabled={isUploading}
-                  />
-                </label>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="item-price">Price (€) *</Label>
-              <Input
-                id="item-price"
-                type="number"
-                step="0.01"
-                min="0"
-                value={itemForm.base_price}
-                onChange={(e) => setItemForm(prev => ({ ...prev, base_price: e.target.value }))}
-                placeholder="12.50"
-                required
-              />
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsCreateItemOpen(false)}>
+
+                  {/* Name */}
+                  <div className="space-y-2">
+                    <Label htmlFor="item-name">Item Name *</Label>
+                    <Input
+                      id="item-name"
+                      value={itemForm.name}
+                      onChange={(e) => setItemForm(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Margherita Pizza"
+                      required
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div className="space-y-2">
+                    <Label htmlFor="item-description">Description</Label>
+                    <Textarea
+                      id="item-description"
+                      value={itemForm.description}
+                      onChange={(e) => setItemForm(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Fresh tomatoes, mozzarella, and basil"
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* Image */}
+                  <div className="space-y-2">
+                    <Label>Image</Label>
+                    {itemForm.image_url ? (
+                      <div className="relative w-32 h-32 rounded-lg overflow-hidden border">
+                        <Image
+                          src={itemForm.image_url}
+                          alt="Item preview"
+                          fill
+                          className="object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setItemForm(prev => ({ ...prev, image_url: '' }))}
+                          className="absolute top-1 right-1 p-1 bg-background/80 rounded-full hover:bg-background"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/50 transition-colors">
+                        {isUploading ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            <span className="text-sm">Uploading...</span>
+                          </div>
+                        ) : (
+                          <>
+                            <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                            <span className="text-sm text-muted-foreground">Click to upload image</span>
+                            <span className="text-xs text-muted-foreground">PNG, JPG, WebP up to 5MB</span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          onChange={handleImageUpload}
+                          className="hidden"
+                          disabled={isUploading}
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Prices */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="item-price">Price (€) *</Label>
+                      <Input
+                        id="item-price"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={itemForm.base_price}
+                        onChange={(e) => setItemForm(prev => ({ ...prev, base_price: e.target.value }))}
+                        placeholder="12.50"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="item-compare-price">Compare Price (€)</Label>
+                      <Input
+                        id="item-compare-price"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={itemForm.compare_price}
+                        onChange={(e) => setItemForm(prev => ({ ...prev, compare_price: e.target.value }))}
+                        placeholder="15.00"
+                      />
+                      <p className="text-xs text-muted-foreground">Original price for showing discount</p>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="details" className="space-y-4 mt-4">
+                  {/* Preparation time & calories */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="prep-time" className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Prep Time (minutes)
+                      </Label>
+                      <Input
+                        id="prep-time"
+                        type="number"
+                        min="0"
+                        value={itemForm.preparation_time}
+                        onChange={(e) => setItemForm(prev => ({ ...prev, preparation_time: e.target.value }))}
+                        placeholder="15"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="calories" className="flex items-center gap-2">
+                        <Flame className="h-4 w-4" />
+                        Calories (kcal)
+                      </Label>
+                      <Input
+                        id="calories"
+                        type="number"
+                        min="0"
+                        value={itemForm.calories}
+                        onChange={(e) => setItemForm(prev => ({ ...prev, calories: e.target.value }))}
+                        placeholder="450"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Status toggles */}
+                  <div className="space-y-4 pt-4 border-t">
+                    <h4 className="font-medium flex items-center gap-2">
+                      <Tag className="h-4 w-4" />
+                      Item Status
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="is-active">Active</Label>
+                          <p className="text-xs text-muted-foreground">Item is visible in menu</p>
+                        </div>
+                        <Switch
+                          id="is-active"
+                          checked={itemForm.is_active}
+                          onCheckedChange={(checked) => setItemForm(prev => ({ ...prev, is_active: checked }))}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="is-featured" className="flex items-center gap-2">
+                            <Star className="h-4 w-4 text-yellow-500" />
+                            Featured
+                          </Label>
+                          <p className="text-xs text-muted-foreground">Highlight this item</p>
+                        </div>
+                        <Switch
+                          id="is-featured"
+                          checked={itemForm.is_featured}
+                          onCheckedChange={(checked) => setItemForm(prev => ({ ...prev, is_featured: checked }))}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="is-new" className="flex items-center gap-2">
+                            <Sparkles className="h-4 w-4 text-blue-500" />
+                            New Item
+                          </Label>
+                          <p className="text-xs text-muted-foreground">Show &quot;New&quot; badge</p>
+                        </div>
+                        <Switch
+                          id="is-new"
+                          checked={itemForm.is_new}
+                          onCheckedChange={(checked) => setItemForm(prev => ({ ...prev, is_new: checked }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="dietary" className="space-y-4 mt-4">
+                  {/* Dietary tags */}
+                  <div className="space-y-3">
+                    <h4 className="font-medium flex items-center gap-2">
+                      <Leaf className="h-4 w-4 text-green-600" />
+                      Dietary Tags
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {dietaryTagOptions.map((tag) => (
+                        <div key={tag} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`dietary-${tag}`}
+                            checked={itemForm.dietary_tags.includes(tag)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setItemForm(prev => ({ ...prev, dietary_tags: [...prev.dietary_tags, tag] }))
+                              } else {
+                                setItemForm(prev => ({ ...prev, dietary_tags: prev.dietary_tags.filter(t => t !== tag) }))
+                              }
+                            }}
+                          />
+                          <label
+                            htmlFor={`dietary-${tag}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 capitalize"
+                          >
+                            {tag}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Allergens */}
+                  <div className="space-y-3 pt-4 border-t">
+                    <h4 className="font-medium flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-orange-500" />
+                      Allergens
+                    </h4>
+                    <p className="text-xs text-muted-foreground">
+                      Select all allergens present in this item
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {allergens.map((allergen) => (
+                        <div key={allergen.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`allergen-${allergen.id}`}
+                            checked={itemForm.allergen_ids.includes(allergen.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setItemForm(prev => ({ ...prev, allergen_ids: [...prev.allergen_ids, allergen.id] }))
+                              } else {
+                                setItemForm(prev => ({ ...prev, allergen_ids: prev.allergen_ids.filter(id => id !== allergen.id) }))
+                              }
+                            }}
+                          />
+                          <label
+                            htmlFor={`allergen-${allergen.id}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {allergen.name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </TabsContent>
+              </ScrollArea>
+            </Tabs>
+
+            <DialogFooter className="mt-4 pt-4 border-t">
+              <Button type="button" variant="outline" onClick={() => { setIsItemDialogOpen(false); resetItemForm() }}>
                 Cancel
               </Button>
               <Button 
                 type="submit" 
-                disabled={createItem.isPending || (!selectedCategoryId && !itemForm.category_id)}
+                disabled={(createItem.isPending || updateItem.isPending) || (!editingItem && !selectedCategoryId && !itemForm.category_id)}
               >
-                {createItem.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Create Item
+                {(createItem.isPending || updateItem.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {editingItem ? 'Update Item' : 'Create Item'}
               </Button>
             </DialogFooter>
           </form>

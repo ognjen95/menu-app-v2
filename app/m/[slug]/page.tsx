@@ -89,8 +89,6 @@ export default async function PublicMenuPage({ params, searchParams }: PageProps
 
   const data = await getTenantData(slug)
 
-  console.log(data)
-
   if (!data) {
     notFound()
   }

@@ -9,6 +9,9 @@ import {
   X,
   Leaf,
   AlertTriangle,
+  Star,
+  Clock,
+  Flame,
 } from 'lucide-react'
 import type { Tenant, Menu, MenuItem, Allergen, Location, Website } from '@/lib/types'
 import { CheckoutDialog } from './checkout-dialog'
@@ -75,10 +78,6 @@ export function PublicMenuView({
   const [cartOpen, setCartOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<MenuItemWithRelations | null>(null)
-
-  // Debug: log website data
-  console.log('Website data:', website)
-  console.log('Background color:', website?.background_color)
 
   // Theme from website settings
   const theme = {
@@ -364,32 +363,48 @@ export function PublicMenuView({
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <h3 className="font-semibold" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>{item.name}</h3>
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="font-semibold" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>{item.name}</h3>
+                          {item.is_featured && (
+                            <Star className="h-4 w-4 fill-current" style={{ color: theme.accent }} />
+                          )}
+                        </div>
                         {item.description && (
                           <p className="text-sm line-clamp-2 mt-1" style={{ color: mutedForeground }}>
                             {item.description}
                           </p>
                         )}
                       </div>
-                      <span className="font-bold whitespace-nowrap" style={{ color: theme.primary }}>
-                        €{item.base_price.toFixed(2)}
-                      </span>
+                      <div className="text-right">
+                        <span className="font-bold whitespace-nowrap" style={{ color: theme.primary }}>
+                          €{item.base_price.toFixed(2)}
+                        </span>
+                        {item.compare_price && item.compare_price > item.base_price && (
+                          <div className="text-xs line-through" style={{ color: mutedForeground }}>
+                            €{item.compare_price.toFixed(2)}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Tags and info */}
-                    <div className="flex flex-wrap gap-1 mt-3">
+                    <div className="flex flex-wrap gap-1.5 mt-3">
                       {item.is_new && (
-                        <span className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: theme.secondary, color: theme.foreground }}>New</span>
+                        <span className="text-xs px-2 py-0.5 rounded font-medium" style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}>New</span>
                       )}
-                      {item.dietary_tags?.map((tag) => (
-                        <span key={tag} className="text-xs px-2 py-0.5 rounded" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
+                      {item.compare_price && item.compare_price > item.base_price && (
+                        <span className="text-xs px-2 py-0.5 rounded font-medium" style={{ backgroundColor: theme.accent, color: getContrastColor(theme.accent) }}>Sale</span>
+                      )}
+                      {item.dietary_tags?.slice(0, 2).map((tag) => (
+                        <span key={tag} className="text-xs px-2 py-0.5 rounded flex items-center gap-1" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
+                          <Leaf className="h-3 w-3" />
                           {tag}
                         </span>
                       ))}
                       {itemAllergens.length > 0 && (
                         <span className="text-xs px-2 py-0.5 rounded flex items-center gap-1" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
                           <AlertTriangle className="h-3 w-3" />
-                          {itemAllergens.length} allergens
+                          {itemAllergens.length}
                         </span>
                       )}
                     </div>
@@ -535,8 +550,12 @@ export function PublicMenuView({
           style={{ backgroundColor: `${theme.background}cc` }}
         >
           <div 
-            className="rounded-t-xl sm:rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
-            style={{ backgroundColor: theme.background }}
+            className="rounded-xl sm:rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl"
+            style={{ 
+              backgroundColor: theme.background,
+              border: `1px solid ${borderColor}`,
+              boxShadow: `0 25px 50px -12px ${theme.foreground}33`,
+            }}
           >
             {/* Item image */}
             {selectedItem.image_urls && selectedItem.image_urls.length > 0 && (
@@ -552,7 +571,12 @@ export function PublicMenuView({
             <div className="p-6">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h2 className="text-xl font-bold" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>{selectedItem.name}</h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-bold" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>{selectedItem.name}</h2>
+                    {selectedItem.is_featured && (
+                      <Star className="h-5 w-5 fill-current" style={{ color: theme.accent }} />
+                    )}
+                  </div>
                   {selectedItem.description && (
                     <p className="mt-1" style={{ color: mutedForeground }}>{selectedItem.description}</p>
                   )}
@@ -566,9 +590,79 @@ export function PublicMenuView({
                 </button>
               </div>
 
-              <div className="text-2xl font-bold mb-6" style={{ color: theme.primary }}>
-                €{selectedItem.base_price.toFixed(2)}
+              {/* Price section */}
+              <div className="flex items-baseline gap-2 mb-4">
+                <span className="text-2xl font-bold" style={{ color: theme.primary }}>
+                  €{selectedItem.base_price.toFixed(2)}
+                </span>
+                {selectedItem.compare_price && selectedItem.compare_price > selectedItem.base_price && (
+                  <span className="text-lg line-through" style={{ color: mutedForeground }}>
+                    €{selectedItem.compare_price.toFixed(2)}
+                  </span>
+                )}
               </div>
+
+              {/* Badges */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {selectedItem.is_new && (
+                  <span className="text-xs px-2 py-1 rounded font-medium" style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}>New</span>
+                )}
+                {selectedItem.compare_price && selectedItem.compare_price > selectedItem.base_price && (
+                  <span className="text-xs px-2 py-1 rounded font-medium" style={{ backgroundColor: theme.accent, color: getContrastColor(theme.accent) }}>
+                    Save €{(selectedItem.compare_price - selectedItem.base_price).toFixed(2)}
+                  </span>
+                )}
+              </div>
+
+              {/* Info row: prep time, calories */}
+              {(selectedItem.preparation_time || selectedItem.calories) && (
+                <div className="flex flex-wrap gap-4 mb-4 py-3 px-4 rounded-lg" style={{ backgroundColor: cardBg }}>
+                  {selectedItem.preparation_time && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" style={{ color: mutedForeground }} />
+                      <span className="text-sm" style={{ color: theme.foreground }}>{selectedItem.preparation_time} min</span>
+                    </div>
+                  )}
+                  {selectedItem.calories && (
+                    <div className="flex items-center gap-2">
+                      <Flame className="h-4 w-4" style={{ color: mutedForeground }} />
+                      <span className="text-sm" style={{ color: theme.foreground }}>{selectedItem.calories} kcal</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Dietary tags */}
+              {selectedItem.dietary_tags && selectedItem.dietary_tags.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="font-semibold mb-2 text-sm" style={{ color: theme.foreground }}>Dietary</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedItem.dietary_tags.map((tag) => (
+                      <span key={tag} className="text-xs px-2 py-1 rounded flex items-center gap-1" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
+                        <Leaf className="h-3 w-3" />
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Allergens */}
+              {selectedItem.item_allergens && selectedItem.item_allergens.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-semibold mb-2 text-sm flex items-center gap-1" style={{ color: theme.foreground }}>
+                    <AlertTriangle className="h-4 w-4" style={{ color: theme.accent }} />
+                    Allergens
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedItem.item_allergens.map((ia) => (
+                      <span key={ia.allergen_id} className="text-xs px-2 py-1 rounded" style={{ backgroundColor: cardBg, color: theme.foreground }}>
+                        {ia.allergens.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Variants */}
               {selectedItem.variants && selectedItem.variants.length > 0 && (
