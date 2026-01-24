@@ -9,6 +9,7 @@ type GalleryBlockProps = {
   theme: {
     primary: string
     secondary: string
+    background: string
     fontHeading: string
     fontBody: string
   }
@@ -83,33 +84,58 @@ export function GalleryBlock({ images, title, theme }: GalleryBlockProps) {
 
   return (
     <>
-      <section style={{ padding: '4rem 0', overflow: 'hidden' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 2rem' }}>
+      <section style={{ padding: '4rem 0' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
           <h2 style={{ 
             fontFamily: theme.fontHeading, 
             fontSize: '2rem', 
-            marginBottom: '1.5rem',
+            marginBottom: '2rem',
             fontWeight: 700,
           }}>
             {title}
           </h2>
           
-          {/* Netflix-style horizontal scroll */}
-          <div 
-            style={{ 
-              display: 'flex',
-              gap: '0.75rem',
-              overflowX: 'auto',
-              scrollSnapType: 'x mandatory',
-              scrollBehavior: 'smooth',
-              paddingBottom: '1rem',
-              marginBottom: '-1rem',
-              // Hide scrollbar
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-            }}
-            className="gallery-scroll"
-          >
+          {/* Gallery wrapper with side fade overlays */}
+          <div style={{ position: 'relative' }}>
+            {/* Left fade overlay */}
+            <div style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: '80px',
+              background: `linear-gradient(to right, ${theme.background}, transparent)`,
+              zIndex: 20,
+              pointerEvents: 'none',
+            }} />
+            
+            {/* Right fade overlay */}
+            <div style={{
+              position: 'absolute',
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: '80px',
+              background: `linear-gradient(to left, ${theme.background}, transparent)`,
+              zIndex: 20,
+              pointerEvents: 'none',
+            }} />
+            
+            {/* Modern carousel with proper spacing for shadows */}
+            <div 
+              style={{ 
+                display: 'flex',
+                gap: '1.25rem',
+                overflowX: 'auto',
+                overflowY: 'visible',
+                scrollSnapType: 'x mandatory',
+                scrollBehavior: 'smooth',
+                padding: '2rem 4rem 3rem 4rem', // Extra padding for shadows and side fades
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+              }}
+              className="gallery-scroll"
+            >
             {images.map((img, idx) => (
               <div
                 key={idx}
@@ -118,18 +144,18 @@ export function GalleryBlock({ images, title, theme }: GalleryBlockProps) {
                 onMouseLeave={() => setIsHovering(null)}
                 style={{
                   flex: '0 0 auto',
-                  width: 'clamp(200px, 25vw, 320px)',
+                  width: 'clamp(240px, 28vw, 360px)',
                   aspectRatio: '16/10',
-                  borderRadius: '0.75rem',
+                  borderRadius: '1rem',
                   overflow: 'hidden',
                   cursor: 'pointer',
                   scrollSnapAlign: 'start',
                   position: 'relative',
-                  transform: isHovering === idx ? 'scale(1.05)' : 'scale(1)',
-                  transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease',
+                  transform: isHovering === idx ? 'scale(1.08) translateY(-8px)' : 'scale(1) translateY(0)',
+                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                   boxShadow: isHovering === idx 
-                    ? '0 20px 40px rgba(0,0,0,0.3)' 
-                    : '0 4px 12px rgba(0,0,0,0.1)',
+                    ? `0 12px 24px -8px rgba(0,0,0,0.25), 0 0 0 2px ${theme.primary}30` 
+                    : '0 4px 12px -4px rgba(0,0,0,0.1)',
                   zIndex: isHovering === idx ? 10 : 1,
                 }}
               >
@@ -141,30 +167,86 @@ export function GalleryBlock({ images, title, theme }: GalleryBlockProps) {
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
+                    transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transform: isHovering === idx ? 'scale(1.1)' : 'scale(1)',
                   }}
                 />
-                {/* Hover overlay */}
+                {/* Gradient overlay */}
                 <div style={{
                   position: 'absolute',
                   inset: 0,
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%)',
-                  opacity: isHovering === idx ? 1 : 0,
-                  transition: 'opacity 0.3s ease',
+                  background: isHovering === idx 
+                    ? 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 40%, transparent 100%)'
+                    : 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 40%)',
+                  transition: 'all 0.4s ease',
+                }} />
+                {/* Content overlay */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  padding: '1.25rem',
                   display: 'flex',
-                  alignItems: 'flex-end',
-                  padding: '1rem',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  transform: isHovering === idx ? 'translateY(0)' : 'translateY(8px)',
+                  opacity: isHovering === idx ? 1 : 0.8,
+                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}>
                   <span style={{ 
                     color: '#fff', 
                     fontSize: '0.875rem',
-                    fontWeight: 500,
+                    fontWeight: 600,
+                    textShadow: '0 2px 4px rgba(0,0,0,0.3)',
                   }}>
-                    View
+                    {idx + 1} / {images.length}
                   </span>
+                  <div style={{
+                    background: 'rgba(255,255,255,0.2)',
+                    backdropFilter: 'blur(8px)',
+                    borderRadius: '2rem',
+                    padding: '0.5rem 1rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    color: '#fff',
+                    opacity: isHovering === idx ? 1 : 0,
+                    transform: isHovering === idx ? 'scale(1)' : 'scale(0.9)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}>
+                    Click to view
+                  </div>
                 </div>
               </div>
             ))}
+            </div>
           </div>
+          
+          {/* Scroll indicator dots */}
+          {images.length > 3 && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              marginTop: '1.5rem',
+            }}>
+              {images.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => openPreview(idx)}
+                  style={{
+                    width: isHovering === idx ? '24px' : '8px',
+                    height: '8px',
+                    borderRadius: '4px',
+                    background: isHovering === idx ? theme.primary : `${theme.primary}40`,
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

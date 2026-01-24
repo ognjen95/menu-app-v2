@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPatch, apiPost, apiDelete } from '@/lib/api'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -65,6 +65,7 @@ import {
   UtensilsCrossed,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { THEME_PRESETS, FONT_OPTIONS, BLOCK_TYPES } from '@/lib/constants/website'
 
 // Types
 type Website = {
@@ -129,70 +130,6 @@ type MenuItem = {
   category: { id: string; name: string } | null
 }
 
-// Block type definitions
-const BLOCK_TYPES = [
-  { type: 'hero', label: 'Hero Banner', icon: Layout, description: 'Large banner with image and text' },
-  { type: 'about', label: 'About Section', icon: FileText, description: 'Tell your story' },
-  { type: 'gallery', label: 'Image Gallery', icon: ImageIcon, description: 'Showcase photos' },
-  { type: 'menu_preview', label: 'Menu Preview', icon: UtensilsCrossed, description: 'Featured menu items' },
-  { type: 'testimonials', label: 'Testimonials', icon: Star, description: 'Customer reviews' },
-  { type: 'contact', label: 'Contact Info', icon: Phone, description: 'Address and contact details' },
-  { type: 'hours', label: 'Opening Hours', icon: Clock, description: 'Business hours' },
-  { type: 'social', label: 'Social Links', icon: Instagram, description: 'Social media links' },
-]
-
-const FONT_OPTIONS = [
-  { value: 'Inter', label: 'Inter (Modern)' },
-  { value: 'Playfair Display', label: 'Playfair Display (Elegant)' },
-  { value: 'Poppins', label: 'Poppins (Clean)' },
-  { value: 'Roboto', label: 'Roboto (Classic)' },
-  { value: 'Lora', label: 'Lora (Serif)' },
-  { value: 'Montserrat', label: 'Montserrat (Bold)' },
-]
-
-const THEME_PRESETS = [
-  { 
-    name: 'Modern Dark', 
-    primary: '#3B82F6', 
-    secondary: '#1E293B', 
-    background: '#0F172A', 
-    foreground: '#F8FAFC',
-    accent: '#22D3EE'
-  },
-  { 
-    name: 'Minimal Light', 
-    primary: '#18181B', 
-    secondary: '#F4F4F5', 
-    background: '#FFFFFF', 
-    foreground: '#18181B',
-    accent: '#F97316'
-  },
-  { 
-    name: 'Warm Restaurant', 
-    primary: '#DC2626', 
-    secondary: '#FEF3C7', 
-    background: '#FFFBEB', 
-    foreground: '#78350F',
-    accent: '#F59E0B'
-  },
-  { 
-    name: 'Fresh & Green', 
-    primary: '#16A34A', 
-    secondary: '#DCFCE7', 
-    background: '#F0FDF4', 
-    foreground: '#14532D',
-    accent: '#84CC16'
-  },
-  { 
-    name: 'Ocean Blue', 
-    primary: '#0EA5E9', 
-    secondary: '#E0F2FE', 
-    background: '#F0F9FF', 
-    foreground: '#0C4A6E',
-    accent: '#06B6D4'
-  },
-]
-
 export default function WebsitePage() {
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState('design')
@@ -202,6 +139,27 @@ export default function WebsitePage() {
   const [isAddBlockOpen, setIsAddBlockOpen] = useState(false)
   const [newPageForm, setNewPageForm] = useState({ title: '', slug: '' })
   const [editingBlock, setEditingBlock] = useState<WebsiteBlock | null>(null)
+  const [showAllThemes, setShowAllThemes] = useState(false)
+  const [settingsForm, setSettingsForm] = useState({
+    subdomain: '',
+    custom_domain: '',
+    seo_title: '',
+    seo_description: '',
+    seo_image_url: '',
+    social_facebook: '',
+    social_instagram: '',
+    social_twitter: '',
+    social_tiktok: '',
+  })
+  const [designForm, setDesignForm] = useState({
+    primary_color: '',
+    secondary_color: '',
+    background_color: '',
+    foreground_color: '',
+    accent_color: '',
+    logo_url: '',
+    favicon_url: '',
+  })
 
   // Fetch website data
   const { data: websiteData, isLoading: websiteLoading } = useQuery({
@@ -225,6 +183,32 @@ export default function WebsitePage() {
   const website = websiteData?.data?.website
   const pages = pagesData?.data?.pages || []
   const blocks = blocksData?.data?.blocks || []
+
+  // Sync forms with website data
+  useEffect(() => {
+    if (website) {
+      setSettingsForm({
+        subdomain: website.subdomain || '',
+        custom_domain: website.custom_domain || '',
+        seo_title: website.seo_title || '',
+        seo_description: website.seo_description || '',
+        seo_image_url: website.seo_image_url || '',
+        social_facebook: website.social_links?.facebook || '',
+        social_instagram: website.social_links?.instagram || '',
+        social_twitter: website.social_links?.twitter || '',
+        social_tiktok: website.social_links?.tiktok || '',
+      })
+      setDesignForm({
+        primary_color: website.primary_color || '#3B82F6',
+        secondary_color: website.secondary_color || '#F4F4F5',
+        background_color: website.background_color || '#FFFFFF',
+        foreground_color: website.foreground_color || '#18181B',
+        accent_color: website.accent_color || '#F97316',
+        logo_url: website.logo_url || '',
+        favicon_url: website.favicon_url || '',
+      })
+    }
+  }, [website])
 
   // Mutations
   const updateWebsite = useMutation({
@@ -300,8 +284,19 @@ export default function WebsitePage() {
     })
   }
 
-  const handleColorChange = (field: keyof Website, value: string) => {
-    updateWebsite.mutate({ [field]: value })
+  const handleColorChange = (field: keyof Website, value: string, immediate = false) => {
+    const designField = field as keyof typeof designForm
+    setDesignForm(prev => ({ ...prev, [designField]: value }))
+    if (immediate) {
+      updateWebsite.mutate({ [field]: value })
+    }
+  }
+
+  const handleColorBlur = (field: keyof Website) => {
+    const designField = field as keyof typeof designForm
+    if (designForm[designField] !== website?.[field]) {
+      updateWebsite.mutate({ [field]: designForm[designField] })
+    }
   }
 
   const handleFontChange = (field: 'font_heading' | 'font_body', value: string) => {
@@ -425,23 +420,91 @@ export default function WebsitePage() {
               <CardTitle>Theme Presets</CardTitle>
               <CardDescription>Quick start with a pre-designed theme</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                {THEME_PRESETS.map((preset) => (
-                  <button
-                    key={preset.name}
-                    onClick={() => handleThemePreset(preset)}
-                    className="p-3 rounded-lg border hover:border-primary transition-colors text-left"
-                  >
-                    <div className="flex gap-1 mb-2">
-                      <div className="h-4 w-4 rounded" style={{ backgroundColor: preset.primary }} />
-                      <div className="h-4 w-4 rounded" style={{ backgroundColor: preset.secondary }} />
-                      <div className="h-4 w-4 rounded" style={{ backgroundColor: preset.accent }} />
-                    </div>
-                    <p className="text-sm font-medium">{preset.name}</p>
-                  </button>
-                ))}
+            <CardContent className="space-y-4">
+              {/* Dark Themes */}
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-3">Dark Themes</p>
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+                  {THEME_PRESETS.filter(p => p.isDark).slice(0, showAllThemes ? undefined : 6).map((preset) => {
+                    const isSelected = website?.primary_color === preset.primary && 
+                                      website?.background_color === preset.background &&
+                                      website?.accent_color === preset.accent
+                    return (
+                      <button
+                        key={preset.name}
+                        onClick={() => handleThemePreset(preset)}
+                        className={cn(
+                          "p-3 rounded-xl border-2 transition-all text-left relative overflow-hidden group",
+                          isSelected 
+                            ? "border-primary ring-2 ring-primary/20" 
+                            : "border-transparent hover:border-primary/50"
+                        )}
+                        style={{ backgroundColor: preset.background }}
+                      >
+                        {isSelected && (
+                          <div className="absolute top-2 right-2">
+                            <Check className="h-4 w-4 text-primary" />
+                          </div>
+                        )}
+                        <div className="flex gap-1 mb-2">
+                          <div className="h-5 w-5 rounded-full shadow-sm" style={{ backgroundColor: preset.primary }} />
+                          <div className="h-5 w-5 rounded-full shadow-sm" style={{ backgroundColor: preset.accent }} />
+                        </div>
+                        <p className="text-xs font-medium truncate" style={{ color: preset.foreground }}>{preset.name}</p>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
+
+              {/* Light Themes */}
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-3">Light Themes</p>
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+                  {THEME_PRESETS.filter(p => !p.isDark).slice(0, showAllThemes ? undefined : 6).map((preset) => {
+                    const isSelected = website?.primary_color === preset.primary && 
+                                      website?.background_color === preset.background &&
+                                      website?.accent_color === preset.accent
+                    return (
+                      <button
+                        key={preset.name}
+                        onClick={() => handleThemePreset(preset)}
+                        className={cn(
+                          "p-3 rounded-xl border-2 transition-all text-left relative overflow-hidden group",
+                          isSelected 
+                            ? "border-primary ring-2 ring-primary/20" 
+                            : "border-transparent hover:border-primary/50"
+                        )}
+                        style={{ backgroundColor: preset.background }}
+                      >
+                        {isSelected && (
+                          <div className="absolute top-2 right-2">
+                            <Check className="h-4 w-4 text-primary" />
+                          </div>
+                        )}
+                        <div className="flex gap-1 mb-2">
+                          <div className="h-5 w-5 rounded-full shadow-sm border" style={{ backgroundColor: preset.primary }} />
+                          <div className="h-5 w-5 rounded-full shadow-sm border" style={{ backgroundColor: preset.accent }} />
+                        </div>
+                        <p className="text-xs font-medium truncate" style={{ color: preset.foreground }}>{preset.name}</p>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* View More Button */}
+              {THEME_PRESETS.length > 12 && (
+                <div className="flex justify-center pt-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setShowAllThemes(!showAllThemes)}
+                  >
+                    {showAllThemes ? 'Show Less' : `View All ${THEME_PRESETS.length} Themes`}
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -465,13 +528,14 @@ export default function WebsitePage() {
                     <div className="flex gap-2">
                       <input
                         type="color"
-                        value={website?.[field as keyof Website] as string || '#000000'}
-                        onChange={(e) => handleColorChange(field as keyof Website, e.target.value)}
+                        value={designForm[field as keyof typeof designForm] || '#000000'}
+                        onChange={(e) => handleColorChange(field as keyof Website, e.target.value, true)}
                         className="h-10 w-10 rounded border cursor-pointer"
                       />
                       <Input
-                        value={website?.[field as keyof Website] as string || ''}
+                        value={designForm[field as keyof typeof designForm] || ''}
                         onChange={(e) => handleColorChange(field as keyof Website, e.target.value)}
+                        onBlur={() => handleColorBlur(field as keyof Website)}
                         placeholder="#000000"
                         className="font-mono text-sm"
                       />
@@ -547,21 +611,23 @@ export default function WebsitePage() {
                 <div className="space-y-3">
                   <Label>Logo URL</Label>
                   <Input
-                    value={website?.logo_url || ''}
-                    onChange={(e) => updateWebsite.mutate({ logo_url: e.target.value })}
+                    value={designForm.logo_url}
+                    onChange={(e) => setDesignForm(prev => ({ ...prev, logo_url: e.target.value }))}
+                    onBlur={() => designForm.logo_url !== website?.logo_url && updateWebsite.mutate({ logo_url: designForm.logo_url })}
                     placeholder="https://example.com/logo.png"
                   />
-                  {website?.logo_url && (
+                  {designForm.logo_url && (
                     <div className="p-4 bg-muted rounded-lg">
-                      <img src={website.logo_url} alt="Logo preview" className="max-h-16 object-contain" />
+                      <img src={designForm.logo_url} alt="Logo preview" className="max-h-16 object-contain" />
                     </div>
                   )}
                 </div>
                 <div className="space-y-3">
                   <Label>Favicon URL</Label>
                   <Input
-                    value={website?.favicon_url || ''}
-                    onChange={(e) => updateWebsite.mutate({ favicon_url: e.target.value })}
+                    value={designForm.favicon_url}
+                    onChange={(e) => setDesignForm(prev => ({ ...prev, favicon_url: e.target.value }))}
+                    onBlur={() => designForm.favicon_url !== website?.favicon_url && updateWebsite.mutate({ favicon_url: designForm.favicon_url })}
                     placeholder="https://example.com/favicon.ico"
                   />
                 </div>
@@ -800,8 +866,9 @@ export default function WebsitePage() {
                 <Label>Subdomain</Label>
                 <div className="flex items-center gap-2">
                   <Input
-                    value={website?.subdomain || ''}
-                    onChange={(e) => updateWebsite.mutate({ subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                    value={settingsForm.subdomain}
+                    onChange={(e) => setSettingsForm(prev => ({ ...prev, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
+                    onBlur={() => settingsForm.subdomain !== website?.subdomain && updateWebsite.mutate({ subdomain: settingsForm.subdomain })}
                     placeholder="your-restaurant"
                     className="max-w-xs"
                   />
@@ -812,8 +879,9 @@ export default function WebsitePage() {
               <div className="space-y-2">
                 <Label>Custom Domain (Pro)</Label>
                 <Input
-                  value={website?.custom_domain || ''}
-                  onChange={(e) => updateWebsite.mutate({ custom_domain: e.target.value })}
+                  value={settingsForm.custom_domain}
+                  onChange={(e) => setSettingsForm(prev => ({ ...prev, custom_domain: e.target.value }))}
+                  onBlur={() => settingsForm.custom_domain !== website?.custom_domain && updateWebsite.mutate({ custom_domain: settingsForm.custom_domain })}
                   placeholder="www.yourrestaurant.com"
                 />
                 <p className="text-sm text-muted-foreground">
@@ -833,33 +901,36 @@ export default function WebsitePage() {
               <div className="space-y-2">
                 <Label>Page Title</Label>
                 <Input
-                  value={website?.seo_title || ''}
-                  onChange={(e) => updateWebsite.mutate({ seo_title: e.target.value })}
+                  value={settingsForm.seo_title}
+                  onChange={(e) => setSettingsForm(prev => ({ ...prev, seo_title: e.target.value }))}
+                  onBlur={() => settingsForm.seo_title !== website?.seo_title && updateWebsite.mutate({ seo_title: settingsForm.seo_title })}
                   placeholder="Your Restaurant - Best Food in Town"
                   maxLength={60}
                 />
                 <p className="text-sm text-muted-foreground">
-                  {(website?.seo_title?.length || 0)}/60 characters
+                  {settingsForm.seo_title.length}/60 characters
                 </p>
               </div>
               <div className="space-y-2">
                 <Label>Meta Description</Label>
                 <Textarea
-                  value={website?.seo_description || ''}
-                  onChange={(e) => updateWebsite.mutate({ seo_description: e.target.value })}
+                  value={settingsForm.seo_description}
+                  onChange={(e) => setSettingsForm(prev => ({ ...prev, seo_description: e.target.value }))}
+                  onBlur={() => settingsForm.seo_description !== website?.seo_description && updateWebsite.mutate({ seo_description: settingsForm.seo_description })}
                   placeholder="Describe your restaurant in 1-2 sentences..."
                   maxLength={160}
                   rows={3}
                 />
                 <p className="text-sm text-muted-foreground">
-                  {(website?.seo_description?.length || 0)}/160 characters
+                  {settingsForm.seo_description.length}/160 characters
                 </p>
               </div>
               <div className="space-y-2">
                 <Label>Social Share Image URL</Label>
                 <Input
-                  value={website?.seo_image_url || ''}
-                  onChange={(e) => updateWebsite.mutate({ seo_image_url: e.target.value })}
+                  value={settingsForm.seo_image_url}
+                  onChange={(e) => setSettingsForm(prev => ({ ...prev, seo_image_url: e.target.value }))}
+                  onBlur={() => settingsForm.seo_image_url !== website?.seo_image_url && updateWebsite.mutate({ seo_image_url: settingsForm.seo_image_url })}
                   placeholder="https://example.com/share-image.jpg"
                 />
               </div>
@@ -879,9 +950,10 @@ export default function WebsitePage() {
                     <Facebook className="h-4 w-4" /> Facebook
                   </Label>
                   <Input
-                    value={website?.social_links?.facebook || ''}
-                    onChange={(e) => updateWebsite.mutate({ 
-                      social_links: { ...website?.social_links, facebook: e.target.value }
+                    value={settingsForm.social_facebook}
+                    onChange={(e) => setSettingsForm(prev => ({ ...prev, social_facebook: e.target.value }))}
+                    onBlur={() => settingsForm.social_facebook !== website?.social_links?.facebook && updateWebsite.mutate({ 
+                      social_links: { ...website?.social_links, facebook: settingsForm.social_facebook }
                     })}
                     placeholder="https://facebook.com/yourpage"
                   />
@@ -891,9 +963,10 @@ export default function WebsitePage() {
                     <Instagram className="h-4 w-4" /> Instagram
                   </Label>
                   <Input
-                    value={website?.social_links?.instagram || ''}
-                    onChange={(e) => updateWebsite.mutate({ 
-                      social_links: { ...website?.social_links, instagram: e.target.value }
+                    value={settingsForm.social_instagram}
+                    onChange={(e) => setSettingsForm(prev => ({ ...prev, social_instagram: e.target.value }))}
+                    onBlur={() => settingsForm.social_instagram !== website?.social_links?.instagram && updateWebsite.mutate({ 
+                      social_links: { ...website?.social_links, instagram: settingsForm.social_instagram }
                     })}
                     placeholder="https://instagram.com/yourpage"
                   />
@@ -903,9 +976,10 @@ export default function WebsitePage() {
                     <Twitter className="h-4 w-4" /> Twitter / X
                   </Label>
                   <Input
-                    value={website?.social_links?.twitter || ''}
-                    onChange={(e) => updateWebsite.mutate({ 
-                      social_links: { ...website?.social_links, twitter: e.target.value }
+                    value={settingsForm.social_twitter}
+                    onChange={(e) => setSettingsForm(prev => ({ ...prev, social_twitter: e.target.value }))}
+                    onBlur={() => settingsForm.social_twitter !== website?.social_links?.twitter && updateWebsite.mutate({ 
+                      social_links: { ...website?.social_links, twitter: settingsForm.social_twitter }
                     })}
                     placeholder="https://twitter.com/yourpage"
                   />
@@ -915,9 +989,10 @@ export default function WebsitePage() {
                     TikTok
                   </Label>
                   <Input
-                    value={website?.social_links?.tiktok || ''}
-                    onChange={(e) => updateWebsite.mutate({ 
-                      social_links: { ...website?.social_links, tiktok: e.target.value }
+                    value={settingsForm.social_tiktok}
+                    onChange={(e) => setSettingsForm(prev => ({ ...prev, social_tiktok: e.target.value }))}
+                    onBlur={() => settingsForm.social_tiktok !== website?.social_links?.tiktok && updateWebsite.mutate({ 
+                      social_links: { ...website?.social_links, tiktok: settingsForm.social_tiktok }
                     })}
                     placeholder="https://tiktok.com/@yourpage"
                   />

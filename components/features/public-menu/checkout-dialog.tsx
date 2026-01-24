@@ -1,11 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Textarea } from '@/components/ui/textarea'
 import {
   X,
   CreditCard,
@@ -19,7 +14,6 @@ import {
   UtensilsCrossed,
   ShoppingBag,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 type CartItem = {
   id: string
@@ -45,6 +39,13 @@ interface CheckoutDialogProps {
   tableId?: string
   currency?: string
   onOrderComplete: () => void
+  theme?: {
+    primary: string
+    secondary: string
+    background: string
+    foreground: string
+    accent: string
+  }
 }
 
 type Step = 'details' | 'payment' | 'confirmation'
@@ -60,7 +61,16 @@ export function CheckoutDialog({
   tableId,
   currency = 'EUR',
   onOrderComplete,
+  theme,
 }: CheckoutDialogProps) {
+  // Default theme fallback
+  const colors = {
+    primary: theme?.primary || '#3B82F6',
+    secondary: theme?.secondary || '#F4F4F5',
+    background: theme?.background || '#FFFFFF',
+    foreground: theme?.foreground || '#18181B',
+    accent: theme?.accent || '#F97316',
+  }
   const [step, setStep] = useState<Step>('details')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [orderResult, setOrderResult] = useState<{
@@ -175,24 +185,41 @@ export function CheckoutDialog({
   const currencySymbol = currency === 'EUR' ? '€' : currency
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-background border-l shadow-xl">
+    <div 
+      className="fixed inset-0 z-50 backdrop-blur-sm"
+      style={{ backgroundColor: `${colors.foreground}40` }}
+    >
+      <div 
+        className="fixed right-0 top-0 bottom-0 w-full max-w-md border-l shadow-xl"
+        style={{ backgroundColor: colors.background, color: colors.foreground }}
+      >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
+          <div 
+            className="flex items-center justify-between p-4"
+            style={{ borderBottom: `1px solid ${colors.foreground}15` }}
+          >
             {step !== 'details' && step !== 'confirmation' && (
-              <Button variant="ghost" size="icon" onClick={() => setStep('details')}>
+              <button 
+                onClick={() => setStep('details')}
+                className="p-2 rounded-lg hover:opacity-70 transition-opacity"
+                style={{ color: colors.foreground }}
+              >
                 <ArrowLeft className="h-5 w-5" />
-              </Button>
+              </button>
             )}
-            <h2 className="font-bold text-lg">
+            <h2 className="font-bold text-lg" style={{ color: colors.primary }}>
               {step === 'details' && 'Checkout'}
               {step === 'payment' && 'Payment'}
               {step === 'confirmation' && 'Order Confirmed'}
             </h2>
-            <Button variant="ghost" size="icon" onClick={handleClose}>
+            <button 
+              onClick={handleClose}
+              className="p-2 rounded-lg hover:opacity-70 transition-opacity"
+              style={{ color: colors.foreground }}
+            >
               <X className="h-5 w-5" />
-            </Button>
+            </button>
           </div>
 
           {/* Content */}
@@ -202,73 +229,86 @@ export function CheckoutDialog({
               <div className="space-y-6">
                 {/* Order Type */}
                 <div className="space-y-3">
-                  <Label className="text-base font-semibold">Order Type</Label>
-                  <RadioGroup
-                    value={formData.orderType}
-                    onValueChange={(value: string) => updateForm('orderType', value)}
-                    className="grid grid-cols-2 gap-3"
-                  >
-                    <label
-                      className={cn(
-                        'flex flex-col items-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-colors',
-                        formData.orderType === 'dine_in'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-muted hover:border-muted-foreground/50'
-                      )}
+                  <label className="text-base font-semibold" style={{ color: colors.foreground }}>Order Type</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => updateForm('orderType', 'dine_in')}
+                      className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-colors"
+                      style={{
+                        borderColor: formData.orderType === 'dine_in' ? colors.primary : `${colors.foreground}20`,
+                        backgroundColor: formData.orderType === 'dine_in' ? `${colors.primary}10` : 'transparent',
+                        color: colors.foreground,
+                      }}
                     >
-                      <RadioGroupItem value="dine_in" className="sr-only" />
                       <UtensilsCrossed className="h-6 w-6" />
                       <span className="font-medium">Dine In</span>
                       {tableId && (
-                        <span className="text-xs text-muted-foreground">Your table</span>
+                        <span className="text-xs" style={{ opacity: 0.6 }}>Your table</span>
                       )}
-                    </label>
-                    <label
-                      className={cn(
-                        'flex flex-col items-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-colors',
-                        formData.orderType === 'takeaway'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-muted hover:border-muted-foreground/50'
-                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateForm('orderType', 'takeaway')}
+                      className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-colors"
+                      style={{
+                        borderColor: formData.orderType === 'takeaway' ? colors.primary : `${colors.foreground}20`,
+                        backgroundColor: formData.orderType === 'takeaway' ? `${colors.primary}10` : 'transparent',
+                        color: colors.foreground,
+                      }}
                     >
-                      <RadioGroupItem value="takeaway" className="sr-only" />
                       <ShoppingBag className="h-6 w-6" />
                       <span className="font-medium">Takeaway</span>
-                    </label>
-                  </RadioGroup>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Customer Info */}
                 <div className="space-y-4">
-                  <Label className="text-base font-semibold">Your Details (Optional)</Label>
+                  <label className="text-base font-semibold" style={{ color: colors.foreground }}>Your Details (Optional)</label>
                   <div className="space-y-3">
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: `${colors.foreground}60` }} />
+                      <input
                         placeholder="Name"
                         value={formData.customerName}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateForm('customerName', e.target.value)}
-                        className="pl-10"
+                        onChange={(e) => updateForm('customerName', e.target.value)}
+                        className="w-full h-10 pl-10 pr-3 rounded-lg border outline-none transition-colors"
+                        style={{ 
+                          backgroundColor: colors.background, 
+                          color: colors.foreground,
+                          borderColor: `${colors.foreground}20`,
+                        }}
                       />
                     </div>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: `${colors.foreground}60` }} />
+                      <input
                         placeholder="Phone number"
                         type="tel"
                         value={formData.customerPhone}
                         onChange={(e) => updateForm('customerPhone', e.target.value)}
-                        className="pl-10"
+                        className="w-full h-10 pl-10 pr-3 rounded-lg border outline-none transition-colors"
+                        style={{ 
+                          backgroundColor: colors.background, 
+                          color: colors.foreground,
+                          borderColor: `${colors.foreground}20`,
+                        }}
                       />
                     </div>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: `${colors.foreground}60` }} />
+                      <input
                         placeholder="Email (for receipt)"
                         type="email"
                         value={formData.customerEmail}
                         onChange={(e) => updateForm('customerEmail', e.target.value)}
-                        className="pl-10"
+                        className="w-full h-10 pl-10 pr-3 rounded-lg border outline-none transition-colors"
+                        style={{ 
+                          backgroundColor: colors.background, 
+                          color: colors.foreground,
+                          borderColor: `${colors.foreground}20`,
+                        }}
                       />
                     </div>
                   </div>
@@ -276,59 +316,66 @@ export function CheckoutDialog({
 
                 {/* Notes */}
                 <div className="space-y-3">
-                  <Label className="text-base font-semibold">Special Requests</Label>
-                  <Textarea
+                  <label className="text-base font-semibold" style={{ color: colors.foreground }}>Special Requests</label>
+                  <textarea
                     placeholder="Any allergies or special requests..."
                     value={formData.customerNotes}
                     onChange={(e) => updateForm('customerNotes', e.target.value)}
                     rows={3}
+                    className="w-full p-3 rounded-lg border outline-none resize-none transition-colors"
+                    style={{ 
+                      backgroundColor: colors.background, 
+                      color: colors.foreground,
+                      borderColor: `${colors.foreground}20`,
+                    }}
                   />
                 </div>
 
                 {/* Payment Method */}
                 <div className="space-y-3">
-                  <Label className="text-base font-semibold">Payment Method</Label>
-                  <RadioGroup
-                    value={formData.paymentMethod}
-                    onValueChange={(value: string) => updateForm('paymentMethod', value)}
-                    className="space-y-2"
-                  >
-                    <label
-                      className={cn(
-                        'flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors',
-                        formData.paymentMethod === 'cash'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-muted hover:border-muted-foreground/50'
-                      )}
+                  <label className="text-base font-semibold" style={{ color: colors.foreground }}>Payment Method</label>
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => updateForm('paymentMethod', 'cash')}
+                      className="w-full flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors text-left"
+                      style={{
+                        borderColor: formData.paymentMethod === 'cash' ? colors.primary : `${colors.foreground}20`,
+                        backgroundColor: formData.paymentMethod === 'cash' ? `${colors.primary}10` : 'transparent',
+                        color: colors.foreground,
+                      }}
                     >
-                      <RadioGroupItem value="cash" className="sr-only" />
                       <Banknote className="h-5 w-5" />
                       <div>
                         <p className="font-medium">Pay at Counter</p>
-                        <p className="text-sm text-muted-foreground">Cash or card when ready</p>
+                        <p className="text-sm" style={{ opacity: 0.6 }}>Cash or card when ready</p>
                       </div>
-                    </label>
-                    <label
-                      className={cn(
-                        'flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors',
-                        formData.paymentMethod === 'online'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-muted hover:border-muted-foreground/50'
-                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateForm('paymentMethod', 'online')}
+                      className="w-full flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors text-left"
+                      style={{
+                        borderColor: formData.paymentMethod === 'online' ? colors.primary : `${colors.foreground}20`,
+                        backgroundColor: formData.paymentMethod === 'online' ? `${colors.primary}10` : 'transparent',
+                        color: colors.foreground,
+                      }}
                     >
-                      <RadioGroupItem value="online" className="sr-only" />
                       <CreditCard className="h-5 w-5" />
                       <div>
                         <p className="font-medium">Pay Online</p>
-                        <p className="text-sm text-muted-foreground">Secure card payment</p>
+                        <p className="text-sm" style={{ opacity: 0.6 }}>Secure card payment</p>
                       </div>
-                    </label>
-                  </RadioGroup>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Order Summary */}
-                <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
-                  <h3 className="font-semibold">Order Summary</h3>
+                <div 
+                  className="space-y-3 p-4 rounded-lg"
+                  style={{ backgroundColor: `${colors.foreground}08` }}
+                >
+                  <h3 className="font-semibold" style={{ color: colors.foreground }}>Order Summary</h3>
                   <div className="space-y-2 text-sm">
                     {cart.map((item) => {
                       const itemPrice = item.item.base_price + (item.variant?.price_modifier || 0)
@@ -336,7 +383,7 @@ export function CheckoutDialog({
                       const totalPrice = (itemPrice + optionsPrice) * item.quantity
 
                       return (
-                        <div key={item.id} className="flex justify-between">
+                        <div key={item.id} className="flex justify-between" style={{ color: colors.foreground }}>
                           <span>
                             {item.quantity}x {item.item.name}
                             {item.variant && ` (${item.variant.name})`}
@@ -346,14 +393,20 @@ export function CheckoutDialog({
                       )
                     })}
                   </div>
-                  <div className="border-t pt-2 flex justify-between font-bold">
+                  <div 
+                    className="pt-2 flex justify-between font-bold"
+                    style={{ borderTop: `1px solid ${colors.foreground}15`, color: colors.foreground }}
+                  >
                     <span>Total</span>
                     <span>{currencySymbol}{cartTotal.toFixed(2)}</span>
                   </div>
                 </div>
 
                 {error && (
-                  <div className="p-3 bg-destructive/10 text-destructive rounded-lg text-sm">
+                  <div 
+                    className="p-3 rounded-lg text-sm"
+                    style={{ backgroundColor: '#FEE2E2', color: '#DC2626' }}
+                  >
                     {error}
                   </div>
                 )}
@@ -363,20 +416,26 @@ export function CheckoutDialog({
             {/* Step: Confirmation */}
             {step === 'confirmation' && orderResult && (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="h-20 w-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-6">
-                  <CheckCircle2 className="h-10 w-10 text-green-600 dark:text-green-400" />
+                <div 
+                  className="h-20 w-20 rounded-full flex items-center justify-center mb-6"
+                  style={{ backgroundColor: `${colors.primary}20` }}
+                >
+                  <CheckCircle2 className="h-10 w-10" style={{ color: colors.primary }} />
                 </div>
-                <h3 className="text-2xl font-bold mb-2">Order Placed!</h3>
-                <p className="text-muted-foreground mb-6">
+                <h3 className="text-2xl font-bold mb-2" style={{ color: colors.primary }}>Order Placed!</h3>
+                <p className="mb-6" style={{ color: colors.foreground, opacity: 0.7 }}>
                   Your order has been sent to {tenantName}
                 </p>
-                <div className="bg-muted/50 rounded-lg p-4 w-full max-w-xs">
-                  <p className="text-sm text-muted-foreground">Order Number</p>
-                  <p className="text-2xl font-bold font-mono">
+                <div 
+                  className="rounded-lg p-4 w-full max-w-xs"
+                  style={{ backgroundColor: `${colors.foreground}10` }}
+                >
+                  <p className="text-sm" style={{ color: colors.foreground, opacity: 0.6 }}>Order Number</p>
+                  <p className="text-2xl font-bold font-mono" style={{ color: colors.primary }}>
                     #{orderResult.orderNumber || orderResult.orderId.slice(-6).toUpperCase()}
                   </p>
                 </div>
-                <p className="text-sm text-muted-foreground mt-6">
+                <p className="text-sm mt-6" style={{ color: colors.foreground, opacity: 0.6 }}>
                   {formData.paymentMethod === 'cash' 
                     ? 'Please pay at the counter when your order is ready.'
                     : 'Payment confirmed. Thank you!'}
@@ -387,11 +446,12 @@ export function CheckoutDialog({
 
           {/* Footer */}
           {step === 'details' && (
-            <div className="border-t p-4">
-              <Button
-                className="w-full h-12 text-lg"
+            <div className="p-4" style={{ borderTop: `1px solid ${colors.foreground}15` }}>
+              <button
+                className="w-full h-12 text-lg font-semibold rounded-lg disabled:opacity-50 transition-opacity flex items-center justify-center"
                 onClick={handleSubmitOrder}
                 disabled={isSubmitting || cart.length === 0}
+                style={{ backgroundColor: colors.primary, color: '#fff' }}
               >
                 {isSubmitting ? (
                   <>
@@ -403,15 +463,19 @@ export function CheckoutDialog({
                     {formData.paymentMethod === 'online' ? 'Proceed to Payment' : 'Place Order'} - {currencySymbol}{cartTotal.toFixed(2)}
                   </>
                 )}
-              </Button>
+              </button>
             </div>
           )}
 
           {step === 'confirmation' && (
-            <div className="border-t p-4">
-              <Button className="w-full h-12" onClick={handleClose}>
+            <div className="p-4" style={{ borderTop: `1px solid ${colors.foreground}15` }}>
+              <button 
+                className="w-full h-12 font-semibold rounded-lg transition-opacity"
+                onClick={handleClose}
+                style={{ backgroundColor: colors.primary, color: '#fff' }}
+              >
                 Done
-              </Button>
+              </button>
             </div>
           )}
         </div>

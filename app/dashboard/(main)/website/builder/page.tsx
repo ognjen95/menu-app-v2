@@ -21,10 +21,11 @@ import {
   Globe, ExternalLink, Palette, Layout, Image as ImageIcon, FileText, Settings, Loader2,
   Plus, Trash2, GripVertical, Clock, Phone, Instagram, Facebook, Twitter, Star,
   ChevronUp, ChevronDown, ChevronLeft, Monitor, Smartphone, Tablet, Edit,
-  RefreshCw, PanelRightClose, PanelRight, UtensilsCrossed, Layers, Paintbrush,
+  RefreshCw, PanelRightClose, PanelRight, UtensilsCrossed, Layers, Paintbrush, Check,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BlockEditor } from '@/components/features/website-builder/BlockEditorComponents'
+import { THEME_PRESETS, FONT_OPTIONS, BLOCK_TYPES } from '@/lib/constants/website'
 
 // Types
 type Website = {
@@ -49,33 +50,6 @@ type Website = {
 type WebsitePage = { id: string; slug: string; title: string; is_published: boolean; is_in_navigation: boolean; sort_order: number }
 type WebsiteBlock = { id: string; page_id: string; type: string; content: Record<string, unknown>; settings: { padding: string; background: string; alignment: string }; is_visible: boolean; sort_order: number }
 
-const BLOCK_TYPES = [
-  { type: 'hero', label: 'Hero Banner', icon: Layout, description: 'Large banner with image and text' },
-  { type: 'about', label: 'About Section', icon: FileText, description: 'Tell your story' },
-  { type: 'gallery', label: 'Image Gallery', icon: ImageIcon, description: 'Showcase photos' },
-  { type: 'menu_preview', label: 'Menu Preview', icon: UtensilsCrossed, description: 'Featured menu items' },
-  { type: 'testimonials', label: 'Testimonials', icon: Star, description: 'Customer reviews' },
-  { type: 'contact', label: 'Contact Info', icon: Phone, description: 'Address and contact details' },
-  { type: 'hours', label: 'Opening Hours', icon: Clock, description: 'Business hours' },
-  { type: 'social', label: 'Social Links', icon: Instagram, description: 'Social media links' },
-]
-
-const FONT_OPTIONS = [
-  { value: 'Inter', label: 'Inter' },
-  { value: 'Playfair Display', label: 'Playfair Display' },
-  { value: 'Poppins', label: 'Poppins' },
-  { value: 'Roboto', label: 'Roboto' },
-  { value: 'Montserrat', label: 'Montserrat' },
-]
-
-const THEME_PRESETS = [
-  { name: 'Modern Dark', primary: '#3B82F6', secondary: '#1E293B', background: '#0F172A', foreground: '#F8FAFC', accent: '#22D3EE' },
-  { name: 'Minimal Light', primary: '#18181B', secondary: '#F4F4F5', background: '#FFFFFF', foreground: '#18181B', accent: '#F97316' },
-  { name: 'Warm', primary: '#DC2626', secondary: '#FEF3C7', background: '#FFFBEB', foreground: '#78350F', accent: '#F59E0B' },
-  { name: 'Fresh', primary: '#16A34A', secondary: '#DCFCE7', background: '#F0FDF4', foreground: '#14532D', accent: '#84CC16' },
-  { name: 'Ocean', primary: '#0EA5E9', secondary: '#E0F2FE', background: '#F0F9FF', foreground: '#0C4A6E', accent: '#06B6D4' },
-]
-
 export default function WebsiteBuilderPage() {
   const queryClient = useQueryClient()
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -88,6 +62,7 @@ export default function WebsiteBuilderPage() {
   const [isAddBlockOpen, setIsAddBlockOpen] = useState(false)
   const [newPageForm, setNewPageForm] = useState({ title: '', slug: '' })
   const [editingBlock, setEditingBlock] = useState<WebsiteBlock | null>(null)
+  const [showAllThemes, setShowAllThemes] = useState(false)
 
   const { data: websiteData, isLoading } = useQuery({ queryKey: ['website'], queryFn: () => apiGet<{ data: { website: Website | null } }>('/website') })
   const { data: pagesData } = useQuery({ queryKey: ['website-pages'], queryFn: () => apiGet<{ data: { pages: WebsitePage[] } }>('/website/pages') })
@@ -322,19 +297,74 @@ export default function WebsiteBuilderPage() {
             {/* Design Panel */}
             {activePanel === 'design' && (<>
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-white">Theme Presets</h3>
+                <h3 className="text-sm font-medium text-white">Dark Themes</h3>
                 <div className="grid grid-cols-2 gap-2">
-                  {THEME_PRESETS.map((preset) => (
-                    <button key={preset.name} onClick={() => updateWebsite.mutate({ primary_color: preset.primary, secondary_color: preset.secondary, background_color: preset.background, foreground_color: preset.foreground, accent_color: preset.accent })} className="p-3 rounded-lg border border-white/10 hover:border-white/30 text-left" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                      <div className="flex gap-1 mb-2">
-                        <div className="h-4 w-4 rounded" style={{ backgroundColor: preset.primary }} />
-                        <div className="h-4 w-4 rounded" style={{ backgroundColor: preset.secondary }} />
-                        <div className="h-4 w-4 rounded" style={{ backgroundColor: preset.accent }} />
-                      </div>
-                      <p className="text-xs text-zinc-300">{preset.name}</p>
-                    </button>
-                  ))}
+                  {THEME_PRESETS.filter(p => p.isDark).slice(0, showAllThemes ? undefined : 4).map((preset) => {
+                    const isSelected = website?.primary_color === preset.primary && 
+                                      website?.background_color === preset.background &&
+                                      website?.accent_color === preset.accent
+                    return (
+                      <button 
+                        key={preset.name} 
+                        onClick={() => updateWebsite.mutate({ primary_color: preset.primary, secondary_color: preset.secondary, background_color: preset.background, foreground_color: preset.foreground, accent_color: preset.accent })} 
+                        className={cn(
+                          "p-2.5 rounded-lg border-2 text-left relative transition-all",
+                          isSelected ? "border-primary ring-1 ring-primary/30" : "border-transparent hover:border-white/20"
+                        )} 
+                        style={{ backgroundColor: preset.background }}
+                      >
+                        {isSelected && (
+                          <div className="absolute top-1.5 right-1.5">
+                            <Check className="h-3 w-3 text-primary" />
+                          </div>
+                        )}
+                        <div className="flex gap-1 mb-1.5">
+                          <div className="h-4 w-4 rounded-full" style={{ backgroundColor: preset.primary }} />
+                          <div className="h-4 w-4 rounded-full" style={{ backgroundColor: preset.accent }} />
+                        </div>
+                        <p className="text-[10px] truncate" style={{ color: preset.foreground }}>{preset.name}</p>
+                      </button>
+                    )
+                  })}
                 </div>
+              </div>
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-white">Light Themes</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {THEME_PRESETS.filter(p => !p.isDark).slice(0, showAllThemes ? undefined : 4).map((preset) => {
+                    const isSelected = website?.primary_color === preset.primary && 
+                                      website?.background_color === preset.background &&
+                                      website?.accent_color === preset.accent
+                    return (
+                      <button 
+                        key={preset.name} 
+                        onClick={() => updateWebsite.mutate({ primary_color: preset.primary, secondary_color: preset.secondary, background_color: preset.background, foreground_color: preset.foreground, accent_color: preset.accent })} 
+                        className={cn(
+                          "p-2.5 rounded-lg border-2 text-left relative transition-all",
+                          isSelected ? "border-primary ring-1 ring-primary/30" : "border-transparent hover:border-zinc-300"
+                        )} 
+                        style={{ backgroundColor: preset.background }}
+                      >
+                        {isSelected && (
+                          <div className="absolute top-1.5 right-1.5">
+                            <Check className="h-3 w-3 text-primary" />
+                          </div>
+                        )}
+                        <div className="flex gap-1 mb-1.5">
+                          <div className="h-4 w-4 rounded-full border" style={{ backgroundColor: preset.primary }} />
+                          <div className="h-4 w-4 rounded-full border" style={{ backgroundColor: preset.accent }} />
+                        </div>
+                        <p className="text-[10px] truncate" style={{ color: preset.foreground }}>{preset.name}</p>
+                      </button>
+                    )
+                  })}
+                </div>
+                <button 
+                  onClick={() => setShowAllThemes(!showAllThemes)}
+                  className="w-full text-xs text-zinc-400 hover:text-white py-1"
+                >
+                  {showAllThemes ? 'Show Less' : `View All ${THEME_PRESETS.length} Themes`}
+                </button>
               </div>
               <Separator className="bg-white/10" />
               <div className="space-y-3">

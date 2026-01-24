@@ -145,3 +145,66 @@
     @apply bg-muted-foreground/50;
   }
 }
+
+/* Cart +1 pop animation */
+@keyframes cart-pop {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-10px, 8px) scale(1.5);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-40px, 30px) scale(1);
+  }
+}
+
+.animate-cart-pop {
+  animation: cart-pop 1s ease-out forwards;
+}
+
+/* Cart icon shake animation */
+@keyframes cart-shake {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  15% {
+    transform: scale(1.2) rotate(-10deg);
+  }
+  30% {
+    transform: scale(1.2) rotate(10deg);
+  }
+  45% {
+    transform: scale(1.15) rotate(-8deg);
+  }
+  60% {
+    transform: scale(1.1) rotate(6deg);
+  }
+  75% {
+    transform: scale(1.05) rotate(-3deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.animate-cart-shake {
+  animation: cart-shake 0.6s ease-out;
+}
+
+/* Cart badge bounce animation */
+@keyframes cart-bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+}
+
+.animate-cart-bounce {
+  animation: cart-bounce 0.3s ease-out;
+}

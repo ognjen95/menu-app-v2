@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import type { Tenant, Menu, MenuItem, Allergen, Location, Website } from '@/lib/types'
 import { CheckoutDialog } from './checkout-dialog'
+import Image from 'next/image'
 
 type MenuWithCategories = Menu & {
   categories: (CategoryWithItems)[]
@@ -78,6 +79,7 @@ export function PublicMenuView({
   const [cartOpen, setCartOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<MenuItemWithRelations | null>(null)
+  const [cartAnimation, setCartAnimation] = useState<number[]>([])
 
   // Theme from website settings
   const theme = {
@@ -167,6 +169,13 @@ export function PublicMenuView({
       }
       return [...prev, cartItem]
     })
+
+    // Trigger +1 animation
+    const animationId = Date.now()
+    setCartAnimation(prev => [...prev, animationId])
+    setTimeout(() => {
+      setCartAnimation(prev => prev.filter(id => id !== animationId))
+    }, 800)
   }
 
   const updateCartQuantity = (cartItemId: string, delta: number) => {
@@ -216,9 +225,11 @@ export function PublicMenuView({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {tenant.logo_url && (
-                <img
+                <Image
                   src={tenant.logo_url}
                   alt={tenant.name}
+                  width={40}
+                  height={40}
                   className="h-10 w-10 rounded-full object-cover"
                 />
               )}
@@ -231,7 +242,7 @@ export function PublicMenuView({
             </div>
             
             <button
-              className="relative p-2 rounded-md"
+              className={`relative p-2 rounded-md ${cartAnimation.length > 0 ? 'animate-cart-shake' : ''}`}
               style={{ 
                 border: `1px solid ${borderColor}`,
                 backgroundColor: 'transparent',
@@ -242,12 +253,28 @@ export function PublicMenuView({
               <ShoppingCart className="h-5 w-5" />
               {cartItemsCount > 0 && (
                 <span 
-                  className="absolute -top-2 -right-2 h-5 w-5 rounded-full text-xs flex items-center justify-center"
+                  key={cartItemsCount}
+                  className="absolute -top-2 -right-2 h-5 w-5 rounded-full text-xs flex items-center justify-center animate-cart-bounce"
                   style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
                 >
                   {cartItemsCount}
                 </span>
               )}
+              {/* +1 confetti animation */}
+              {cartAnimation.map((id) => (
+                <span
+                  key={id}
+                  className="absolute pointer-events-none font-extrabold text-lg animate-cart-pop"
+                  style={{
+                    color: theme.primary,
+                    top: '-4px',
+                    right: '-4px',
+                    textShadow: `0 1px 2px rgba(0,0,0,0.3), 0 0 8px ${theme.primary}66`,
+                  }}
+                >
+                  +1
+                </span>
+              ))}
             </button>
           </div>
 
@@ -341,13 +368,14 @@ export function PublicMenuView({
               return (
                 <div
                   key={item.id}
-                  className="rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                  className="rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer flex flex-col"
                   style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}
                   onClick={() => setSelectedItem(item)}
                 >
-                  {/* Image */}
+                  {/* Image - fixed height */}
                   {item.image_urls && item.image_urls.length > 0 ? (
-                    <div className="aspect-video" style={{ backgroundColor: theme.secondary }}>
+                    <div className="h-40 flex-shrink-0" style={{ backgroundColor: theme.secondary }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={item.image_urls[0]}
                         alt={item.name}
@@ -355,16 +383,16 @@ export function PublicMenuView({
                       />
                     </div>
                   ) : (
-                    <div className="aspect-video flex items-center justify-center" style={{ backgroundColor: theme.secondary }}>
+                    <div className="h-40 flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: theme.secondary }}>
                       <span className="text-4xl">🍽️</span>
                     </div>
                   )}
 
-                  <div className="p-4">
+                  <div className="p-5 flex-1 flex flex-col">
                     <div className="flex items-start justify-between gap-2">
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                          <h3 className="font-semibold" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>{item.name}</h3>
+                          <h3 className="font-semibold truncate" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>{item.name}</h3>
                           {item.is_featured && (
                             <Star className="h-4 w-4 fill-current" style={{ color: theme.accent }} />
                           )}
@@ -387,44 +415,48 @@ export function PublicMenuView({
                       </div>
                     </div>
 
-                    {/* Tags and info */}
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {item.is_new && (
-                        <span className="text-xs px-2 py-0.5 rounded font-medium" style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}>New</span>
-                      )}
-                      {item.compare_price && item.compare_price > item.base_price && (
-                        <span className="text-xs px-2 py-0.5 rounded font-medium" style={{ backgroundColor: theme.accent, color: getContrastColor(theme.accent) }}>Sale</span>
-                      )}
-                      {item.dietary_tags?.slice(0, 2).map((tag) => (
-                        <span key={tag} className="text-xs px-2 py-0.5 rounded flex items-center gap-1" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
-                          <Leaf className="h-3 w-3" />
-                          {tag}
-                        </span>
-                      ))}
-                      {itemAllergens.length > 0 && (
-                        <span className="text-xs px-2 py-0.5 rounded flex items-center gap-1" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
-                          <AlertTriangle className="h-3 w-3" />
-                          {itemAllergens.length}
-                        </span>
-                      )}
-                    </div>
+                    {/* Tags and info - limited to prevent overflow */}
+                    {(item.is_new || (item.compare_price && item.compare_price > item.base_price) || item.dietary_tags?.length || itemAllergens.length > 0) && (
+                      <div className="flex flex-wrap gap-1.5 mt-3 max-h-14 overflow-hidden">
+                        {item.is_new && (
+                          <span className="text-xs px-2 py-0.5 rounded font-medium flex-shrink-0" style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}>New</span>
+                        )}
+                        {item.compare_price && item.compare_price > item.base_price && (
+                          <span className="text-xs px-2 py-0.5 rounded font-medium flex-shrink-0" style={{ backgroundColor: theme.accent, color: getContrastColor(theme.accent) }}>Sale</span>
+                        )}
+                        {item.dietary_tags?.slice(0, 2).map((tag) => (
+                          <span key={tag} className="text-xs px-2 py-0.5 rounded flex items-center gap-1 flex-shrink-0 max-w-24 truncate" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
+                            <Leaf className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">{tag}</span>
+                          </span>
+                        ))}
+                        {itemAllergens.length > 0 && (
+                          <span className="text-xs px-2 py-0.5 rounded flex items-center gap-1 flex-shrink-0" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
+                            <AlertTriangle className="h-3 w-3" />
+                            {itemAllergens.length}
+                          </span>
+                        )}
+                      </div>
+                    )}
 
                     {/* Add to cart button */}
-                    <button
-                      className="w-full mt-4 py-2 px-4 rounded-md font-medium flex items-center justify-center gap-2 transition-colors"
-                      style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (item.variants?.length || item.option_groups?.length) {
-                          setSelectedItem(item)
-                        } else {
-                          addToCart(item)
-                        }
-                      }}
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add to order
-                    </button>
+                    <div className="mt-auto pt-5">
+                      <button
+                        className="w-full py-2.5 px-4 rounded-md font-medium flex items-center justify-center gap-2 transition-colors"
+                        style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (item.variants?.length || item.option_groups?.length) {
+                            setSelectedItem(item)
+                          } else {
+                            addToCart(item)
+                          }
+                        }}
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add to order
+                      </button>
+                    </div>
                   </div>
                 </div>
               )
@@ -734,6 +766,7 @@ export function PublicMenuView({
         tableId={tableId}
         currency={tenant.default_currency}
         onOrderComplete={() => setCart([])}
+        theme={theme}
       />
     </div>
   )
