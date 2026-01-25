@@ -82,6 +82,14 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
     }
   }
 
+  // Fetch locations for the tenant (needed for contact, hours, location blocks)
+  const { data: locations } = await supabase
+    .from('locations')
+    .select('id, name, slug, address, city, postal_code, country, latitude, longitude, phone, email, opening_hours, is_active')
+    .eq('tenant_id', website.tenant_id)
+    .eq('is_active', true)
+    .order('name')
+
   // Theme styles
   const theme = {
     primary: website.primary_color || '#3B82F6',
@@ -174,7 +182,7 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
       {/* Page Content - Render Blocks */}
       <main>
         {blocks?.map((block) => (
-          <BlockRenderer key={block.id} block={block} theme={theme} menuItems={menuItemsMap} menuLink={menuLink} />
+          <BlockRenderer key={block.id} block={block} theme={theme} menuItems={menuItemsMap} menuLink={menuLink} locations={locations || []} />
         ))}
 
         {(!blocks || blocks.length === 0) && (

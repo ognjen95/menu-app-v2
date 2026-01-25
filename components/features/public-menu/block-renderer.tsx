@@ -1,7 +1,24 @@
-import { MapPin, Phone, Mail, Clock, Calendar, Sparkles, Wifi, ParkingCircle, Music, Dog, Baby, Accessibility, CreditCard, Utensils, Wine, Coffee, Leaf, Play } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Calendar, Sparkles, Wifi, ParkingCircle, Music, Dog, Baby, Accessibility, CreditCard, Utensils, Wine, Coffee, Leaf, Play, Building2 } from "lucide-react";
 import { FaFacebookF, FaInstagram, FaXTwitter, FaTiktok, FaYoutube, FaLinkedinIn, FaYelp } from "react-icons/fa6";
 import { SiTripadvisor } from "react-icons/si";
 import { GalleryBlock } from "../GalleryBlock";
+
+// Location type from database
+export interface Location {
+  id: string
+  name: string
+  slug: string
+  address?: string | null
+  city?: string | null
+  postal_code?: string | null
+  country?: string | null
+  latitude?: number | null
+  longitude?: number | null
+  phone?: string | null
+  email?: string | null
+  opening_hours?: Record<string, { open: string; close: string; closed?: boolean }> | null
+  is_active?: boolean
+}
 
 // Feature icons mapping
 const FEATURE_ICONS: Record<string, any> = {
@@ -18,13 +35,46 @@ const FEATURE_ICONS: Record<string, any> = {
   vegan: Leaf,
 };
 
-export function BlockRenderer({ block, theme, menuItems, menuLink }: {
+export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [] }: {
   block: { type: string; content: Record<string, unknown>; settings: Record<string, unknown> }
   theme: { primary: string; secondary: string; background: string; foreground: string; accent: string; fontHeading: string; fontBody: string }
   menuItems: Record<string, { id: string; name: string; description: string | null; base_price: number; image_urls: string[] | null }>
   menuLink: string
+  locations?: Location[]
 }) {
   const content = block.content || {}
+
+  // Helper to get locations based on block content settings
+  const getBlockLocations = (): Location[] => {
+    if (!content.use_locations) return []
+    
+    const mode = content.location_mode as string || 'all'
+    const selectedIds = (content.location_ids as string[]) || []
+    
+    if (mode === 'selected' && selectedIds.length > 0) {
+      return locations.filter(loc => selectedIds.includes(loc.id) && loc.is_active !== false)
+    }
+    return locations.filter(loc => loc.is_active !== false)
+  }
+
+  // Helper to format full address
+  const formatAddress = (loc: Location): string => {
+    const parts = [loc.address, loc.city, loc.postal_code, loc.country].filter(Boolean)
+    return parts.join(', ')
+  }
+
+  // Helper to generate Google Maps embed URL from coordinates (uses free embed without API key)
+  const getMapEmbedUrl = (loc: Location): string | null => {
+    if (loc.latitude && loc.longitude) {
+      // Use Google Maps embed without API key (limited but free)
+      return `https://maps.google.com/maps?q=${loc.latitude},${loc.longitude}&z=15&output=embed`
+    }
+    if (loc.address) {
+      const query = encodeURIComponent(formatAddress(loc))
+      return `https://maps.google.com/maps?q=${query}&z=15&output=embed`
+    }
+    return null
+  }
 
   const sectionPadding = block.settings?.padding === 'large' ? '6rem 0' : '4rem 0'
   const contentStyle: React.CSSProperties = {
@@ -122,63 +172,198 @@ export function BlockRenderer({ block, theme, menuItems, menuLink }: {
       )
 
     case 'contact':
+      const contactLocations = getBlockLocations()
+      const useLocationsForContact = content.use_locations && contactLocations.length > 0
+
+      // Single location contact card component
+      const ContactCard = ({ loc, showName = false }: { loc: { name?: string; address?: string | null; phone?: string | null; email?: string | null }; showName?: boolean }) => (
+        <div style={{
+          backgroundColor: theme.background,
+          padding: '1.5rem',
+          borderRadius: '1rem',
+          flex: '1',
+          minWidth: '280px',
+          maxWidth: contactLocations.length === 1 ? '500px' : undefined,
+        }}>
+          {showName && loc.name && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+              <Building2 size={20} color={theme.primary} />
+              <h3 style={{ fontFamily: theme.fontHeading, fontWeight: 600, margin: 0 }}>{loc.name}</h3>
+            </div>
+          )}
+          {loc.address && (
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              <MapPin size={18} color={theme.primary} style={{ flexShrink: 0, marginTop: '2px' }} />
+              <span style={{ fontSize: '0.9rem' }}>{loc.address}</span>
+            </div>
+          )}
+          {loc.phone && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              <Phone size={18} color={theme.primary} />
+              <a href={`tel:${loc.phone}`} style={{ color: theme.foreground, textDecoration: 'none', fontSize: '0.9rem' }}>
+                {loc.phone}
+              </a>
+            </div>
+          )}
+          {loc.email && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Mail size={18} color={theme.primary} />
+              <a href={`mailto:${loc.email}`} style={{ color: theme.foreground, textDecoration: 'none', fontSize: '0.9rem' }}>
+                {loc.email}
+              </a>
+            </div>
+          )}
+        </div>
+      )
+
       return (
         <section style={{ padding: sectionPadding, backgroundColor: theme.secondary }}>
           <div style={contentStyle}>
             <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
               {String(content.title || 'Contact Us')}
             </h2>
-            <div style={{ display: 'flex', gap: '2rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-              {Boolean(content.address) && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <MapPin size={20} color={theme.primary} />
-                  <span>{String(content.address)}</span>
-                </div>
-              )}
-              {Boolean(content.phone) && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Phone size={20} color={theme.primary} />
-                  <a href={`tel:${content.phone}`} style={{ color: theme.foreground, textDecoration: 'none' }}>
-                    {String(content.phone)}
-                  </a>
-                </div>
-              )}
-              {Boolean(content.email) && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Mail size={20} color={theme.primary} />
-                  <a href={`mailto:${content.email}`} style={{ color: theme.foreground, textDecoration: 'none' }}>
-                    {String(content.email)}
-                  </a>
-                </div>
-              )}
-            </div>
+            
+            {useLocationsForContact ? (
+              // Location-based contact info
+              <div style={{
+                display: 'flex',
+                gap: '1.5rem',
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+              }}>
+                {contactLocations.map(loc => (
+                  <ContactCard
+                    key={loc.id}
+                    loc={{ name: loc.name, address: formatAddress(loc), phone: loc.phone, email: loc.email }}
+                    showName={contactLocations.length > 1}
+                  />
+                ))}
+              </div>
+            ) : (
+              // Manual contact info (original behavior)
+              <div style={{ display: 'flex', gap: '2rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                {Boolean(content.address) && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <MapPin size={20} color={theme.primary} />
+                    <span>{String(content.address)}</span>
+                  </div>
+                )}
+                {Boolean(content.phone) && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Phone size={20} color={theme.primary} />
+                    <a href={`tel:${content.phone}`} style={{ color: theme.foreground, textDecoration: 'none' }}>
+                      {String(content.phone)}
+                    </a>
+                  </div>
+                )}
+                {Boolean(content.email) && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Mail size={20} color={theme.primary} />
+                    <a href={`mailto:${content.email}`} style={{ color: theme.foreground, textDecoration: 'none' }}>
+                      {String(content.email)}
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </section>
       )
 
     case 'hours':
-      return (
-        <section style={{ padding: sectionPadding }}>
-          <div style={contentStyle}>
-          <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '1.5rem', textAlign: 'center' }}>
-            {String(content.title || 'Opening Hours')}
-          </h2>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '1rem',
-          }}>
-            <Clock size={24} color={theme.primary} />
+      const hoursLocations = getBlockLocations()
+      const useLocationsForHours = content.use_locations && hoursLocations.length > 0
+
+      // Format opening hours from jsonb to readable text
+      const formatOpeningHours = (hours: Record<string, { open: string; close: string; closed?: boolean }> | null | undefined): string => {
+        if (!hours) return ''
+        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        const dayLabels: Record<string, string> = {
+          monday: 'Mon', tuesday: 'Tue', wednesday: 'Wed', thursday: 'Thu',
+          friday: 'Fri', saturday: 'Sat', sunday: 'Sun'
+        }
+        return days
+          .map(day => {
+            const h = hours[day]
+            if (!h) return null
+            if (h.closed) return `${dayLabels[day]}: Closed`
+            return `${dayLabels[day]}: ${h.open} - ${h.close}`
+          })
+          .filter(Boolean)
+          .join('\n')
+      }
+
+      // Hours card component for a single location
+      const HoursCard = ({ loc, showName = false }: { loc: Location; showName?: boolean }) => (
+        <div style={{
+          backgroundColor: theme.secondary,
+          padding: '1.5rem',
+          borderRadius: '1rem',
+          flex: '1',
+          minWidth: '260px',
+          maxWidth: hoursLocations.length === 1 ? '400px' : undefined,
+          textAlign: 'center',
+        }}>
+          {showName && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+              <Building2 size={20} color={theme.primary} />
+              <h3 style={{ fontFamily: theme.fontHeading, fontWeight: 600, margin: 0 }}>{loc.name}</h3>
+            </div>
+          )}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: '0.75rem' }}>
+            <Clock size={20} color={theme.primary} style={{ flexShrink: 0, marginTop: '2px' }} />
             <pre style={{
               fontFamily: theme.fontBody,
               whiteSpace: 'pre-wrap',
               margin: 0,
               opacity: 0.8,
+              textAlign: 'left',
+              fontSize: '0.9rem',
             }}>
-              {String(content.hours_text || '')}
+              {formatOpeningHours(loc.opening_hours)}
             </pre>
           </div>
+        </div>
+      )
+
+      return (
+        <section style={{ padding: sectionPadding }}>
+          <div style={contentStyle}>
+            <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '1.5rem', textAlign: 'center' }}>
+              {String(content.title || 'Opening Hours')}
+            </h2>
+            
+            {useLocationsForHours ? (
+              // Location-based hours
+              <div style={{
+                display: 'flex',
+                gap: '1.5rem',
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+              }}>
+                {hoursLocations.map(loc => (
+                  <HoursCard key={loc.id} loc={loc} showName={hoursLocations.length > 1} />
+                ))}
+              </div>
+            ) : (
+              // Manual hours text (original behavior)
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '1rem',
+              }}>
+                <Clock size={24} color={theme.primary} />
+                <pre style={{
+                  fontFamily: theme.fontBody,
+                  whiteSpace: 'pre-wrap',
+                  margin: 0,
+                  opacity: 0.8,
+                }}>
+                  {String(content.hours_text || '')}
+                </pre>
+              </div>
+            )}
           </div>
         </section>
       )
@@ -634,39 +819,137 @@ export function BlockRenderer({ block, theme, menuItems, menuLink }: {
       )
 
     case 'location':
+      const mapLocations = getBlockLocations()
+      const useLocationsForMap = content.use_locations && mapLocations.length > 0
+
+      // Single location map card component
+      const LocationMapCard = ({ loc, showName = false, isOnlyOne = false }: { loc: Location; showName?: boolean; isOnlyOne?: boolean }) => {
+        const mapUrl = content.map_embed ? String(content.map_embed) : getMapEmbedUrl(loc)
+        const address = formatAddress(loc)
+        
+        return (
+          <div style={{
+            backgroundColor: theme.background,
+            borderRadius: '1rem',
+            overflow: 'hidden',
+            flex: isOnlyOne ? undefined : '1',
+            minWidth: isOnlyOne ? undefined : '320px',
+            width: isOnlyOne ? '100%' : undefined,
+          }}>
+            {/* Map */}
+            {mapUrl && (
+              <div style={{ height: isOnlyOne ? '350px' : '220px', width: '100%' }}>
+                <iframe
+                  src={mapUrl}
+                  style={{ width: '100%', height: '100%', border: 0 }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            )}
+            {/* Info */}
+            <div style={{ padding: '1.25rem' }}>
+              {showName && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                  <Building2 size={20} color={theme.primary} />
+                  <h3 style={{ fontFamily: theme.fontHeading, fontWeight: 600, margin: 0 }}>{loc.name}</h3>
+                </div>
+              )}
+              {address && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <MapPin size={18} color={theme.primary} style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <p style={{ margin: 0, fontSize: '0.9rem' }}>{address}</p>
+                </div>
+              )}
+              {loc.phone && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <Phone size={18} color={theme.primary} />
+                  <a href={`tel:${loc.phone}`} style={{ color: theme.foreground, textDecoration: 'none', fontSize: '0.9rem' }}>
+                    {loc.phone}
+                  </a>
+                </div>
+              )}
+              {/* Directions link */}
+              {(loc.latitude && loc.longitude) && (
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${loc.latitude},${loc.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    marginTop: '0.75rem',
+                    color: theme.primary,
+                    textDecoration: 'none',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                  }}
+                >
+                  <MapPin size={16} />
+                  Get Directions
+                </a>
+              )}
+            </div>
+          </div>
+        )
+      }
+
       return (
         <section style={{ padding: sectionPadding, backgroundColor: theme.secondary }}>
           <div style={contentStyle}>
             <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
               {String(content.title || 'Find Us')}
             </h2>
-            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-              <div style={{ flex: '1', minWidth: '280px' }}>
-                {Boolean(content.image_url) && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={String(content.image_url)} alt="Location" style={{ width: '100%', borderRadius: '1rem', marginBottom: '1.5rem' }} />
-                )}
-                {Boolean(content.address) && (
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1rem' }}>
-                    <MapPin size={20} color={theme.primary} style={{ flexShrink: 0, marginTop: '2px' }} />
-                    <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{String(content.address)}</p>
+
+            {useLocationsForMap ? (
+              // Location-based maps
+              mapLocations.length === 1 ? (
+                // Single location - full width layout
+                <LocationMapCard loc={mapLocations[0]} showName={false} isOnlyOne={true} />
+              ) : (
+                // Multiple locations - grid layout
+                <div style={{
+                  display: 'flex',
+                  gap: '1.5rem',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                }}>
+                  {mapLocations.map(loc => (
+                    <LocationMapCard key={loc.id} loc={loc} showName={true} isOnlyOne={false} />
+                  ))}
+                </div>
+              )
+            ) : (
+              // Manual location data (original behavior)
+              <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+                <div style={{ flex: '1', minWidth: '280px' }}>
+                  {Boolean(content.image_url) && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={String(content.image_url)} alt="Location" style={{ width: '100%', borderRadius: '1rem', marginBottom: '1.5rem' }} />
+                  )}
+                  {Boolean(content.address) && (
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1rem' }}>
+                      <MapPin size={20} color={theme.primary} style={{ flexShrink: 0, marginTop: '2px' }} />
+                      <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{String(content.address)}</p>
+                    </div>
+                  )}
+                  {Boolean(content.directions) && (
+                    <p style={{ fontSize: '0.875rem', opacity: 0.7, marginTop: '1rem' }}>{String(content.directions)}</p>
+                  )}
+                </div>
+                {Boolean(content.map_embed) && (
+                  <div style={{ flex: '2', minWidth: '300px', height: '300px', borderRadius: '1rem', overflow: 'hidden' }}>
+                    <iframe
+                      src={String(content.map_embed)}
+                      style={{ width: '100%', height: '100%', border: 0 }}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
                   </div>
                 )}
-                {Boolean(content.directions) && (
-                  <p style={{ fontSize: '0.875rem', opacity: 0.7, marginTop: '1rem' }}>{String(content.directions)}</p>
-                )}
               </div>
-              {Boolean(content.map_embed) && (
-                <div style={{ flex: '2', minWidth: '300px', height: '300px', borderRadius: '1rem', overflow: 'hidden' }}>
-                  <iframe
-                    src={String(content.map_embed)}
-                    style={{ width: '100%', height: '100%', border: 0 }}
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                  />
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </section>
       )
