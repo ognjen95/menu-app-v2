@@ -263,7 +263,7 @@ export default function WebsiteBuilderPage() {
       {/* Top Bar */}
       <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild className="text-zinc-400 hover:text-white hover:bg-white/10 gap-1"><a href="/dashboard/website"><ChevronLeft className="h-4 w-4" />Exit</a></Button>
+          <Button variant="ghost" size="sm" asChild className="text-zinc-400 hover:text-white hover:bg-white/10 gap-1"><a href="/dashboard"><ChevronLeft className="h-4 w-4" />Exit</a></Button>
           <div><h1 className="text-white font-semibold">Website Builder</h1><p className="text-xs text-zinc-400">{website?.subdomain || 'No subdomain'}.qrmenu.app</p></div>
         </div>
         <div className="flex items-center gap-2">
@@ -539,9 +539,14 @@ export default function WebsiteBuilderPage() {
 
       {/* Edit Block Dialog */}
       <Dialog open={!!editingBlock} onOpenChange={(o) => !o && setEditingBlock(null)}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Edit Block</DialogTitle><DialogDescription className="text-zinc-400">Customize content</DialogDescription></DialogHeader>
-          {editingBlock && <BlockEditor block={editingBlock} onSave={(content) => updateBlock.mutate({ blockId: editingBlock.id, content })} isPending={updateBlock.isPending} />}
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-lg max-h-[85vh] overflow-y-auto flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Edit Block</DialogTitle>
+            <DialogDescription className="text-zinc-400">Customize content</DialogDescription>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {editingBlock && <BlockEditor block={editingBlock} onSave={(content) => updateBlock.mutate({ blockId: editingBlock.id, content })} isPending={updateBlock.isPending} />}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

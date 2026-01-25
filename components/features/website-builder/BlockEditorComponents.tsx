@@ -238,8 +238,8 @@ export function BlockEditor({ block, onSave, isPending }: { block: WebsiteBlock;
           <div className="space-y-2"><Label className="text-zinc-300">Title</Label><Input value={(content.title as string) || ''} onChange={(e) => setContent({ ...content, title: e.target.value })} className={inputClass} /></div>
           <div className="space-y-2">
             <div className="flex items-center justify-between"><Label className="text-zinc-300">Testimonials</Label><Button type="button" variant="ghost" size="sm" onClick={addTestimonial} className="text-blue-400 hover:text-blue-300"><Plus className="h-4 w-4 mr-1" />Add</Button></div>
-            <ScrollArea className="max-h-[300px]">
-              <div className="space-y-3 pr-2">
+            <ScrollArea className="h-[300px]">
+              <div className="space-y-3 pr-4">
                 {testimonials.map((t, idx) => (
                   <div key={idx} className="p-3 rounded-lg border border-zinc-700 bg-zinc-800/50 space-y-3">
                     <div className="flex items-start gap-3">
@@ -315,5 +315,5 @@ export function BlockEditor({ block, onSave, isPending }: { block: WebsiteBlock;
     }
   }
 
-  return (<div className="space-y-4">{renderFields()}<DialogFooter><Button onClick={() => onSave(content)} disabled={isPending}>{isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Save</Button></DialogFooter></div>)
+  return (<ScrollArea className="space-y-4">{renderFields()}<DialogFooter><Button onClick={() => onSave(content)} disabled={isPending}>{isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Save</Button></DialogFooter></ScrollArea>)
 }

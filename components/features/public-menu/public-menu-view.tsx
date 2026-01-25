@@ -12,6 +12,7 @@ import {
   Star,
   Clock,
   Flame,
+  Trash2,
 } from 'lucide-react'
 import type { Tenant, Menu, MenuItem, Allergen, Location, Website } from '@/lib/types'
 import { CheckoutDialog } from './checkout-dialog'
@@ -182,7 +183,7 @@ export function PublicMenuView({
     setCart(prev => prev.map(item => {
       if (item.id === cartItemId) {
         const newQuantity = item.quantity + delta
-        return newQuantity > 0 ? { ...item, quantity: newQuantity } : item
+        return { ...item, quantity: newQuantity }
       }
       return item
     }).filter(item => item.quantity > 0))
@@ -542,6 +543,14 @@ export function PublicMenuView({
                               onClick={() => updateCartQuantity(cartItem.id, 1)}
                             >
                               <Plus className="h-4 w-4" />
+                            </button>
+                            <button
+                              className="h-8 w-8 rounded-md flex items-center justify-center ml-1"
+                              style={{ color: '#EF4444' }}
+                              onClick={() => removeFromCart(cartItem.id)}
+                              title="Remove item"
+                            >
+                              <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
                         </div>

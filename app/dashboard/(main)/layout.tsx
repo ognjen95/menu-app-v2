@@ -30,9 +30,9 @@ const navigation = [
   { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
   { name: 'Kitchen', href: '/dashboard/kitchen', icon: ChefHat },
   { name: 'Tables & QR', href: '/dashboard/tables', icon: QrCode },
-  { name: 'Inventory', href: '/dashboard/inventory', icon: Package },
-  { name: 'Website', href: '/dashboard/website', icon: Globe },
-  { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+  // { name: 'Inventory', href: '/dashboard/inventory', icon: Package },
+  { name: 'Website', href: '/dashboard/website/builder', icon: Globe },
+  // { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
 ]
 
 const settingsNavigation = [
