@@ -1,4 +1,4 @@
-import { Layout, FileText, Image as ImageIcon, Star, Phone, Clock, Instagram } from 'lucide-react'
+import { Layout, FileText, Image as ImageIcon, Star, Phone, Clock, Instagram, Sparkles, Calendar, BookOpen, Video, MousePointer, Users, MapPin, Type, Gift, Wine } from 'lucide-react'
 import { UtensilsCrossed } from 'lucide-react'
 
 export const BLOCK_TYPES = [
@@ -10,6 +10,16 @@ export const BLOCK_TYPES = [
   { type: 'contact', label: 'Contact Info', icon: Phone, description: 'Address and contact details' },
   { type: 'hours', label: 'Opening Hours', icon: Clock, description: 'Business hours' },
   { type: 'social', label: 'Social Links', icon: Instagram, description: 'Social media links' },
+  { type: 'specials', label: 'Daily Specials', icon: Sparkles, description: 'Featured dishes & offers' },
+  { type: 'events', label: 'Events', icon: Calendar, description: 'Upcoming events & happenings' },
+  { type: 'reservation', label: 'Reservations', icon: BookOpen, description: 'Table booking call-to-action' },
+  { type: 'features', label: 'Features', icon: Gift, description: 'Amenities & services grid' },
+  { type: 'video', label: 'Video', icon: Video, description: 'Embed YouTube or Vimeo' },
+  { type: 'cta', label: 'Call to Action', icon: MousePointer, description: 'Promotional banner' },
+  { type: 'team', label: 'Team', icon: Users, description: 'Meet the staff/chef' },
+  { type: 'text', label: 'Text Block', icon: Type, description: 'Simple text section' },
+  { type: 'location', label: 'Location Map', icon: MapPin, description: 'Embedded map' },
+  { type: 'drinks', label: 'Drinks Menu', icon: Wine, description: 'Cocktails & beverages' },
 ]
 
 export const FONT_OPTIONS = [
