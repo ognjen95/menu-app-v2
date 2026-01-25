@@ -83,12 +83,15 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
   }
 
   // Fetch locations for the tenant (needed for contact, hours, location blocks)
-  const { data: locations } = await supabase
+  const { data: locations, error: locationsError } = await supabase
     .from('locations')
     .select('id, name, slug, address, city, postal_code, country, latitude, longitude, phone, email, opening_hours, is_active')
     .eq('tenant_id', website.tenant_id)
     .eq('is_active', true)
     .order('name')
+
+  // Debug log for locations
+  console.log('[Site Page] Locations fetched:', { count: locations?.length, tenantId: website.tenant_id, error: locationsError?.message })
 
   // Theme styles
   const theme = {

@@ -44,6 +44,16 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
 }) {
   const content = block.content || {}
 
+  // Debug log for location blocks
+  if (['contact', 'hours', 'location'].includes(block.type)) {
+    console.log(`[BlockRenderer] ${block.type}:`, { 
+      locationsCount: locations.length, 
+      useLocations: content.use_locations,
+      locationMode: content.location_mode,
+      locationIds: content.location_ids 
+    })
+  }
+
   // Helper to get locations based on block content settings
   const getBlockLocations = (): Location[] => {
     if (!content.use_locations) return []
@@ -393,15 +403,18 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
               {String(content.title || 'What Our Guests Say')}
             </h2>
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+              display: 'flex',
+              flexWrap: 'wrap',
               gap: '1.5rem',
+              justifyContent: 'center',
             }}>
               {testimonials.map((t, idx) => (
                 <div key={idx} style={{
                   backgroundColor: theme.background,
                   padding: '1.5rem',
                   borderRadius: '1rem',
+                  width: '320px',
+                  flexShrink: 0,
                 }}>
                   <p style={{ fontStyle: 'italic', marginBottom: '1rem', lineHeight: 1.6 }}>&ldquo;{t.text}&rdquo;</p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -438,15 +451,18 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
           </h2>
           {selectedItems.length > 0 ? (
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              display: 'flex',
+              flexWrap: 'wrap',
               gap: '1.5rem',
+              justifyContent: 'center',
             }}>
               {selectedItems.map((item) => (
                 <div key={item.id} style={{
                   backgroundColor: theme.secondary,
                   borderRadius: '1rem',
                   overflow: 'hidden',
+                  width: '300px',
+                  flexShrink: 0,
                 }}>
                   {item.image_urls?.[0] && (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -565,9 +581,9 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
                 <p style={{ opacity: 0.7, marginTop: '0.5rem' }}>{String(content.subtitle)}</p>
               )}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'center' }}>
               {specials.map((item, idx) => (
-                <div key={idx} style={{ backgroundColor: theme.background, borderRadius: '1rem', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                <div key={idx} style={{ backgroundColor: theme.background, borderRadius: '1rem', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', width: '320px', flexShrink: 0 }}>
                   {item.image_url && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '160px', objectFit: 'cover' }} />
@@ -596,9 +612,9 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
             <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
               {String(content.title || 'Upcoming Events')}
             </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
               {events.map((event, idx) => (
-                <div key={idx} style={{ display: 'flex', gap: '1.5rem', backgroundColor: theme.secondary, borderRadius: '1rem', overflow: 'hidden', flexWrap: 'wrap' }}>
+                <div key={idx} style={{ display: 'flex', gap: '1.5rem', backgroundColor: theme.secondary, borderRadius: '1rem', overflow: 'hidden', flexWrap: 'wrap', maxWidth: '700px', width: '100%' }}>
                   {event.image_url && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={event.image_url} alt={event.title} style={{ width: '200px', height: '150px', objectFit: 'cover', flexShrink: 0 }} />
@@ -679,11 +695,11 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
             <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
               {String(content.title || 'What We Offer')}
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'center' }}>
               {features.map((feature, idx) => {
                 const IconComponent = FEATURE_ICONS[feature.icon] || Sparkles
                 return (
-                  <div key={idx} style={{ textAlign: 'center', padding: '1.5rem', backgroundColor: theme.background, borderRadius: '1rem' }}>
+                  <div key={idx} style={{ textAlign: 'center', padding: '1.5rem', backgroundColor: theme.background, borderRadius: '1rem', width: '180px', flexShrink: 0 }}>
                     <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: `${theme.primary}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
                       <IconComponent size={28} color={theme.primary} />
                     </div>
@@ -742,23 +758,30 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
       )
 
     case 'cta':
+      const ctaHasImage = Boolean(content.background_image)
+      const ctaTextColor = ctaHasImage ? '#fff' : theme.foreground
       return (
         <section style={{
           padding: sectionPadding,
-          backgroundColor: content.background_color ? String(content.background_color) : theme.primary,
+          backgroundColor: content.background_color ? String(content.background_color) : theme.background,
+          backgroundImage: ctaHasImage ? `url(${content.background_image})` : undefined,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
           textAlign: 'center',
+          position: 'relative',
         }}>
-          <div style={contentStyle}>
-            <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', color: '#fff', marginBottom: '1rem' }}>
+          {ctaHasImage && <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)' }} />}
+          <div style={{ ...contentStyle, position: 'relative', zIndex: 1 }}>
+            <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', color: ctaTextColor, marginBottom: '1rem' }}>
               {String(content.title || 'Ready to Visit?')}
             </h2>
             {Boolean(content.subtitle) && (
-              <p style={{ fontSize: '1.125rem', color: '#fff', opacity: 0.9, marginBottom: '2rem' }}>{String(content.subtitle)}</p>
+              <p style={{ fontSize: '1.125rem', color: ctaTextColor, opacity: 0.9, marginBottom: '2rem' }}>{String(content.subtitle)}</p>
             )}
             {Boolean(content.button_text) && (
               <a href={String(content.button_url || menuLink)} style={{
-                backgroundColor: '#fff',
-                color: theme.primary,
+                backgroundColor: ctaHasImage ? '#fff' : theme.primary,
+                color: ctaHasImage ? theme.primary : '#fff',
                 padding: '1rem 2.5rem',
                 borderRadius: '0.5rem',
                 textDecoration: 'none',
@@ -780,9 +803,9 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
             <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
               {String(content.title || 'Meet Our Team')}
             </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '2rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'center' }}>
               {members.map((member, idx) => (
-                <div key={idx} style={{ textAlign: 'center' }}>
+                <div key={idx} style={{ textAlign: 'center', width: '220px', flexShrink: 0 }}>
                   {member.image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={member.image_url} alt={member.name} style={{ width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover', margin: '0 auto 1rem', border: `3px solid ${theme.primary}` }} />

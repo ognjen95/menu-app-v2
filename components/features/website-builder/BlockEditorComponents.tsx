@@ -38,6 +38,17 @@ type MenuItem = {
   category: { id: string; name: string } | null
 }
 
+type Location = {
+  id: string
+  name: string
+  slug: string
+  address?: string | null
+  city?: string | null
+  phone?: string | null
+  email?: string | null
+  is_active?: boolean
+}
+
 type WebsiteBlock = {
   id: string
   page_id: string
@@ -183,6 +194,93 @@ export function MenuItemsSelector({ selectedItems, onChange }: { selectedItems: 
   )
 }
 
+// Locations Selector for location-aware blocks
+export function LocationsSelector({ 
+  useLocations, 
+  locationMode, 
+  selectedLocationIds, 
+  onUseLocationsChange, 
+  onLocationModeChange, 
+  onSelectedLocationsChange 
+}: { 
+  useLocations: boolean
+  locationMode: string
+  selectedLocationIds: string[]
+  onUseLocationsChange: (value: boolean) => void
+  onLocationModeChange: (value: string) => void
+  onSelectedLocationsChange: (ids: string[]) => void
+}) {
+  const { data, isLoading } = useQuery({ queryKey: ['locations'], queryFn: () => apiGet<{ data: { locations: Location[] } }>('/locations') })
+  const locations = data?.data?.locations?.filter(l => l.is_active !== false) || []
+
+  return (
+    <div className="space-y-3 p-3 rounded-lg border border-zinc-700 bg-zinc-800/30">
+      <div className="flex items-center gap-3">
+        <Checkbox 
+          id="use-locations" 
+          checked={useLocations} 
+          onCheckedChange={(checked) => onUseLocationsChange(checked === true)} 
+        />
+        <Label htmlFor="use-locations" className="text-zinc-300 text-sm cursor-pointer">
+          Use data from locations
+        </Label>
+      </div>
+      
+      {useLocations && (
+        <>
+          <div className="space-y-2">
+            <Label className="text-zinc-400 text-xs">Location Mode</Label>
+            <select 
+              value={locationMode || 'all'} 
+              onChange={(e) => onLocationModeChange(e.target.value)}
+              className="w-full h-9 px-3 rounded bg-zinc-800 border border-zinc-700 text-white text-sm"
+            >
+              <option value="all">All locations</option>
+              <option value="selected">Selected locations only</option>
+            </select>
+          </div>
+
+          {locationMode === 'selected' && (
+            <div className="space-y-2">
+              <Label className="text-zinc-400 text-xs">Select Locations</Label>
+              {isLoading ? (
+                <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-zinc-500" /></div>
+              ) : locations.length === 0 ? (
+                <p className="text-xs text-zinc-500 py-2">No locations found. Add locations in Settings.</p>
+              ) : (
+                <div className="space-y-1 max-h-[150px] overflow-y-auto">
+                  {locations.map((loc) => (
+                    <label key={loc.id} className="flex items-center gap-2 p-2 rounded hover:bg-zinc-700/50 cursor-pointer">
+                      <Checkbox 
+                        checked={selectedLocationIds.includes(loc.id)} 
+                        onCheckedChange={() => {
+                          if (selectedLocationIds.includes(loc.id)) {
+                            onSelectedLocationsChange(selectedLocationIds.filter(id => id !== loc.id))
+                          } else {
+                            onSelectedLocationsChange([...selectedLocationIds, loc.id])
+                          }
+                        }} 
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-white truncate">{loc.name}</p>
+                        {loc.city && <p className="text-xs text-zinc-500">{loc.city}</p>}
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          
+          <p className="text-xs text-zinc-500">
+            When enabled, contact info, hours, and address will be pulled from your locations.
+          </p>
+        </>
+      )}
+    </div>
+  )
+}
+
 // Block Editor
 export function BlockEditor({ block, onSave, isPending }: { block: WebsiteBlock; onSave: (content: Record<string, unknown>) => void; isPending: boolean }) {
   const [content, setContent] = useState(block.content)
@@ -216,14 +314,40 @@ export function BlockEditor({ block, onSave, isPending }: { block: WebsiteBlock;
       case 'contact':
         return (<div className="space-y-4">
           <div className="space-y-2"><Label className="text-zinc-300">Title</Label><Input value={(content.title as string) || ''} onChange={(e) => setContent({ ...content, title: e.target.value })} className={inputClass} /></div>
-          <div className="space-y-2"><Label className="text-zinc-300">Address</Label><Input value={(content.address as string) || ''} onChange={(e) => setContent({ ...content, address: e.target.value })} className={inputClass} /></div>
-          <div className="space-y-2"><Label className="text-zinc-300">Phone</Label><Input value={(content.phone as string) || ''} onChange={(e) => setContent({ ...content, phone: e.target.value })} className={inputClass} /></div>
-          <div className="space-y-2"><Label className="text-zinc-300">Email</Label><Input value={(content.email as string) || ''} onChange={(e) => setContent({ ...content, email: e.target.value })} className={inputClass} /></div>
+          
+          <LocationsSelector
+            useLocations={content.use_locations === true}
+            locationMode={(content.location_mode as string) || 'all'}
+            selectedLocationIds={(content.location_ids as string[]) || []}
+            onUseLocationsChange={(value) => setContent({ ...content, use_locations: value })}
+            onLocationModeChange={(value) => setContent({ ...content, location_mode: value })}
+            onSelectedLocationsChange={(ids) => setContent({ ...content, location_ids: ids })}
+          />
+          
+          {!content.use_locations && (
+            <>
+              <div className="space-y-2"><Label className="text-zinc-300">Address</Label><Input value={(content.address as string) || ''} onChange={(e) => setContent({ ...content, address: e.target.value })} className={inputClass} /></div>
+              <div className="space-y-2"><Label className="text-zinc-300">Phone</Label><Input value={(content.phone as string) || ''} onChange={(e) => setContent({ ...content, phone: e.target.value })} className={inputClass} /></div>
+              <div className="space-y-2"><Label className="text-zinc-300">Email</Label><Input value={(content.email as string) || ''} onChange={(e) => setContent({ ...content, email: e.target.value })} className={inputClass} /></div>
+            </>
+          )}
         </div>)
       case 'hours':
         return (<div className="space-y-4">
           <div className="space-y-2"><Label className="text-zinc-300">Title</Label><Input value={(content.title as string) || ''} onChange={(e) => setContent({ ...content, title: e.target.value })} className={inputClass} /></div>
-          <div className="space-y-2"><Label className="text-zinc-300">Hours</Label><Textarea value={(content.hours_text as string) || ''} onChange={(e) => setContent({ ...content, hours_text: e.target.value })} rows={5} className={inputClass} /></div>
+          
+          <LocationsSelector
+            useLocations={content.use_locations === true}
+            locationMode={(content.location_mode as string) || 'all'}
+            selectedLocationIds={(content.location_ids as string[]) || []}
+            onUseLocationsChange={(value) => setContent({ ...content, use_locations: value })}
+            onLocationModeChange={(value) => setContent({ ...content, location_mode: value })}
+            onSelectedLocationsChange={(ids) => setContent({ ...content, location_ids: ids })}
+          />
+          
+          {!content.use_locations && (
+            <div className="space-y-2"><Label className="text-zinc-300">Hours</Label><Textarea value={(content.hours_text as string) || ''} onChange={(e) => setContent({ ...content, hours_text: e.target.value })} rows={5} className={inputClass} placeholder="Mon-Fri: 9am-10pm&#10;Sat-Sun: 10am-11pm" /></div>
+          )}
         </div>)
       case 'testimonials':
         const testimonials = (content.testimonials as { image?: string; name: string; text: string }[]) || []
@@ -410,7 +534,10 @@ export function BlockEditor({ block, onSave, isPending }: { block: WebsiteBlock;
           <div className="space-y-2"><Label className="text-zinc-300">Subtitle</Label><Input value={(content.subtitle as string) || ''} onChange={(e) => setContent({ ...content, subtitle: e.target.value })} className={inputClass} /></div>
           <div className="space-y-2"><Label className="text-zinc-300">Button Text</Label><Input value={(content.button_text as string) || ''} onChange={(e) => setContent({ ...content, button_text: e.target.value })} className={inputClass} placeholder="View Menu" /></div>
           <div className="space-y-2"><Label className="text-zinc-300">Button URL</Label><Input value={(content.button_url as string) || ''} onChange={(e) => setContent({ ...content, button_url: e.target.value })} className={inputClass} placeholder="Leave empty for menu link" /></div>
-          <div className="space-y-2"><Label className="text-zinc-300">Background Color</Label><Input type="color" value={(content.background_color as string) || '#3B82F6'} onChange={(e) => setContent({ ...content, background_color: e.target.value })} className="h-10 w-full" /></div>
+          <ImageUpload label="Background Image (optional)" value={(content.background_image as string) || ''} onChange={(url) => setContent({ ...content, background_image: url })} />
+          {!content.background_image && (
+            <div className="space-y-2"><Label className="text-zinc-300">Background Color</Label><Input type="color" value={(content.background_color as string) || '#FFFFFF'} onChange={(e) => setContent({ ...content, background_color: e.target.value })} className="h-10 w-full" /></div>
+          )}
         </div>)
 
       case 'team':
@@ -457,10 +584,24 @@ export function BlockEditor({ block, onSave, isPending }: { block: WebsiteBlock;
       case 'location':
         return (<div className="space-y-4">
           <div className="space-y-2"><Label className="text-zinc-300">Title</Label><Input value={(content.title as string) || ''} onChange={(e) => setContent({ ...content, title: e.target.value })} className={inputClass} placeholder="Find Us" /></div>
-          <div className="space-y-2"><Label className="text-zinc-300">Address</Label><Textarea value={(content.address as string) || ''} onChange={(e) => setContent({ ...content, address: e.target.value })} rows={2} className={inputClass} placeholder="123 Main St, City, State" /></div>
-          <div className="space-y-2"><Label className="text-zinc-300">Directions / Notes</Label><Input value={(content.directions as string) || ''} onChange={(e) => setContent({ ...content, directions: e.target.value })} className={inputClass} placeholder="e.g., Free parking behind building" /></div>
-          <ImageUpload label="Location Photo (optional)" value={(content.image_url as string) || ''} onChange={(url) => setContent({ ...content, image_url: url })} />
-          <div className="space-y-2"><Label className="text-zinc-300">Google Maps Embed URL</Label><Input value={(content.map_embed as string) || ''} onChange={(e) => setContent({ ...content, map_embed: e.target.value })} className={inputClass} placeholder="https://www.google.com/maps/embed?..." /><p className="text-xs text-zinc-500">Get embed URL from Google Maps → Share → Embed a map</p></div>
+          
+          <LocationsSelector
+            useLocations={content.use_locations === true}
+            locationMode={(content.location_mode as string) || 'all'}
+            selectedLocationIds={(content.location_ids as string[]) || []}
+            onUseLocationsChange={(value) => setContent({ ...content, use_locations: value })}
+            onLocationModeChange={(value) => setContent({ ...content, location_mode: value })}
+            onSelectedLocationsChange={(ids) => setContent({ ...content, location_ids: ids })}
+          />
+          
+          {!content.use_locations && (
+            <>
+              <div className="space-y-2"><Label className="text-zinc-300">Address</Label><Textarea value={(content.address as string) || ''} onChange={(e) => setContent({ ...content, address: e.target.value })} rows={2} className={inputClass} placeholder="123 Main St, City, State" /></div>
+              <div className="space-y-2"><Label className="text-zinc-300">Directions / Notes</Label><Input value={(content.directions as string) || ''} onChange={(e) => setContent({ ...content, directions: e.target.value })} className={inputClass} placeholder="e.g., Free parking behind building" /></div>
+              <ImageUpload label="Location Photo (optional)" value={(content.image_url as string) || ''} onChange={(url) => setContent({ ...content, image_url: url })} />
+              <div className="space-y-2"><Label className="text-zinc-300">Google Maps Embed URL</Label><Input value={(content.map_embed as string) || ''} onChange={(e) => setContent({ ...content, map_embed: e.target.value })} className={inputClass} placeholder="https://www.google.com/maps/embed?..." /><p className="text-xs text-zinc-500">Get embed URL from Google Maps → Share → Embed a map</p></div>
+            </>
+          )}
         </div>)
 
       case 'drinks':
