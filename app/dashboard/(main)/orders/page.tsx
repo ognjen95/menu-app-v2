@@ -35,7 +35,7 @@ const statusConfig: Record<OrderStatus, { label: string; color: string; icon: Re
 
 const typeIcons = {
   dine_in: Store,
-  takeaway: Car,
+  takeaway: User,
   delivery: Truck,
 }
 

@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
       customer_phone?: string
       customer_email?: string
       customer_notes?: string
+      delivery_address?: string
       payment_method: 'online' | 'cash' | 'card_pos'
       items: {
         menu_item_id: string
@@ -40,6 +41,19 @@ export async function POST(request: NextRequest) {
     }
     if (!orderData.items || orderData.items.length === 0) {
       return NextResponse.json({ error: 'Order must have at least one item' }, { status: 400 })
+    }
+
+    // Validate delivery orders require name, phone, and address
+    if (orderData.type === 'delivery') {
+      if (!orderData.customer_name?.trim()) {
+        return NextResponse.json({ error: 'Name is required for delivery orders' }, { status: 400 })
+      }
+      if (!orderData.customer_phone?.trim()) {
+        return NextResponse.json({ error: 'Phone number is required for delivery orders' }, { status: 400 })
+      }
+      if (!orderData.delivery_address?.trim()) {
+        return NextResponse.json({ error: 'Delivery address is required for delivery orders' }, { status: 400 })
+      }
     }
 
     // Verify tenant exists and is active
@@ -160,6 +174,7 @@ export async function POST(request: NextRequest) {
         customer_phone: orderData.customer_phone,
         customer_email: orderData.customer_email,
         customer_notes: orderData.customer_notes,
+        delivery_address: orderData.type === 'delivery' && orderData.delivery_address ? { address: orderData.delivery_address } : null,
         session_id: sessionId,
         subtotal,
         tax_rate: taxRate,

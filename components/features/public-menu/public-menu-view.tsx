@@ -775,6 +775,10 @@ export function PublicMenuView({
         tableId={tableId}
         currency={tenant.default_currency}
         onOrderComplete={() => setCart([])}
+        onlinePaymentsEnabled={(tenant.settings as { online_payments_enabled?: boolean } | null)?.online_payments_enabled === true}
+        dineInEnabled={(tenant.settings as { dine_in_enabled?: boolean } | null)?.dine_in_enabled !== false}
+        takeawayEnabled={(tenant.settings as { takeaway_enabled?: boolean } | null)?.takeaway_enabled !== false}
+        deliveryEnabled={(tenant.settings as { delivery_enabled?: boolean } | null)?.delivery_enabled === true}
         theme={theme}
       />
     </div>

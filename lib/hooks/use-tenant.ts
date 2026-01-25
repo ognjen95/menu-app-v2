@@ -33,7 +33,7 @@ type InviteUserInput = {
 export function useCurrentTenant() {
   return useQuery({
     queryKey: tenantKeys.current(),
-    queryFn: () => apiGet<CurrentTenantResponse>('/tenant/current'),
+    queryFn: () => apiGet<{data: CurrentTenantResponse}>('/tenant/current'),
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 }
@@ -84,7 +84,7 @@ export function useUpdateTenant() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: Partial<Tenant>) => apiPut<{ tenant: Tenant }>('/tenant', data),
+    mutationFn: (data: Partial<Tenant>) => apiPut<{ tenant: Tenant }>('/tenant/current', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: tenantKeys.current() })
     },

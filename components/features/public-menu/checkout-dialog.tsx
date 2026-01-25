@@ -13,6 +13,9 @@ import {
   Mail,
   UtensilsCrossed,
   ShoppingBag,
+  MapPin,
+  AlertCircle,
+  Truck,
 } from 'lucide-react'
 
 type CartItem = {
@@ -39,6 +42,10 @@ interface CheckoutDialogProps {
   tableId?: string
   currency?: string
   onOrderComplete: () => void
+  onlinePaymentsEnabled?: boolean
+  dineInEnabled?: boolean
+  takeawayEnabled?: boolean
+  deliveryEnabled?: boolean
   theme?: {
     primary: string
     secondary: string
@@ -61,6 +68,10 @@ export function CheckoutDialog({
   tableId,
   currency = 'EUR',
   onOrderComplete,
+  onlinePaymentsEnabled = false,
+  dineInEnabled = true,
+  takeawayEnabled = true,
+  deliveryEnabled = false,
   theme,
 }: CheckoutDialogProps) {
   // Default theme fallback
@@ -80,15 +91,33 @@ export function CheckoutDialog({
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // Determine default order type based on what's enabled
+  const getDefaultOrderType = () => {
+    if (tableId && dineInEnabled) return 'dine_in'
+    if (takeawayEnabled) return 'takeaway'
+    if (deliveryEnabled) return 'delivery'
+    if (dineInEnabled) return 'dine_in'
+    return 'dine_in' // fallback
+  }
+
   // Form state
   const [formData, setFormData] = useState({
     customerName: '',
     customerPhone: '',
     customerEmail: '',
     customerNotes: '',
-    orderType: tableId ? 'dine_in' : 'takeaway',
+    deliveryAddress: '',
+    orderType: getDefaultOrderType(),
     paymentMethod: 'cash' as 'online' | 'cash' | 'card_pos',
   })
+
+  // Count enabled order types
+  const enabledOrderTypes = [dineInEnabled, takeawayEnabled, deliveryEnabled].filter(Boolean).length
+  const showOrderTypeSelector = enabledOrderTypes > 1
+
+  // Validation for delivery (requires name, phone, and address)
+  const isDelivery = formData.orderType === 'delivery'
+  const deliveryValid = !isDelivery || (formData.customerName.trim() && formData.customerPhone.trim() && formData.deliveryAddress.trim())
 
   const updateForm = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -123,6 +152,7 @@ export function CheckoutDialog({
           customer_phone: formData.customerPhone || undefined,
           customer_email: formData.customerEmail || undefined,
           customer_notes: formData.customerNotes || undefined,
+          delivery_address: formData.orderType === 'delivery' && formData.deliveryAddress ? formData.deliveryAddress : undefined,
           payment_method: formData.paymentMethod,
           items: orderItems,
         }),
@@ -227,64 +257,102 @@ export function CheckoutDialog({
             {/* Step: Details */}
             {step === 'details' && (
               <div className="space-y-6">
-                {/* Order Type */}
-                <div className="space-y-3">
-                  <label className="text-base font-semibold" style={{ color: colors.foreground }}>Order Type</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => updateForm('orderType', 'dine_in')}
-                      className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-colors"
-                      style={{
-                        borderColor: formData.orderType === 'dine_in' ? colors.primary : `${colors.foreground}20`,
-                        backgroundColor: formData.orderType === 'dine_in' ? `${colors.primary}10` : 'transparent',
-                        color: colors.foreground,
-                      }}
-                    >
-                      <UtensilsCrossed className="h-6 w-6" />
-                      <span className="font-medium">Dine In</span>
-                      {tableId && (
-                        <span className="text-xs" style={{ opacity: 0.6 }}>Your table</span>
+                {/* Order Type - only show selector if multiple options enabled */}
+                {showOrderTypeSelector ? (
+                  <div className="space-y-3">
+                    <label className="text-base font-semibold" style={{ color: colors.foreground }}>Order Type</label>
+                    <div className={`grid gap-3 ${enabledOrderTypes === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                      {dineInEnabled && (
+                        <button
+                          type="button"
+                          onClick={() => updateForm('orderType', 'dine_in')}
+                          className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-colors"
+                          style={{
+                            borderColor: formData.orderType === 'dine_in' ? colors.primary : `${colors.foreground}20`,
+                            backgroundColor: formData.orderType === 'dine_in' ? `${colors.primary}10` : 'transparent',
+                            color: colors.foreground,
+                          }}
+                        >
+                          <UtensilsCrossed className="h-6 w-6" />
+                          <span className="font-medium text-sm">Dine In</span>
+                        </button>
                       )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => updateForm('orderType', 'takeaway')}
-                      className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-colors"
-                      style={{
-                        borderColor: formData.orderType === 'takeaway' ? colors.primary : `${colors.foreground}20`,
-                        backgroundColor: formData.orderType === 'takeaway' ? `${colors.primary}10` : 'transparent',
-                        color: colors.foreground,
-                      }}
-                    >
-                      <ShoppingBag className="h-6 w-6" />
-                      <span className="font-medium">Takeaway</span>
-                    </button>
+                      {takeawayEnabled && (
+                        <button
+                          type="button"
+                          onClick={() => updateForm('orderType', 'takeaway')}
+                          className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-colors"
+                          style={{
+                            borderColor: formData.orderType === 'takeaway' ? colors.primary : `${colors.foreground}20`,
+                            backgroundColor: formData.orderType === 'takeaway' ? `${colors.primary}10` : 'transparent',
+                            color: colors.foreground,
+                          }}
+                        >
+                          <ShoppingBag className="h-6 w-6" />
+                          <span className="font-medium text-sm">Takeaway</span>
+                        </button>
+                      )}
+                      {deliveryEnabled && (
+                        <button
+                          type="button"
+                          onClick={() => updateForm('orderType', 'delivery')}
+                          className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-colors"
+                          style={{
+                            borderColor: formData.orderType === 'delivery' ? colors.primary : `${colors.foreground}20`,
+                            backgroundColor: formData.orderType === 'delivery' ? `${colors.primary}10` : 'transparent',
+                            color: colors.foreground,
+                          }}
+                        >
+                          <Truck className="h-6 w-6" />
+                          <span className="font-medium text-sm">Delivery</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex items-center gap-3 p-3 rounded-lg" style={{ backgroundColor: `${colors.foreground}08` }}>
+                    {formData.orderType === 'dine_in' && (
+                      <><UtensilsCrossed className="h-5 w-5" style={{ color: colors.primary }} /><span className="font-medium" style={{ color: colors.foreground }}>Dine In Order</span></>
+                    )}
+                    {formData.orderType === 'takeaway' && (
+                      <><ShoppingBag className="h-5 w-5" style={{ color: colors.primary }} /><span className="font-medium" style={{ color: colors.foreground }}>Takeaway Order</span></>
+                    )}
+                    {formData.orderType === 'delivery' && (
+                      <><Truck className="h-5 w-5" style={{ color: colors.primary }} /><span className="font-medium" style={{ color: colors.foreground }}>Delivery Order</span></>
+                    )}
+                  </div>
+                )}
 
                 {/* Customer Info */}
                 <div className="space-y-4">
-                  <label className="text-base font-semibold" style={{ color: colors.foreground }}>Your Details (Optional)</label>
+                  <label className="text-base font-semibold" style={{ color: colors.foreground }}>
+                    Your Details {isDelivery ? '(Required)' : '(Optional)'}
+                  </label>
+                  {isDelivery && (
+                    <div className="flex items-start gap-2 p-3 rounded-lg text-sm" style={{ backgroundColor: `${colors.accent}15`, color: colors.foreground }}>
+                      <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: colors.accent }} />
+                      <span>Name, phone, and delivery address are required for delivery orders</span>
+                    </div>
+                  )}
                   <div className="space-y-3">
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: `${colors.foreground}60` }} />
                       <input
-                        placeholder="Name"
+                        placeholder={isDelivery ? "Name *" : "Name"}
                         value={formData.customerName}
                         onChange={(e) => updateForm('customerName', e.target.value)}
                         className="w-full h-10 pl-10 pr-3 rounded-lg border outline-none transition-colors"
                         style={{ 
                           backgroundColor: colors.background, 
                           color: colors.foreground,
-                          borderColor: `${colors.foreground}20`,
+                          borderColor: isDelivery && !formData.customerName.trim() ? colors.accent : `${colors.foreground}20`,
                         }}
                       />
                     </div>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: `${colors.foreground}60` }} />
                       <input
-                        placeholder="Phone number"
+                        placeholder={isDelivery ? "Phone number *" : "Phone number"}
                         type="tel"
                         value={formData.customerPhone}
                         onChange={(e) => updateForm('customerPhone', e.target.value)}
@@ -292,10 +360,27 @@ export function CheckoutDialog({
                         style={{ 
                           backgroundColor: colors.background, 
                           color: colors.foreground,
-                          borderColor: `${colors.foreground}20`,
+                          borderColor: isDelivery && !formData.customerPhone.trim() ? colors.accent : `${colors.foreground}20`,
                         }}
                       />
                     </div>
+                    {isDelivery && (
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-3 h-4 w-4" style={{ color: `${colors.foreground}60` }} />
+                        <textarea
+                          placeholder="Delivery address *"
+                          value={formData.deliveryAddress}
+                          onChange={(e) => updateForm('deliveryAddress', e.target.value)}
+                          rows={2}
+                          className="w-full py-2 pl-10 pr-3 rounded-lg border outline-none resize-none transition-colors"
+                          style={{ 
+                            backgroundColor: colors.background, 
+                            color: colors.foreground,
+                            borderColor: isDelivery && !formData.deliveryAddress.trim() ? colors.accent : `${colors.foreground}20`,
+                          }}
+                        />
+                      </div>
+                    )}
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: `${colors.foreground}60` }} />
                       <input
@@ -351,22 +436,24 @@ export function CheckoutDialog({
                         <p className="text-sm" style={{ opacity: 0.6 }}>Cash or card when ready</p>
                       </div>
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => updateForm('paymentMethod', 'online')}
-                      className="w-full flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors text-left"
-                      style={{
-                        borderColor: formData.paymentMethod === 'online' ? colors.primary : `${colors.foreground}20`,
-                        backgroundColor: formData.paymentMethod === 'online' ? `${colors.primary}10` : 'transparent',
-                        color: colors.foreground,
-                      }}
-                    >
-                      <CreditCard className="h-5 w-5" />
-                      <div>
-                        <p className="font-medium">Pay Online</p>
-                        <p className="text-sm" style={{ opacity: 0.6 }}>Secure card payment</p>
-                      </div>
-                    </button>
+                    {onlinePaymentsEnabled && (
+                      <button
+                        type="button"
+                        onClick={() => updateForm('paymentMethod', 'online')}
+                        className="w-full flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors text-left"
+                        style={{
+                          borderColor: formData.paymentMethod === 'online' ? colors.primary : `${colors.foreground}20`,
+                          backgroundColor: formData.paymentMethod === 'online' ? `${colors.primary}10` : 'transparent',
+                          color: colors.foreground,
+                        }}
+                      >
+                        <CreditCard className="h-5 w-5" />
+                        <div>
+                          <p className="font-medium">Pay Online</p>
+                          <p className="text-sm" style={{ opacity: 0.6 }}>Secure card payment</p>
+                        </div>
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -450,7 +537,7 @@ export function CheckoutDialog({
               <button
                 className="w-full h-12 text-lg font-semibold rounded-lg disabled:opacity-50 transition-opacity flex items-center justify-center"
                 onClick={handleSubmitOrder}
-                disabled={isSubmitting || cart.length === 0}
+                disabled={isSubmitting || cart.length === 0 || !deliveryValid}
                 style={{ backgroundColor: colors.primary, color: '#fff' }}
               >
                 {isSubmitting ? (

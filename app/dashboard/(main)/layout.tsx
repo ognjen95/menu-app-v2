@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -22,6 +22,10 @@ import {
   ChevronLeft,
   Store,
   ChefHat,
+  Bell,
+  SidebarIcon,
+  SidebarOpenIcon,
+  SidebarCloseIcon,
 } from 'lucide-react'
 
 const navigation = [
@@ -51,6 +55,23 @@ export default function DashboardLayout({
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  // Load collapsed state from localStorage after mount
+  useEffect(() => {
+    const saved = localStorage.getItem('sidebar-collapsed')
+    if (saved === 'true') {
+      setCollapsed(true)
+    }
+    setMounted(true)
+  }, [])
+
+  // Persist collapsed state
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem('sidebar-collapsed', String(collapsed))
+    }
+  }, [collapsed, mounted])
 
   // Hide layout for full-screen builder
   const isBuilderPage = pathname === '/dashboard/website/builder'
@@ -71,36 +92,32 @@ export default function DashboardLayout({
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex flex-col bg-card border-r transition-all duration-300',
-          collapsed ? 'w-16' : 'w-64',
+          'fixed inset-y-0 left-0 z-50 flex flex-col bg-card shadow-lg',
+          mounted ? 'transition-all duration-300 ease-in-out' : '',
+          collapsed ? 'w-[72px]' : 'w-64',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
-        {/* Logo */}
-        <div className="flex h-16 items-center justify-between px-4 border-b">
-          {!collapsed && (
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <Store className="h-6 w-6 text-primary" />
-              <span className="font-semibold text-lg">QR Menu</span>
-            </Link>
-          )}
-          {collapsed && (
-            <Link href="/dashboard" className="mx-auto">
-              <Store className="h-6 w-6 text-primary" />
-            </Link>
-          )}
+        {/* Logo Header */}
+        <div className={cn(
+          'flex h-16 items-center border-b border-border/50',
+          collapsed ? 'justify-center px-2' : 'justify-between px-4'
+        )}>
+          <Link href="/dashboard" className={cn(
+            'flex items-center gap-3 transition-all',
+            collapsed ? 'justify-center' : ''
+          )}>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+              <Store className="h-5 w-5 text-primary" />
+            </div>
+            {!collapsed && (
+              <span className="font-bold text-lg tracking-tight">QR Menu</span>
+            )}
+          </Link>
           <Button
             variant="ghost"
             size="icon"
-            className="hidden lg:flex"
-            onClick={() => setCollapsed(!collapsed)}
-          >
-            <ChevronLeft className={cn('h-4 w-4 transition-transform', collapsed && 'rotate-180')} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
+            className="lg:hidden h-9 w-9"
             onClick={() => setSidebarOpen(false)}
           >
             <X className="h-4 w-4" />
@@ -108,24 +125,29 @@ export default function DashboardLayout({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4">
-          <ul className="space-y-1 px-2">
+        <nav className="flex-1 overflow-y-auto p-3">
+          <ul className="space-y-1.5">
             {navigation.map((item) => {
-              const isActive = pathname === item.href || 
+              const isActive = pathname === item.href ||
                 (item.href !== '/dashboard/overview' && pathname.startsWith(item.href))
               return (
                 <li key={item.name}>
                   <Link
                     href={item.href}
                     className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      'group flex items-center gap-3 rounded-xl px-3 py-3 font-medium transition-all duration-200',
+                      collapsed ? 'justify-center' : '',
                       isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                        ? 'bg-primary text-primary-foreground shadow-md'
+                        : 'text-muted-foreground hover:bg-accent hover:text-foreground hover:shadow-sm'
                     )}
                     title={collapsed ? item.name : undefined}
                   >
-                    <item.icon className="h-5 w-5 flex-shrink-0" />
+                    <item.icon className={cn(
+                      'flex-shrink-0 transition-transform duration-200',
+                      collapsed ? 'h-5 w-5' : 'h-5 w-5',
+                      !isActive && 'group-hover:scale-110'
+                    )} />
                     {!collapsed && <span>{item.name}</span>}
                   </Link>
                 </li>
@@ -134,13 +156,13 @@ export default function DashboardLayout({
           </ul>
 
           {/* Settings section */}
-          <div className="mt-6 pt-6 border-t mx-2">
+          <div className="mt-6 pt-4 border-t border-border/50">
             {!collapsed && (
-              <p className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              <p className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Settings
               </p>
             )}
-            <ul className="space-y-1">
+            <ul className="space-y-1.5">
               {settingsNavigation.map((item) => {
                 const isActive = pathname === item.href ||
                   (item.href !== '/dashboard/settings' && pathname.startsWith(item.href))
@@ -149,14 +171,19 @@ export default function DashboardLayout({
                     <Link
                       href={item.href}
                       className={cn(
-                        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                        'group flex items-center gap-3 rounded-xl px-3 py-3 font-medium transition-all duration-200',
+                        collapsed ? 'justify-center' : '',
                         isActive
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                          ? 'bg-primary text-primary-foreground shadow-md'
+                          : 'text-muted-foreground hover:bg-accent hover:text-foreground hover:shadow-sm'
                       )}
                       title={collapsed ? item.name : undefined}
                     >
-                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      <item.icon className={cn(
+                        'flex-shrink-0 transition-transform duration-200',
+                        collapsed ? 'h-5 w-5' : 'h-5 w-5',
+                        !isActive && 'group-hover:scale-110'
+                      )} />
                       {!collapsed && <span>{item.name}</span>}
                     </Link>
                   </li>
@@ -166,16 +193,35 @@ export default function DashboardLayout({
           </div>
         </nav>
 
-        {/* Theme toggle at bottom */}
-        <div className="border-t p-4">
-          <ThemeToggle />
+        {/* Collapse Button at Bottom */}
+        <div className="p-3 border-t border-border/50">
+          <Button
+            variant="ghost"
+            className={cn(
+              'w-full hidden lg:flex items-center gap-3 rounded-xl py-3 h-auto font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-200',
+              collapsed ? 'justify-center px-0' : 'justify-start px-3'
+            )}
+            onClick={() => setCollapsed(!collapsed)}
+          >
+            {collapsed ? (
+              <SidebarOpenIcon className="h-5 w-5" />
+            ) : (
+              <>
+                <SidebarCloseIcon className="h-5 w-5" />
+                <span>Collapse</span>
+              </>
+            )}
+          </Button>
         </div>
       </aside>
 
       {/* Main content */}
-      <div className={cn('transition-all duration-300', collapsed ? 'lg:pl-16' : 'lg:pl-64')}>
+      <div className={cn(
+        mounted ? 'transition-all duration-300 ease-in-out' : '',
+        collapsed ? 'lg:pl-[72px]' : 'lg:pl-64'
+      )}>
         {/* Top header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 lg:px-6">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-4  bg-background px-4 lg:px-6">
           <Button
             variant="ghost"
             size="icon"
@@ -184,10 +230,19 @@ export default function DashboardLayout({
           >
             <Menu className="h-5 w-5" />
           </Button>
-          
+
           <div className="flex-1" />
-          
-          {/* User menu would go here */}
+
+          {/* Theme toggle */}
+          <ThemeToggle />
+
+          {/* Notifications */}
+          <Button variant="ghost" size="icon" className="relative">
+            <Bell className="h-5 w-5" />
+            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">
+              3
+            </span>
+          </Button>
         </header>
 
         {/* Page content */}
