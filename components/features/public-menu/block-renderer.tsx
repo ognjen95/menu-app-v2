@@ -4,7 +4,6 @@ import { SiTripadvisor } from "react-icons/si";
 import { GalleryBlock } from "../GalleryBlock";
 
 // Feature icons mapping
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const FEATURE_ICONS: Record<string, any> = {
   wifi: Wifi,
   parking: ParkingCircle,
