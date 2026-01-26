@@ -25,7 +25,11 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     // Build update object with appropriate timestamps
-    const updateData: Record<string, unknown> = { status }
+    const updateData: Record<string, unknown> = { 
+      status,
+      status_updated_by: user.id,
+      status_updated_at: new Date().toISOString()
+    }
     const now = new Date().toISOString()
 
     switch (status) {
@@ -49,7 +53,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         break
       case 'cancelled':
         updateData.cancelled_at = now
-        updateData.cancellation_reason = cancellation_reason
+        updateData.cancelled_by = user.id
+        updateData.cancelled_reason = cancellation_reason
         break
     }
 
@@ -60,7 +65,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       .eq('tenant_id', tenantId)
       .select(`
         *,
-        items:order_items(*)
+        items:order_items(*),
+        status_updated_by_profile:status_updated_by(full_name, avatar_url),
+        cancelled_by_profile:cancelled_by(full_name, avatar_url),
+        assigned_to_profile:assigned_to(full_name, avatar_url)
       `)
       .single()
 

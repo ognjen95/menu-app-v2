@@ -281,6 +281,8 @@ export interface Order {
   accepted_by: string | null
   prepared_by: string | null
   served_by: string | null
+  cancelled_by: string | null
+  status_updated_by: string | null
   created_at: string
   updated_at: string
 }
@@ -548,6 +550,36 @@ export interface OrderWithRelations extends Order {
   payments?: OrderPayment[]
   table?: Table
   location?: Location
+  status_updated_by_profile?: {
+    id: string
+    full_name: string | null
+    avatar_url: string | null
+  }
+  assigned_to_profile?: {
+    id: string
+    full_name: string | null
+    avatar_url: string | null
+  }
+  accepted_by_profile?: {
+    id: string
+    full_name: string | null
+    avatar_url: string | null
+  }
+  prepared_by_profile?: {
+    id: string
+    full_name: string | null
+    avatar_url: string | null
+  }
+  served_by_profile?: {
+    id: string
+    full_name: string | null
+    avatar_url: string | null
+  }
+  cancelled_by_profile?: {
+    id: string
+    full_name: string | null
+    avatar_url: string | null
+  }
 }
 
 export interface OrderItemWithRelations extends OrderItem {

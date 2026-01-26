@@ -8,6 +8,13 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { OrderLogsDialog } from '@/components/features/orders/OrderLogsDialog'
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -25,9 +32,12 @@ import {
   Loader2,
   Volume2,
   VolumeX,
+  MoreVertical,
+  History,
+  XCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Order, OrderItem, Location } from '@/lib/types'
+import type { Order, OrderItem, Location, OrderWithRelations } from '@/lib/types'
 
 type OrderWithItems = Order & {
   items: (OrderItem & { menu_item?: { name: string; image_urls?: string[] } })[]
@@ -53,7 +63,20 @@ type KitchenOrder = {
     options: { name: string; price: number }[]
   }[]
   placed_at: string
+  accepted_at?: string | null
+  preparing_at?: string | null
+  ready_at?: string | null
+  served_at?: string | null
+  completed_at?: string | null
+  cancelled_at?: string | null
+  cancellation_reason?: string | null
   time_elapsed: number
+  // User IDs for fetching profiles
+  status_updated_by?: string | null
+  accepted_by?: string | null
+  prepared_by?: string | null
+  served_by?: string | null
+  cancelled_by?: string | null
 }
 
 const STATUS_CONFIG = {
@@ -83,6 +106,7 @@ export default function KitchenPage() {
   const [selectedLocationId, setSelectedLocationId] = useState<string>('')
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [lastOrderCount, setLastOrderCount] = useState(0)
+  const [selectedOrderForLogs, setSelectedOrderForLogs] = useState<KitchenOrder | null>(null)
 
   // Fetch locations
   const { data: locationsData } = useQuery({
@@ -139,9 +163,21 @@ export default function KitchenPage() {
       options: item.selected_options || [],
     })) || [],
     placed_at: order.placed_at || order.created_at,
+    accepted_at: order.accepted_at,
+    preparing_at: order.preparing_at,
+    ready_at: order.ready_at,
+    served_at: order.served_at,
+    completed_at: order.completed_at,
+    cancelled_at: order.cancelled_at,
+    cancellation_reason: order.cancellation_reason,
     time_elapsed: order.placed_at 
       ? (Date.now() - new Date(order.placed_at).getTime()) / 60000 
       : 0,
+    status_updated_by: order.status_updated_by,
+    accepted_by: order.accepted_by,
+    prepared_by: order.prepared_by,
+    served_by: order.served_by,
+    cancelled_by: order.cancelled_by,
   }))
 
   // Group orders by status
@@ -172,8 +208,8 @@ export default function KitchenPage() {
   }
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Header */}
+      <div className="h-full flex flex-col">
+        {/* Header */}
       <div className="flex items-center justify-between p-4 border-b bg-background">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
@@ -227,6 +263,7 @@ export default function KitchenPage() {
                 nextStatus="accepted"
                 isUpdating={updateStatus.isPending}
                 t={t}
+                onViewLogs={setSelectedOrderForLogs}
               />
             ))}
             {ordersByStatus.placed.length === 0 && (
@@ -252,6 +289,7 @@ export default function KitchenPage() {
                 nextStatus="preparing"
                 isUpdating={updateStatus.isPending}
                 t={t}
+                onViewLogs={setSelectedOrderForLogs}
               />
             ))}
             {ordersByStatus.accepted.length === 0 && (
@@ -277,6 +315,7 @@ export default function KitchenPage() {
                 nextStatus="ready"
                 isUpdating={updateStatus.isPending}
                 t={t}
+                onViewLogs={setSelectedOrderForLogs}
               />
             ))}
             {ordersByStatus.preparing.length === 0 && (
@@ -302,6 +341,7 @@ export default function KitchenPage() {
                 nextStatus="served"
                 isUpdating={updateStatus.isPending}
                 t={t}
+                onViewLogs={setSelectedOrderForLogs}
               />
             ))}
             {ordersByStatus.ready.length === 0 && (
@@ -313,7 +353,14 @@ export default function KitchenPage() {
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Logs Dialog */}
+      <OrderLogsDialog
+        order={selectedOrderForLogs}
+        open={!!selectedOrderForLogs}
+        onOpenChange={() => setSelectedOrderForLogs(null)}
+      />
+      </div>
   )
 }
 
@@ -323,9 +370,10 @@ interface OrderCardProps {
   nextStatus: string
   isUpdating: boolean
   t: (key: string) => string
+  onViewLogs: (order: KitchenOrder) => void
 }
 
-function OrderCard({ order, onStatusChange, nextStatus, isUpdating, t }: OrderCardProps) {
+function OrderCard({ order, onStatusChange, nextStatus, isUpdating, t, onViewLogs }: OrderCardProps) {
   const statusConfig = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG]
   const timerColor = getTimerColor(order.time_elapsed)
 
@@ -342,9 +390,24 @@ function OrderCard({ order, onStatusChange, nextStatus, isUpdating, t }: OrderCa
               </Badge>
             )}
           </div>
-          <div className={cn("flex items-center gap-1 font-mono text-sm", timerColor)}>
-            <Timer className="h-4 w-4" />
-            {formatTimeElapsed(order.time_elapsed, t('justNow'))}
+          <div className="flex items-center gap-2">
+            <div className={cn("flex items-center gap-1 font-mono text-sm", timerColor)}>
+              <Timer className="h-4 w-4" />
+              {formatTimeElapsed(order.time_elapsed, t('justNow'))}
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon" variant="ghost" className="h-7 w-7">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onViewLogs(order)}>
+                  <History className="h-4 w-4 mr-2" />
+                  View Logs
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">

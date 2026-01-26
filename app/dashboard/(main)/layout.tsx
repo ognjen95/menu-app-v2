@@ -56,7 +56,7 @@ export default function DashboardLayout({
   const [collapsed, setCollapsed] = useState(false)
   const [mounted, setMounted] = useState(false)
 
-  // Load collapsed state from localStorage after mount
+  // Load collapsed state after mount
   useEffect(() => {
     const saved = localStorage.getItem('sidebar-collapsed')
     if (saved === 'true') {
@@ -196,6 +196,7 @@ export default function DashboardLayout({
 
         {/* Collapse Button at Bottom */}
         <div className="p-3 border-t border-border/50">
+          {/* Collapse Button */}
           <Button
             variant="ghost"
             className={cn(

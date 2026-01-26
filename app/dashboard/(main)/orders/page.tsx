@@ -7,6 +7,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
   Clock,
   CheckCircle,
   XCircle,
@@ -19,8 +25,10 @@ import {
   RefreshCw,
   Car,
   Table,
+  History,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { OrderLogsDialog } from '@/components/features/orders/OrderLogsDialog'
 import type { OrderStatus, OrderWithRelations } from '@/lib/types'
 
 const statusConfig: Record<OrderStatus, { label: string; color: string; icon: React.ElementType }> = {
@@ -43,6 +51,7 @@ const typeIcons = {
 export default function OrdersPage() {
   const t = useTranslations('ordersPage')
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | 'all'>('all')
+  const [selectedOrderForLogs, setSelectedOrderForLogs] = useState<OrderWithRelations | null>(null)
   const { data, isLoading, refetch } = useActiveOrders()
   const updateStatus = useUpdateOrderStatus()
 
@@ -76,8 +85,8 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page header */}
+      <div className="space-y-6">
+        {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
@@ -155,9 +164,21 @@ export default function OrdersPage() {
                         {t(`type.${order.type}`)}
                       </Badge>
                     </div>
-                    <Button size="icon" variant="ghost" className="h-8 w-8">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="ghost" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setSelectedOrderForLogs(order)}>
+                            <History className="h-4 w-4 mr-2" />
+                            View Logs
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     {order.table_id && <Badge className="flex items-center gap-2"><Table className="h-4 w-4" /> {`${order.table?.name}, ${order?.table?.zone}`}</Badge>}
@@ -225,6 +246,13 @@ export default function OrdersPage() {
           })}
         </div>
       )}
-    </div>
+
+      {/* Logs Dialog */}
+      <OrderLogsDialog
+        order={selectedOrderForLogs}
+        open={!!selectedOrderForLogs}
+        onOpenChange={() => setSelectedOrderForLogs(null)}
+      />
+      </div>
   )
 }

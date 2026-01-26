@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
     const tenantId = requireTenant(user)
     const locationId = params.get('location_id')
 
+    // Fetch orders first
     let query = supabase
       .from('orders')
       .select(`
