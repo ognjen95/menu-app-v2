@@ -177,23 +177,23 @@ export default function TablesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Page header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             {t('description')}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            {t('exportAllQr')}
+          <Button variant="outline" size="sm" className="md:size-default">
+            <Download className="h-4 w-4 md:mr-2" />
+            <span className="hidden md:inline">{t('exportAllQr')}</span>
           </Button>
-          <Button disabled={!selectedLocationId} onClick={() => setIsCreateOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t('addTable')}
+          <Button disabled={!selectedLocationId} onClick={() => setIsCreateOpen(true)} size="sm" className="md:size-default">
+            <Plus className="h-4 w-4 md:mr-2" />
+            <span className="hidden sm:inline">{t('addTable')}</span>
           </Button>
         </div>
       </div>
@@ -206,9 +206,9 @@ export default function TablesPage() {
             variant={selectedLocationId === location.id ? 'default' : 'outline'}
             size="sm"
             onClick={() => setSelectedLocationId(location.id)}
-            className="gap-2"
+            className="gap-1.5 h-9 px-3 text-sm md:gap-2"
           >
-            <MapPin className="h-4 w-4" />
+            <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4" />
             {location.name}
           </Button>
         ))}
@@ -251,7 +251,7 @@ export default function TablesPage() {
                 <span>{zone}</span>
                 <Badge variant="secondary">{zoneTables.length} {t('tables')}</Badge>
               </h2>
-              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              <div className="grid gap-3 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 {zoneTables.map((table) => {
                   const qrCode = getTableQrCode(table.id)
                   return (
@@ -271,17 +271,20 @@ export default function TablesPage() {
                         table.status === 'reserved' && 'bg-blue-500',
                       )} />
 
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg">{table.name}</CardTitle>
-                          <Badge variant={
-                            table.status === 'available' ? 'default' :
-                            table.status === 'occupied' ? 'secondary' : 'outline'
-                          }>
+                      <CardHeader className="pb-2 pt-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <CardTitle className="text-base md:text-lg truncate">{table.name}</CardTitle>
+                          <Badge 
+                            variant={
+                              table.status === 'available' ? 'default' :
+                              table.status === 'occupied' ? 'secondary' : 'outline'
+                            }
+                            className="text-xs shrink-0"
+                          >
                             {t(`status.${table.status}`)}
                           </Badge>
                         </div>
-                        <CardDescription>
+                        <CardDescription className="text-xs">
                           <Users className="h-3 w-3 inline mr-1" />
                           {t('capacity')}: {table.capacity}
                         </CardDescription>
@@ -322,44 +325,44 @@ export default function TablesPage() {
                         )}
 
                         {/* Actions */}
-                        <div className="flex gap-1">
+                        <div className="flex flex-wrap gap-1">
                           {qrCode && (
                             <>
                               <Button 
                                 size="icon" 
                                 variant="ghost" 
-                                className="h-8 w-8"
+                                className="h-8 w-8 shrink-0"
                                 onClick={() => copyToClipboard(qrCode.url, qrCode.id)}
                                 title={t('copyUrl')}
                               >
-                                {copiedId === qrCode.id ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                                {copiedId === qrCode.id ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
                               </Button>
                               <Button 
                                 size="icon" 
                                 variant="ghost" 
-                                className="h-8 w-8"
+                                className="h-8 w-8 shrink-0"
                                 onClick={() => downloadQr(qrCode)}
                                 title={t('downloadQr')}
                               >
-                                <Download className="h-4 w-4" />
+                                <Download className="h-3.5 w-3.5" />
                               </Button>
                               <Button 
                                 size="icon" 
                                 variant="ghost" 
-                                className="h-8 w-8"
+                                className="h-8 w-8 shrink-0"
                                 onClick={() => { setEditQr(qrCode); setQrStyle({ color: qrCode.style?.color || '#000000', background: qrCode.style?.background || '#ffffff' }) }}
                                 title={t('editStyle')}
                               >
-                                <Palette className="h-4 w-4" />
+                                <Palette className="h-3.5 w-3.5" />
                               </Button>
                               <Button 
                                 size="icon" 
                                 variant="ghost" 
-                                className="h-8 w-8"
+                                className="h-8 w-8 shrink-0"
                                 onClick={() => window.open(qrCode.url, '_blank')}
                                 title={t('openMenu')}
                               >
-                                <ExternalLink className="h-4 w-4" />
+                                <ExternalLink className="h-3.5 w-3.5" />
                               </Button>
                             </>
                           )}

@@ -65,10 +65,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       .eq('tenant_id', tenantId)
       .select(`
         *,
-        items:order_items(*),
-        status_updated_by_profile:status_updated_by(full_name, avatar_url),
-        cancelled_by_profile:cancelled_by(full_name, avatar_url),
-        assigned_to_profile:assigned_to(full_name, avatar_url)
+        items:order_items(*)
       `)
       .single()
 

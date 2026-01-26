@@ -22,7 +22,6 @@ import {
   X,
   ChevronLeft,
   Store,
-  ChefHat,
   SidebarIcon,
   SidebarOpenIcon,
   SidebarCloseIcon,
@@ -32,7 +31,6 @@ const navigationItems = [
   { key: 'overview', href: '/dashboard/overview', icon: LayoutDashboard },
   { key: 'menu', href: '/dashboard/menu', icon: UtensilsCrossed },
   { key: 'orders', href: '/dashboard/orders', icon: ShoppingCart },
-  { key: 'kitchen', href: '/dashboard/kitchen', icon: ChefHat },
   { key: 'tablesQr', href: '/dashboard/tables', icon: QrCode },
   { key: 'website', href: '/dashboard/website/builder', icon: Globe },
 ]

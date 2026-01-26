@@ -226,20 +226,20 @@ export default function LocationsPage() {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Page header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             {t('description')}
           </p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              {t('addLocation')}
+            <Button size="sm" className="md:size-default self-start md:self-auto">
+              <Plus className="h-4 w-4 md:mr-2" />
+              <span className="hidden sm:inline">{t('addLocation')}</span>
             </Button>
           </DialogTrigger>
           <DialogContent>

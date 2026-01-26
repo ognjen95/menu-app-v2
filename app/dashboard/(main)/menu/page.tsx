@@ -253,42 +253,42 @@ export default function MenuPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Page header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             {t('description')}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline">
-            <Filter className="h-4 w-4 mr-2" />
-            {t('filter')}
+          <Button variant="outline" size="sm" className="md:size-default">
+            <Filter className="h-4 w-4 md:mr-2" />
+            <span className="hidden md:inline">{t('filter')}</span>
           </Button>
-          <Button onClick={() => setIsItemDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t('addItem')}
+          <Button onClick={() => setIsItemDialogOpen(true)} size="sm" className="md:size-default">
+            <Plus className="h-4 w-4 md:mr-2" />
+            <span className="hidden sm:inline">{t('addItem')}</span>
           </Button>
         </div>
       </div>
 
       {/* Search bar */}
-      <div className="relative max-w-md">
+      <div className="relative w-full md:max-w-md">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder={t('searchItems')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
+          className="pl-10 h-10"
         />
       </div>
 
       {/* Main layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 md:gap-6">
         {/* Menus sidebar */}
-        <div className="lg:col-span-3">
+        <div className="md:col-span-1 lg:col-span-3">
           <Card>
             <CardHeader className="py-4">
               <div className="flex items-center justify-between">
@@ -327,7 +327,7 @@ export default function MenuPage() {
         </div>
 
         {/* Categories */}
-        <div className="lg:col-span-3">
+        <div className="md:col-span-1 lg:col-span-3">
           <Card className="h-full">
             <CardHeader className="py-4">
               <div className="flex items-center justify-between">
@@ -376,7 +376,7 @@ export default function MenuPage() {
         </div>
 
         {/* Items */}
-        <div className="lg:col-span-6">
+        <div className="md:col-span-2 lg:col-span-6">
           <Card className="h-full min-h-[400px]">
             <CardHeader className="py-4">
               <div className="flex items-center justify-between">
@@ -418,12 +418,12 @@ export default function MenuPage() {
                   {items.map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-center gap-4 p-4 rounded-xl border hover:bg-accent/50 transition-colors group"
+                      className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border hover:bg-accent/50 transition-colors group"
                     >
-                      <GripVertical className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 cursor-grab" />
+                      <GripVertical className="hidden lg:block h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 cursor-grab" />
                       
                       {/* Image */}
-                      <div className="relative h-16 w-16 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      <div className="relative h-20 w-20 sm:h-16 sm:w-16 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
                         {item.image_urls && item.image_urls.length > 0 ? (
                           <Image
                             src={item.image_urls[0]}
@@ -437,9 +437,9 @@ export default function MenuPage() {
                       </div>
 
                       {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-medium truncate">{item.name}</h3>
+                      <div className="flex-1 min-w-0 w-full sm:w-auto">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-medium text-base sm:text-sm">{item.name}</h3>
                           {item.is_featured && (
                             <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                           )}
@@ -450,10 +450,10 @@ export default function MenuPage() {
                             <span className="text-xs px-1.5 py-0.5 bg-muted rounded">{t('hidden')}</span>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground truncate">
+                        <p className="text-sm text-muted-foreground line-clamp-2 sm:line-clamp-1">
                           {item.description || t('noDescription')}
                         </p>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <div className="flex items-center gap-1.5 sm:gap-2 mt-1 flex-wrap">
                           {item.dietary_tags?.map((tag) => (
                             <span
                               key={tag}
@@ -484,8 +484,8 @@ export default function MenuPage() {
                       </div>
 
                       {/* Price */}
-                      <div className="text-right">
-                        <div className="font-semibold">
+                      <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-0 sm:text-right ml-auto sm:ml-0">
+                        <div className="font-semibold text-lg sm:text-base">
                           €{item.base_price.toFixed(2)}
                         </div>
                         {item.compare_price && (
@@ -496,7 +496,7 @@ export default function MenuPage() {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <Button 
                           size="icon" 
                           variant="ghost" 

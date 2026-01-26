@@ -20,7 +20,18 @@
     "or": "Or",
     "and": "And",
     "items": "items",
-    "fromYesterday": "from yesterday"
+    "fromYesterday": "from yesterday",
+    "takeaway": "Takeaway",
+    "orderStatus": {
+      "draft": "Draft",
+      "placed": "Placed",
+      "accepted": "Accepted",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "served": "Served",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
   },
   "auth": {
     "login": {
@@ -162,15 +173,21 @@
     },
     "recentOrders": {
       "title": "Recent Orders",
-      "description": "Latest orders from your restaurant"
+      "description": "Latest orders from your restaurant",
+      "noOrders": "No orders yet"
     },
     "topItems": {
       "title": "Top Selling Items",
       "description": "Best performers today",
-      "orders": "orders"
+      "orders": "orders",
+      "noItems": "No items sold yet"
     },
     "quickActions": {
       "title": "Quick Actions",
+      "viewOrders": "View Orders",
+      "manageMenu": "Menu",
+      "manageTables": "Tables",
+      "settings": "Settings",
       "addMenuItem": "Add Menu Item",
       "newOrder": "New Order",
       "inviteStaff": "Invite Staff",
@@ -420,7 +437,8 @@
     "description": "Manage incoming orders and track their status",
     "refresh": "Refresh",
     "all": "All",
-    "noOrders": "No orders yet",
+    "allLocations": "All Locations",
+    "noOrders": "No orders",
     "noOrdersDesc": "Orders will appear here when customers place them",
     "noOrdersFound": "No orders found",
     "orderNumber": "Order",
@@ -432,6 +450,13 @@
     "moreItems": "+{count} more items",
     "markAs": "Mark as {status}",
     "loading": "Loading orders...",
+    "viewLogs": "View Logs",
+    "enableSound": "Enable sound notifications",
+    "disableSound": "Disable sound notifications",
+    "hasNotes": "Has notes",
+    "customerNotes": "Customer notes",
+    "showMore": "Show more",
+    "showLess": "Show less",
     "status": {
       "draft": "Draft",
       "placed": "New",

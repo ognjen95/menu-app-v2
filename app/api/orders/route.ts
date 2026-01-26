@@ -24,10 +24,7 @@ export async function GET(request: NextRequest) {
           *,
           menu_item:menu_items(id, name, image_urls)
         ),
-        payments:order_payments(*),
-        status_updated_by_profile:status_updated_by(full_name, avatar_url),
-        cancelled_by_profile:cancelled_by(full_name, avatar_url),
-        assigned_to_profile:assigned_to(full_name, avatar_url)
+        payments:order_payments(*)
       `, { count: 'exact' })
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })

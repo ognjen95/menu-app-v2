@@ -20,7 +20,18 @@
     "or": "O",
     "and": "Y",
     "items": "artículos",
-    "fromYesterday": "respecto a ayer"
+    "fromYesterday": "respecto a ayer",
+    "takeaway": "Para Llevar",
+    "orderStatus": {
+      "draft": "Borrador",
+      "placed": "Recibido",
+      "accepted": "Aceptado",
+      "preparing": "Preparando",
+      "ready": "Listo",
+      "served": "Servido",
+      "completed": "Completado",
+      "cancelled": "Cancelado"
+    }
   },
   "auth": {
     "login": {
@@ -162,15 +173,21 @@
     },
     "recentOrders": {
       "title": "Pedidos Recientes",
-      "description": "Últimos pedidos de tu restaurante"
+      "description": "Últimos pedidos de su restaurante",
+      "noOrders": "No hay pedidos aún"
     },
     "topItems": {
       "title": "Artículos Más Vendidos",
       "description": "Los mejores hoy",
-      "orders": "pedidos"
+      "orders": "pedidos",
+      "noItems": "No se han vendido artículos aún"
     },
     "quickActions": {
       "title": "Acciones Rápidas",
+      "viewOrders": "Ver Pedidos",
+      "manageMenu": "Menú",
+      "manageTables": "Mesas",
+      "settings": "Configuración",
       "addMenuItem": "Añadir Artículo",
       "newOrder": "Nuevo Pedido",
       "inviteStaff": "Invitar Personal",
@@ -420,13 +437,21 @@
     "description": "Gestiona los pedidos entrantes y su estado",
     "refresh": "Actualizar",
     "all": "Todos",
-    "noOrders": "Sin pedidos aún",
+    "allLocations": "Todas las Ubicaciones",
+    "noOrders": "Sin pedidos",
     "noOrdersDesc": "Los pedidos aparecerán aquí cuando los clientes los realicen",
     "noOrdersFound": "No se encontraron pedidos",
     "orderNumber": "Pedido",
     "moreItems": "+{count} artículos más",
     "markAs": "Marcar como {status}",
     "loading": "Cargando pedidos...",
+    "viewLogs": "Ver Historial",
+    "enableSound": "Activar notificaciones de sonido",
+    "disableSound": "Desactivar notificaciones de sonido",
+    "hasNotes": "Tiene notas",
+    "customerNotes": "Notas del cliente",
+    "showMore": "Mostrar más",
+    "showLess": "Mostrar menos",
     "table": "Mesa",
     "customer": "Cliente",
     "items": "artículos",

@@ -1,6 +1,8 @@
 'use client'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { 
   ShoppingCart, 
   TrendingUp, 
@@ -10,68 +12,159 @@ import {
   UtensilsCrossed,
   ArrowUpRight,
   ArrowDownRight,
+  Plus,
+  Eye,
+  Settings,
+  Bell,
+  ChefHat,
+  Table,
+  Menu,
+  Loader2,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { useQuery } from '@tanstack/react-query'
+import { apiGet } from '@/lib/api'
+import Link from 'next/link'
+import type { OrderWithRelations, Table as TableType, MenuItem } from '@/lib/types'
 
-// Mock data - will be replaced with real data from API
-const getStats = (t: ReturnType<typeof useTranslations>) => [
-  {
-    title: t('stats.ordersToday'),
-    value: '24',
-    change: '+12%',
-    changeType: 'positive' as const,
-    icon: ShoppingCart,
-  },
-  {
-    title: t('stats.revenueToday'),
-    value: '€1,234',
-    change: '+8%',
-    changeType: 'positive' as const,
-    icon: DollarSign,
-  },
-  {
-    title: t('stats.activeTables'),
-    value: '8/12',
-    change: '67%',
-    changeType: 'neutral' as const,
-    icon: Users,
-  },
-  {
-    title: t('stats.avgOrderTime'),
-    value: '18 min',
-    change: '-2 min',
-    changeType: 'positive' as const,
-    icon: Clock,
-  },
-]
-
-const recentOrders = [
-  { id: '#001', table: 'T1', items: 3, total: '€45.00', status: 'preparing', time: '5 min ago' },
-  { id: '#002', table: 'T4', items: 2, total: '€28.50', status: 'ready', time: '8 min ago' },
-  { id: '#003', table: 'Takeaway', items: 5, total: '€67.00', status: 'completed', time: '12 min ago' },
-  { id: '#004', table: 'T2', items: 4, total: '€52.00', status: 'placed', time: '2 min ago' },
-]
-
-const topItems = [
-  { name: 'Margherita Pizza', orders: 45, revenue: '€450' },
-  { name: 'Caesar Salad', orders: 32, revenue: '€288' },
-  { name: 'Grilled Salmon', orders: 28, revenue: '€476' },
-  { name: 'Tiramisu', orders: 24, revenue: '€168' },
-]
+// Helper to format time ago
+const formatTimeAgo = (date: string) => {
+  const now = new Date()
+  const past = new Date(date)
+  const diffMs = now.getTime() - past.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  
+  if (diffMins < 1) return 'Just now'
+  if (diffMins < 60) return `${diffMins} min ago`
+  const diffHours = Math.floor(diffMins / 60)
+  if (diffHours < 24) return `${diffHours}h ago`
+  const diffDays = Math.floor(diffHours / 24)
+  return `${diffDays}d ago`
+}
 
 export default function DashboardPage() {
   const t = useTranslations('dashboard')
   const tc = useTranslations('common')
-  const stats = getStats(t)
+
+  // Fetch today's orders
+  const { data: ordersData, isLoading: ordersLoading } = useQuery({
+    queryKey: ['orders', 'today'],
+    queryFn: () => apiGet<{ data: { orders: OrderWithRelations[] } }>('/orders'),
+    refetchInterval: 30000, // Refresh every 30s
+  })
+
+  // Fetch tables
+  const { data: tablesData } = useQuery({
+    queryKey: ['tables'],
+    queryFn: () => apiGet<{ data: { tables: TableType[] } }>('/tables'),
+  })
+
+  // Fetch analytics
+  const { data: analyticsData } = useQuery({
+    queryKey: ['analytics', 'today'],
+    queryFn: () => apiGet<{ data: any }>('/analytics/today'),
+  })
+
+  const orders = ordersData?.data?.orders || []
+  const tables = tablesData?.data?.tables || []
+  const analytics = analyticsData?.data || {}
+
+  // Calculate stats
+  const todayOrders = orders.filter(o => {
+    const orderDate = new Date(o.created_at)
+    const today = new Date()
+    return orderDate.toDateString() === today.toDateString()
+  })
+
+  const activeOrders = orders.filter(o => 
+    ['placed', 'accepted', 'preparing', 'ready', 'served'].includes(o.status)
+  )
+
+  const todayRevenue = todayOrders.reduce((sum, o) => sum + (o.total || 0), 0)
+  const activeTables = tables.filter(t => t.status === 'occupied').length
+  const totalTables = tables.length
+
+  // Calculate average order time (mock for now)
+  const avgOrderTime = analytics.avgOrderTime || 18
+
+  // Get recent orders (last 10)
+  const recentOrders = [...orders]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 10)
+
+  // Calculate top items
+  const itemStats = new Map<string, { name: string; orders: number; revenue: number }>()
+  orders.forEach(order => {
+    order.items?.forEach(item => {
+      const existing = itemStats.get(item.item_name) || { name: item.item_name, orders: 0, revenue: 0 }
+      existing.orders += item.quantity
+      existing.revenue += item.total_price || 0
+      itemStats.set(item.item_name, existing)
+    })
+  })
+  const topItems = Array.from(itemStats.values())
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5)
+
+  const stats = [
+    {
+      title: t('stats.ordersToday'),
+      value: todayOrders.length.toString(),
+      change: analytics.ordersTrend || '+0%',
+      changeType: 'positive' as const,
+      icon: ShoppingCart,
+    },
+    {
+      title: t('stats.revenueToday'),
+      value: `€${todayRevenue.toFixed(2)}`,
+      change: analytics.revenueTrend || '+0%',
+      changeType: 'positive' as const,
+      icon: DollarSign,
+    },
+    {
+      title: t('stats.activeTables'),
+      value: `${activeTables}/${totalTables}`,
+      change: totalTables > 0 ? `${Math.round((activeTables / totalTables) * 100)}%` : '0%',
+      changeType: 'neutral' as const,
+      icon: Users,
+    },
+    {
+      title: t('stats.avgOrderTime'),
+      value: `${avgOrderTime} min`,
+      change: analytics.orderTimeTrend || '-',
+      changeType: 'positive' as const,
+      icon: Clock,
+    },
+  ]
+
+  const quickActions = [
+    { label: t('quickActions.viewOrders'), icon: Bell, href: '/dashboard/orders', variant: 'default' as const },
+    { label: t('quickActions.manageMenu'), icon: Menu, href: '/dashboard/menu', variant: 'outline' as const },
+    { label: t('quickActions.manageTables'), icon: Table, href: '/dashboard/tables', variant: 'outline' as const },
+    { label: t('quickActions.settings'), icon: Settings, href: '/dashboard/settings', variant: 'outline' as const },
+  ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Page header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
-        <p className="text-muted-foreground">
-          {t('welcome')}
-        </p>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
+            {t('welcome')}
+          </p>
+        </div>
+        {/* Quick Actions */}
+        <div className="flex flex-wrap gap-2">
+          {quickActions.map((action) => (
+            <Link key={action.href} href={action.href}>
+              <Button variant={action.variant} size="sm" className="gap-1.5">
+                <action.icon className="h-4 w-4" />
+                <span className="hidden sm:inline">{action.label}</span>
+              </Button>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Stats grid */}
@@ -103,92 +196,79 @@ export default function DashboardPage() {
       {/* Main content grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         {/* Recent orders */}
-        <Card className="col-span-4">
-          <CardHeader>
+        <Card className="col-span-4 flex flex-col">
+          <CardHeader className="shrink-0">
             <CardTitle>{t('recentOrders.title')}</CardTitle>
             <CardDescription>{t('recentOrders.description')}</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentOrders.map((order) => (
-                <div
-                  key={order.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="font-medium">{order.id}</div>
-                    <div className="text-sm text-muted-foreground">{order.table}</div>
-                    <div className="text-sm">{order.items} {tc('items')}</div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      order.status === 'placed' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' :
-                      order.status === 'preparing' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' :
-                      order.status === 'ready' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
-                      'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-                    }`}>
-                      {order.status}
-                    </span>
-                    <div className="font-medium">{order.total}</div>
-                    <div className="text-xs text-muted-foreground w-16 text-right">{order.time}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <CardContent className="flex-1 min-h-0">
+            {ordersLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : recentOrders.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                {t('recentOrders.noOrders')}
+              </div>
+            ) : (
+              <div className="space-y-3 overflow-y-auto h-[400px] pr-2">
+                {recentOrders.map((order) => (
+                  <Link key={order.id} href={`/dashboard/orders`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors gap-2">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="font-medium shrink-0">{order.order_number}</div>
+                        <div className="text-sm text-muted-foreground truncate">
+                          {order.table?.name || order.customer_name || tc('takeaway')}
+                        </div>
+                        <div className="text-sm shrink-0">{order.items?.length || 0} {tc('items')}</div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline" className="shrink-0">
+                          {tc(`orderStatus.${order.status}`)}
+                        </Badge>
+                        <div className="font-medium shrink-0">€{order.total?.toFixed(2) || '0.00'}</div>
+                        <div className="text-xs text-muted-foreground shrink-0 hidden sm:block">
+                          {formatTimeAgo(order.created_at)}
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Top items */}
-        <Card className="col-span-3">
-          <CardHeader>
+        <Card className="col-span-3 flex flex-col">
+          <CardHeader className="shrink-0">
             <CardTitle>{t('topItems.title')}</CardTitle>
             <CardDescription>{t('topItems.description')}</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {topItems.map((item, index) => (
-                <div key={item.name} className="flex items-center gap-4">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium">
-                    {index + 1}
+          <CardContent className="flex-1 min-h-0">
+            {topItems.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                {t('topItems.noItems')}
+              </div>
+            ) : (
+              <div className="space-y-4 overflow-y-auto h-[400px] pr-2">
+                {topItems.map((item, index) => (
+                  <div key={item.name} className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium shrink-0">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{item.name}</p>
+                      <p className="text-sm text-muted-foreground">{item.orders} {t('topItems.orders')}</p>
+                    </div>
+                    <div className="font-medium shrink-0">€{item.revenue.toFixed(2)}</div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">{item.orders} {t('topItems.orders')}</p>
-                  </div>
-                  <div className="font-medium">{item.revenue}</div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
-
-      {/* Quick actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('quickActions.title')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-4">
-            <button className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-dashed hover:border-primary hover:bg-primary/5 transition-colors">
-              <UtensilsCrossed className="h-8 w-8 text-muted-foreground" />
-              <span className="text-sm font-medium">{t('quickActions.addMenuItem')}</span>
-            </button>
-            <button className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-dashed hover:border-primary hover:bg-primary/5 transition-colors">
-              <ShoppingCart className="h-8 w-8 text-muted-foreground" />
-              <span className="text-sm font-medium">{t('quickActions.newOrder')}</span>
-            </button>
-            <button className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-dashed hover:border-primary hover:bg-primary/5 transition-colors">
-              <Users className="h-8 w-8 text-muted-foreground" />
-              <span className="text-sm font-medium">{t('quickActions.inviteStaff')}</span>
-            </button>
-            <button className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-dashed hover:border-primary hover:bg-primary/5 transition-colors">
-              <TrendingUp className="h-8 w-8 text-muted-foreground" />
-              <span className="text-sm font-medium">{t('quickActions.viewReports')}</span>
-            </button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }

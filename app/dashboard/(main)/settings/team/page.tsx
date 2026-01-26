@@ -296,21 +296,21 @@ export default function TeamPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Page header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             {t('description')}
           </p>
         </div>
         <div className="flex gap-2">
           <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">
-                <UserPlus className="h-4 w-4 mr-2" />
-                {t('addMember')}
+              <Button variant="outline" size="sm" className="md:size-default">
+                <UserPlus className="h-4 w-4 md:mr-2" />
+                <span className="hidden sm:inline">{t('addMember')}</span>
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -381,9 +381,9 @@ export default function TeamPage() {
 
           <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
             <DialogTrigger asChild>
-              <Button>
-                <Mail className="h-4 w-4 mr-2" />
-                {t('inviteMember')}
+              <Button size="sm" className="md:size-default">
+                <Mail className="h-4 w-4 md:mr-2" />
+                <span className="hidden sm:inline">{t('inviteMember')}</span>
               </Button>
             </DialogTrigger>
           <DialogContent>

@@ -20,7 +20,18 @@
     "or": "Ili",
     "and": "I",
     "items": "stavki",
-    "fromYesterday": "od juče"
+    "fromYesterday": "od juče",
+    "takeaway": "Ponesi",
+    "orderStatus": {
+      "draft": "Nacrt",
+      "placed": "Naručeno",
+      "accepted": "Prihvaćeno",
+      "preparing": "Priprema",
+      "ready": "Spremno",
+      "served": "Servirano",
+      "completed": "Završeno",
+      "cancelled": "Otkazano"
+    }
   },
   "auth": {
     "login": {
@@ -162,15 +173,21 @@
     },
     "recentOrders": {
       "title": "Nedavne porudžbine",
-      "description": "Poslednje porudžbine iz vašeg restorana"
+      "description": "Poslednje porudžbine iz vašeg restorana",
+      "noOrders": "Još nema porudžbina"
     },
     "topItems": {
       "title": "Najprodavanije stavke",
       "description": "Najbolji rezultati danas",
-      "orders": "porudžbina"
+      "orders": "porudžbina",
+      "noItems": "Još nema prodatih stavki"
     },
     "quickActions": {
       "title": "Brze akcije",
+      "viewOrders": "Pogledaj porudžbine",
+      "manageMenu": "Meni",
+      "manageTables": "Stolovi",
+      "settings": "Podešavanja",
       "addMenuItem": "Dodaj stavku u meni",
       "newOrder": "Nova porudžbina",
       "inviteStaff": "Pozovi osoblje",
@@ -420,7 +437,8 @@
     "description": "Upravljajte dolaznim porudžbinama i pratite njihov status",
     "refresh": "Osveži",
     "all": "Sve",
-    "noOrders": "Još nema porudžbina",
+    "allLocations": "Sve lokacije",
+    "noOrders": "Nema porudžbina",
     "noOrdersDesc": "Porudžbine će se pojaviti ovde kada ih gosti naprave",
     "noOrdersFound": "Nema pronađenih porudžbina",
     "orderNumber": "Porudžbina",
@@ -432,13 +450,20 @@
     "moreItems": "+{count} više stavki",
     "markAs": "Označi kao {status}",
     "loading": "Učitavanje porudžbina...",
+    "viewLogs": "Pogledaj istoriju",
+    "enableSound": "Uključi zvučna obaveštenja",
+    "disableSound": "Isključi zvučna obaveštenja",
+    "hasNotes": "Ima napomene",
+    "customerNotes": "Napomene gosta",
+    "showMore": "Prikaži više",
+    "showLess": "Prikaži manje",
     "status": {
       "draft": "Nacrt",
       "placed": "Novo",
       "accepted": "Prihvaćeno",
       "preparing": "Priprema",
       "ready": "Spremno",
-      "served": "Serviran o",
+      "served": "Servirano",
       "completed": "Završeno",
       "cancelled": "Otkazano"
     },
