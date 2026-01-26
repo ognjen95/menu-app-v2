@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPost, apiPatch, apiDelete } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -46,6 +47,7 @@ type Location = {
 }
 
 export default function LocationsPage() {
+  const t = useTranslations('locationsPage')
   const queryClient = useQueryClient()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editingLocation, setEditingLocation] = useState<Location | null>(null)
@@ -131,73 +133,73 @@ export default function LocationsPage() {
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="loc-name">Location Name *</Label>
+        <Label htmlFor="loc-name">{t('locationNameRequired')}</Label>
         <Input
           id="loc-name"
           value={formData.name}
           onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-          placeholder="Main Restaurant"
+          placeholder={t('locationNamePlaceholder')}
           required
         />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="loc-address">Address</Label>
+          <Label htmlFor="loc-address">{t('address')}</Label>
           <Input
             id="loc-address"
             value={formData.address}
             onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-            placeholder="123 Main Street"
+            placeholder={t('addressPlaceholder')}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="loc-city">City</Label>
+          <Label htmlFor="loc-city">{t('city')}</Label>
           <Input
             id="loc-city"
             value={formData.city}
             onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-            placeholder="Belgrade"
+            placeholder={t('cityPlaceholder')}
           />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="loc-postal">Postal Code</Label>
+          <Label htmlFor="loc-postal">{t('postalCode')}</Label>
           <Input
             id="loc-postal"
             value={formData.postal_code}
             onChange={(e) => setFormData(prev => ({ ...prev, postal_code: e.target.value }))}
-            placeholder="11000"
+            placeholder={t('postalCodePlaceholder')}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="loc-country">Country</Label>
+          <Label htmlFor="loc-country">{t('country')}</Label>
           <Input
             id="loc-country"
             value={formData.country}
             onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
-            placeholder="RS"
+            placeholder={t('countryPlaceholder')}
           />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="loc-phone">Phone</Label>
+          <Label htmlFor="loc-phone">{t('phone')}</Label>
           <Input
             id="loc-phone"
             value={formData.phone}
             onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-            placeholder="+381 11 123 4567"
+            placeholder={t('phonePlaceholder')}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="loc-email">Email</Label>
+          <Label htmlFor="loc-email">{t('email')}</Label>
           <Input
             id="loc-email"
             type="email"
             value={formData.email}
             onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-            placeholder="location@example.com"
+            placeholder={t('emailPlaceholder')}
           />
         </div>
       </div>
@@ -211,13 +213,13 @@ export default function LocationsPage() {
             resetForm()
           }}
         >
-          Cancel
+          {t('cancel')}
         </Button>
         <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
           {(createMutation.isPending || updateMutation.isPending) && (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
           )}
-          {editingLocation ? 'Update' : 'Create'} Location
+          {editingLocation ? t('updateLocation') : t('createLocation')}
         </Button>
       </DialogFooter>
     </form>
@@ -228,23 +230,23 @@ export default function LocationsPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Locations</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Manage your restaurant locations
+            {t('description')}
           </p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Add Location
+              {t('addLocation')}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Location</DialogTitle>
+              <DialogTitle>{t('addNewLocation')}</DialogTitle>
               <DialogDescription>
-                Create a new location for your business
+                {t('createNewLocation')}
               </DialogDescription>
             </DialogHeader>
             {formContent}
@@ -261,13 +263,13 @@ export default function LocationsPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <MapPin className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No locations yet</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('noLocations')}</h3>
             <p className="text-muted-foreground text-center mb-4">
-              Add your first location to start managing tables and menus
+              {t('noLocationsDesc')}
             </p>
             <Button onClick={() => setIsCreateOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Location
+              {t('addLocation')}
             </Button>
           </CardContent>
         </Card>
@@ -287,7 +289,7 @@ export default function LocationsPage() {
                     </div>
                   </div>
                   <Badge variant={location.is_active ? 'default' : 'secondary'}>
-                    {location.is_active ? 'Active' : 'Inactive'}
+                    {location.is_active ? t('active') : t('inactive')}
                   </Badge>
                 </div>
               </CardHeader>
@@ -318,7 +320,7 @@ export default function LocationsPage() {
                     onClick={() => handleEdit(location)}
                   >
                     <Edit className="h-4 w-4 mr-1" />
-                    Edit
+                    {t('edit')}
                   </Button>
                   <Button
                     variant="outline"
@@ -339,9 +341,9 @@ export default function LocationsPage() {
       <Dialog open={!!editingLocation} onOpenChange={(open: boolean) => !open && setEditingLocation(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Location</DialogTitle>
+            <DialogTitle>{t('editLocation')}</DialogTitle>
             <DialogDescription>
-              Update location details
+              {t('updateLocationDetails')}
             </DialogDescription>
           </DialogHeader>
           {formContent}

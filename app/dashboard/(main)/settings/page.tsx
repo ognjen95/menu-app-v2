@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { useCurrentTenant, useUpdateTenant } from '@/lib/hooks/use-tenant'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -28,6 +29,7 @@ type TenantSettings = {
 }
 
 export default function SettingsPage() {
+  const t = useTranslations('settingsPage')
   const { data, isLoading, refetch } = useCurrentTenant()
   const updateTenant = useUpdateTenant()
   const [isEditing, setIsEditing] = useState(false)
@@ -92,7 +94,7 @@ export default function SettingsPage() {
   if (!tenant) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        No business found
+        {t('noBusinessFound')}
       </div>
     )
   }
@@ -101,9 +103,9 @@ export default function SettingsPage() {
     <div className="space-y-6">
       {/* Page header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
         <p className="text-muted-foreground">
-          Manage your business settings and preferences
+          {t('description')}
         </p>
       </div>
 
@@ -116,13 +118,13 @@ export default function SettingsPage() {
                 <Store className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <CardTitle>Business Information</CardTitle>
-                <CardDescription>Update your business details</CardDescription>
+                <CardTitle>{t('businessInfo')}</CardTitle>
+                <CardDescription>{t('updateBusinessDetails')}</CardDescription>
               </div>
             </div>
             {!isEditing && (
               <Button variant="outline" onClick={handleEdit}>
-                Edit
+                {t('edit')}
               </Button>
             )}
           </div>
@@ -132,7 +134,7 @@ export default function SettingsPage() {
             <>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Business Name</Label>
+                  <Label htmlFor="name">{t('businessName')}</Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -140,7 +142,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('email')}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -149,7 +151,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="phone">{t('phone')}</Label>
                   <Input
                     id="phone"
                     value={formData.phone}
@@ -157,7 +159,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="currency">Currency</Label>
+                  <Label htmlFor="currency">{t('currency')}</Label>
                   <select
                     id="currency"
                     value={formData.default_currency}
@@ -173,7 +175,7 @@ export default function SettingsPage() {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="vat_rate">VAT Rate (%)</Label>
+                  <Label htmlFor="vat_rate">{t('vatRate')}</Label>
                   <Input
                     id="vat_rate"
                     type="number"
@@ -185,7 +187,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="timezone">Timezone</Label>
+                  <Label htmlFor="timezone">{t('timezone')}</Label>
                   <select
                     id="timezone"
                     value={formData.timezone}
@@ -204,37 +206,37 @@ export default function SettingsPage() {
               <div className="flex gap-2">
                 <Button onClick={handleSave} disabled={updateTenant.isPending}>
                   {updateTenant.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Save Changes
+                  {t('saveChanges')}
                 </Button>
                 <Button variant="outline" onClick={() => setIsEditing(false)}>
-                  Cancel
+                  {t('cancel')}
                 </Button>
               </div>
             </>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div>
-                <Label className="text-muted-foreground text-xs">Business Name</Label>
+                <Label className="text-muted-foreground text-xs">{t('businessName')}</Label>
                 <p className="font-medium">{tenant.name}</p>
               </div>
               <div>
-                <Label className="text-muted-foreground text-xs">Menu URL</Label>
+                <Label className="text-muted-foreground text-xs">{t('menuUrl')}</Label>
                 <p className="font-medium font-mono text-sm">/m/{tenant.slug}</p>
               </div>
               <div>
-                <Label className="text-muted-foreground text-xs">Email</Label>
+                <Label className="text-muted-foreground text-xs">{t('email')}</Label>
                 <p className="font-medium">{tenant.email || '-'}</p>
               </div>
               <div>
-                <Label className="text-muted-foreground text-xs">Phone</Label>
+                <Label className="text-muted-foreground text-xs">{t('phone')}</Label>
                 <p className="font-medium">{tenant.phone || '-'}</p>
               </div>
               <div>
-                <Label className="text-muted-foreground text-xs">Currency</Label>
+                <Label className="text-muted-foreground text-xs">{t('currency')}</Label>
                 <p className="font-medium">{tenant.default_currency}</p>
               </div>
               <div>
-                <Label className="text-muted-foreground text-xs">VAT Rate</Label>
+                <Label className="text-muted-foreground text-xs">{t('vatRate')}</Label>
                 <p className="font-medium">{tenant.vat_rate}%</p>
               </div>
             </div>
@@ -250,8 +252,8 @@ export default function SettingsPage() {
               <Receipt className="h-5 w-5 text-orange-500" />
             </div>
             <div>
-              <CardTitle>Order Settings</CardTitle>
-              <CardDescription>Configure how customers can order from you</CardDescription>
+              <CardTitle>{t('orderSettings')}</CardTitle>
+              <CardDescription>{t('configureOrders')}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -263,8 +265,8 @@ export default function SettingsPage() {
                 <Utensils className="h-4 w-4" />
               </div>
               <div>
-                <p className="font-medium">Dine-In Orders</p>
-                <p className="text-sm text-muted-foreground">Allow customers to order from their table</p>
+                <p className="font-medium">{t('dineInOrders')}</p>
+                <p className="text-sm text-muted-foreground">{t('dineInDesc')}</p>
               </div>
             </div>
             <Switch
@@ -281,8 +283,8 @@ export default function SettingsPage() {
                 <ShoppingBag className="h-4 w-4" />
               </div>
               <div>
-                <p className="font-medium">Takeaway Orders</p>
-                <p className="text-sm text-muted-foreground">Allow customers to order for pickup</p>
+                <p className="font-medium">{t('takeawayOrders')}</p>
+                <p className="text-sm text-muted-foreground">{t('takeawayDesc')}</p>
               </div>
             </div>
             <Switch
@@ -299,8 +301,8 @@ export default function SettingsPage() {
                 <Truck className="h-4 w-4" />
               </div>
               <div>
-                <p className="font-medium">Delivery Orders</p>
-                <p className="text-sm text-muted-foreground">Allow customers to order for delivery (requires address)</p>
+                <p className="font-medium">{t('deliveryOrders')}</p>
+                <p className="text-sm text-muted-foreground">{t('deliveryDesc')}</p>
               </div>
             </div>
             <Switch
@@ -317,8 +319,8 @@ export default function SettingsPage() {
                 <CreditCard className="h-4 w-4 text-green-500" />
               </div>
               <div>
-                <p className="font-medium">Online Payments</p>
-                <p className="text-sm text-muted-foreground">Accept card payments through Stripe</p>
+                <p className="font-medium">{t('onlinePayments')}</p>
+                <p className="text-sm text-muted-foreground">{t('onlinePaymentsDesc')}</p>
               </div>
             </div>
             <Switch
@@ -330,7 +332,7 @@ export default function SettingsPage() {
           {settings.online_payments_enabled && (
             <div className="ml-12 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
               <p className="text-sm text-green-700 dark:text-green-400">
-                Online payments are enabled. Customers can pay with their card during checkout.
+                {t('onlinePaymentsEnabled')}
               </p>
             </div>
           )}
@@ -346,13 +348,13 @@ export default function SettingsPage() {
                 <Crown className="h-5 w-5 text-purple-500" />
               </div>
               <div>
-                <CardTitle>Subscription</CardTitle>
-                <CardDescription>Manage your subscription plan</CardDescription>
+                <CardTitle>{t('subscription')}</CardTitle>
+                <CardDescription>{t('manageSubscription')}</CardDescription>
               </div>
             </div>
             <Badge variant={tenant.plan === 'pro' ? 'default' : 'secondary'} className="gap-1">
               {tenant.plan === 'pro' && <Crown className="h-3 w-3" />}
-              {tenant.plan?.toUpperCase() || 'BASIC'} Plan
+              {tenant.plan?.toUpperCase() || 'BASIC'} {t('plan')}
             </Badge>
           </div>
         </CardHeader>
@@ -360,64 +362,64 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
             <div>
               <p className="font-medium">
-                {tenant.plan === 'basic' ? 'Basic Plan' : 'Pro Plan'}
+                {tenant.plan === 'basic' ? t('basicPlan') : t('proPlan')}
               </p>
               <p className="text-sm text-muted-foreground">
-                Status: <span className="capitalize">{tenant.subscription_status}</span>
+                {t('status')}: <span className="capitalize">{tenant.subscription_status}</span>
                 {tenant.trial_ends_at && tenant.subscription_status === 'trialing' && (
-                  <> • Trial ends {new Date(tenant.trial_ends_at).toLocaleDateString()}</>
+                  <> • {t('trialEnds')} {new Date(tenant.trial_ends_at).toLocaleDateString()}</>
                 )}
               </p>
             </div>
             {tenant.plan === 'basic' && (
               <Button>
                 <Crown className="h-4 w-4 mr-2" />
-                Upgrade to Pro
+                {t('upgradeToPro')}
               </Button>
             )}
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <p className="font-medium text-sm">Included Features</p>
+              <p className="font-medium text-sm">{t('includedFeatures')}</p>
               <div className="space-y-1.5 text-sm">
                 <div className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span>Menu management</span>
+                  <span>{t('features.menuManagement')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span>Order management</span>
+                  <span>{t('features.orderManagement')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span>QR code generation</span>
+                  <span>{t('features.qrCodeGeneration')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-green-500" />
-                  <span>Website builder</span>
+                  <span>{t('features.websiteBuilder')}</span>
                 </div>
               </div>
             </div>
             {tenant.plan === 'pro' && (
               <div className="space-y-2">
-                <p className="font-medium text-sm">Pro Features</p>
+                <p className="font-medium text-sm">{t('proFeatures')}</p>
                 <div className="space-y-1.5 text-sm">
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500" />
-                    <span>AI translations</span>
+                    <span>{t('features.aiTranslations')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500" />
-                    <span>Advanced analytics</span>
+                    <span>{t('features.advancedAnalytics')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500" />
-                    <span>Inventory management</span>
+                    <span>{t('features.inventoryManagement')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-green-500" />
-                    <span>Priority support</span>
+                    <span>{t('features.prioritySupport')}</span>
                   </div>
                 </div>
               </div>

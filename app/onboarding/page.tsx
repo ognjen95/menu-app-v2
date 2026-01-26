@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { useMutation } from '@tanstack/react-query'
 import { apiPost } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -24,15 +25,17 @@ import {
 import { cn } from '@/lib/utils'
 import type { TenantType } from '@/lib/types'
 
-const businessTypes: { value: TenantType; label: string; icon: React.ElementType; description: string }[] = [
-  { value: 'restaurant', label: 'Restaurant', icon: Utensils, description: 'Full-service dining' },
-  { value: 'cafe', label: 'Cafe', icon: Coffee, description: 'Coffee shop or bakery' },
-  { value: 'bar', label: 'Bar', icon: Wine, description: 'Bar or pub' },
-  { value: 'salon', label: 'Salon', icon: Scissors, description: 'Hair or beauty salon' },
-  { value: 'carshop', label: 'Car Shop', icon: Car, description: 'Auto repair or dealership' },
-  { value: 'shop', label: 'Shop', icon: Store, description: 'Retail store' },
-  { value: 'other', label: 'Other', icon: Building, description: 'Other business type' },
-]
+const businessTypeIcons: Record<TenantType, React.ElementType> = {
+  restaurant: Utensils,
+  cafe: Coffee,
+  bar: Wine,
+  salon: Scissors,
+  carshop: Car,
+  shop: Store,
+  other: Building,
+}
+
+const businessTypeKeys: TenantType[] = ['restaurant', 'cafe', 'bar', 'salon', 'carshop', 'shop', 'other']
 
 type OnboardingData = {
   businessType: TenantType | null
@@ -46,6 +49,7 @@ type OnboardingData = {
 }
 
 export default function OnboardingPage() {
+  const t = useTranslations('onboardingPage')
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [data, setData] = useState<OnboardingData>({
@@ -133,37 +137,40 @@ export default function OnboardingPage() {
         {step === 1 && (
           <Card>
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl">What type of business do you have?</CardTitle>
+              <CardTitle className="text-2xl">{t('step1Title')}</CardTitle>
               <CardDescription>
-                Select the option that best describes your business
+                {t('step1Desc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {businessTypes.map((type) => (
-                  <button
-                    key={type.value}
-                    onClick={() => setData(prev => ({ ...prev, businessType: type.value }))}
-                    className={cn(
-                      'flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all',
-                      data.businessType === type.value
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/50 hover:bg-muted'
-                    )}
-                  >
-                    <type.icon className={cn(
-                      'h-8 w-8',
-                      data.businessType === type.value ? 'text-primary' : 'text-muted-foreground'
-                    )} />
-                    <span className="font-medium">{type.label}</span>
-                    <span className="text-xs text-muted-foreground text-center">{type.description}</span>
-                  </button>
-                ))}
+                {businessTypeKeys.map((typeKey) => {
+                  const Icon = businessTypeIcons[typeKey]
+                  return (
+                    <button
+                      key={typeKey}
+                      onClick={() => setData(prev => ({ ...prev, businessType: typeKey }))}
+                      className={cn(
+                        'flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all',
+                        data.businessType === typeKey
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50 hover:bg-muted'
+                      )}
+                    >
+                      <Icon className={cn(
+                        'h-8 w-8',
+                        data.businessType === typeKey ? 'text-primary' : 'text-muted-foreground'
+                      )} />
+                      <span className="font-medium">{t(`businessTypes.${typeKey}`)}</span>
+                      <span className="text-xs text-muted-foreground text-center">{t(`businessTypes.${typeKey}Desc`)}</span>
+                    </button>
+                  )
+                })}
               </div>
 
               <div className="flex justify-end mt-8">
                 <Button onClick={() => setStep(2)} disabled={!canProceed()}>
-                  Continue
+                  {t('continue')}
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>
@@ -175,24 +182,24 @@ export default function OnboardingPage() {
         {step === 2 && (
           <Card>
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Tell us about your business</CardTitle>
+              <CardTitle className="text-2xl">{t('step2Title')}</CardTitle>
               <CardDescription>
-                This information will be shown to your customers
+                {t('step2Desc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="name">Business Name *</Label>
+                <Label htmlFor="name">{t('businessName')} *</Label>
                 <Input
                   id="name"
-                  placeholder="e.g., The Italian Kitchen"
+                  placeholder={t('businessNamePlaceholder')}
                   value={data.businessName}
                   onChange={(e) => handleNameChange(e.target.value)}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="slug">URL Slug *</Label>
+                <Label htmlFor="slug">{t('urlSlug')} *</Label>
                 <div className="flex items-center gap-2">
                   <span className="text-muted-foreground text-sm">qrmenu.app/m/</span>
                   <Input
@@ -204,13 +211,13 @@ export default function OnboardingPage() {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  This will be your unique menu URL
+                  {t('uniqueMenuUrl')}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('email')}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -220,7 +227,7 @@ export default function OnboardingPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="phone">{t('phone')}</Label>
                   <Input
                     id="phone"
                     placeholder="+381 11 123 4567"
@@ -233,10 +240,10 @@ export default function OnboardingPage() {
               <div className="flex justify-between mt-8">
                 <Button variant="outline" onClick={() => setStep(1)}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
+                  {t('back')}
                 </Button>
                 <Button onClick={() => setStep(3)} disabled={!canProceed()}>
-                  Continue
+                  {t('continue')}
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>
@@ -248,14 +255,14 @@ export default function OnboardingPage() {
         {step === 3 && (
           <Card>
             <CardHeader className="text-center">
-              <CardTitle className="text-2xl">Where is your business located?</CardTitle>
+              <CardTitle className="text-2xl">{t('step3Title')}</CardTitle>
               <CardDescription>
-                Add your main location - you can add more later
+                {t('step3Desc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="address">{t('address')}</Label>
                 <Input
                   id="address"
                   placeholder="123 Main Street"
@@ -266,7 +273,7 @@ export default function OnboardingPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
+                  <Label htmlFor="city">{t('city')}</Label>
                   <Input
                     id="city"
                     placeholder="Belgrade"
@@ -275,7 +282,7 @@ export default function OnboardingPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="country">Country</Label>
+                  <Label htmlFor="country">{t('country')}</Label>
                   <select
                     id="country"
                     value={data.country}
@@ -302,7 +309,7 @@ export default function OnboardingPage() {
               <div className="flex justify-between mt-8">
                 <Button variant="outline" onClick={() => setStep(2)}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
+                  {t('back')}
                 </Button>
                 <Button 
                   onClick={() => createTenant.mutate()} 
@@ -311,12 +318,12 @@ export default function OnboardingPage() {
                   {createTenant.isPending ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Creating...
+                      {t('creating')}
                     </>
                   ) : (
                     <>
                       <Check className="h-4 w-4 mr-2" />
-                      Create My Business
+                      {t('createMyBusiness')}
                     </>
                   )}
                 </Button>
@@ -326,7 +333,7 @@ export default function OnboardingPage() {
                 <p className="text-destructive text-sm text-center">
                   {createTenant.error instanceof Error 
                     ? createTenant.error.message 
-                    : 'Failed to create business. Please try again.'}
+                    : t('failedToCreate')}
                 </p>
               )}
             </CardContent>

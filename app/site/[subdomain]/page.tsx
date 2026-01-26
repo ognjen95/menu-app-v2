@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { FaFacebookF, FaInstagram, FaXTwitter } from 'react-icons/fa6'
 import { unstable_noStore as noStore } from 'next/cache'
+import { getTranslations } from 'next-intl/server'
 import { BlockRenderer } from '@/components/features/public-menu/block-renderer'
 
 // Public Supabase client (no auth required for public website)
@@ -22,6 +23,7 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
 
   const { subdomain } = await params
   const { page: pageSlug } = await searchParams
+  const t = await getTranslations('blockRenderer')
 
   // Fetch website by subdomain with tenant join
   const { data: website, error: websiteError } = await supabase
@@ -83,15 +85,12 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
   }
 
   // Fetch locations for the tenant (needed for contact, hours, location blocks)
-  const { data: locations, error: locationsError } = await supabase
+  const { data: locations } = await supabase
     .from('locations')
     .select('id, name, slug, address, city, postal_code, country, latitude, longitude, phone, email, opening_hours, is_active')
     .eq('tenant_id', website.tenant_id)
     .eq('is_active', true)
     .order('name')
-
-  // Debug log for locations
-  console.log('[Site Page] Locations fetched:', { count: locations?.length, tenantId: website.tenant_id, error: locationsError?.message })
 
   // Theme styles
   const theme = {
@@ -185,7 +184,7 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
       {/* Page Content - Render Blocks */}
       <main>
         {blocks?.map((block) => (
-          <BlockRenderer key={block.id} block={block} theme={theme} menuItems={menuItemsMap} menuLink={menuLink} locations={locations || []} />
+          <BlockRenderer key={block.id} block={block} theme={theme} menuItems={menuItemsMap} menuLink={menuLink} locations={locations || []} t={t} />
         ))}
 
         {(!blocks || blocks.length === 0) && (

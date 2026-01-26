@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Search,
   ShoppingCart,
@@ -73,6 +74,7 @@ export function PublicMenuView({
   tableId,
   locationId,
 }: PublicMenuViewProps) {
+  const t = useTranslations('publicMenuView')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedFilters, setSelectedFilters] = useState<string[]>([])

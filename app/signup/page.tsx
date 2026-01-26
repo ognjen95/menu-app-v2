@@ -1,10 +1,13 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from 'next/link'
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
 import SignupForm from "@/components/SignupForm"
 import ProviderSigninBlock from "@/components/ProviderSigninBlock"
 
 export default function Signup() {
+    const t = useTranslations('auth.signup')
+
     return (
         <div className="flex items-center justify-center bg-muted min-h-screen">
 
@@ -16,8 +19,8 @@ export default function Signup() {
                         </Link>
                     </div>
 
-                    <CardTitle className="text-2x\l font-bold">Signup</CardTitle>
-                    <CardDescription>Create your account now!</CardDescription>
+                    <CardTitle className="text-2xl font-bold">{t('title')}</CardTitle>
+                    <CardDescription>{t('description')}</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4">
                     <SignupForm />
@@ -26,14 +29,14 @@ export default function Signup() {
                             <span className="w-full border-t" />
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                            <span className="bg-background px-2 text-muted-foreground">{t('orContinueWith')}</span>
                         </div>
                     </div>
                     <ProviderSigninBlock />
                 </CardContent>
                 <CardFooter className="flex-col text-center">
                     <Link className="w-full text-sm text-muted-foreground" href="/login">
-                        Have an account? Login
+                        {t('haveAccount')}
                     </Link>
                 </CardFooter>
             </Card>

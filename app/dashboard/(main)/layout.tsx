@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { ThemeToggle } from '@/components/theme-toggle'
+import { NavbarActions } from '@/components/NavbarActions'
 import {
   LayoutDashboard,
   UtensilsCrossed,
@@ -22,27 +23,24 @@ import {
   ChevronLeft,
   Store,
   ChefHat,
-  Bell,
   SidebarIcon,
   SidebarOpenIcon,
   SidebarCloseIcon,
 } from 'lucide-react'
 
-const navigation = [
-  { name: 'Overview', href: '/dashboard/overview', icon: LayoutDashboard },
-  { name: 'Menu', href: '/dashboard/menu', icon: UtensilsCrossed },
-  { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
-  { name: 'Kitchen', href: '/dashboard/kitchen', icon: ChefHat },
-  { name: 'Tables & QR', href: '/dashboard/tables', icon: QrCode },
-  // { name: 'Inventory', href: '/dashboard/inventory', icon: Package },
-  { name: 'Website', href: '/dashboard/website/builder', icon: Globe },
-  // { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+const navigationItems = [
+  { key: 'overview', href: '/dashboard/overview', icon: LayoutDashboard },
+  { key: 'menu', href: '/dashboard/menu', icon: UtensilsCrossed },
+  { key: 'orders', href: '/dashboard/orders', icon: ShoppingCart },
+  { key: 'kitchen', href: '/dashboard/kitchen', icon: ChefHat },
+  { key: 'tablesQr', href: '/dashboard/tables', icon: QrCode },
+  { key: 'website', href: '/dashboard/website/builder', icon: Globe },
 ]
 
-const settingsNavigation = [
-  { name: 'Locations', href: '/dashboard/settings/locations', icon: MapPin },
-  { name: 'Team', href: '/dashboard/settings/team', icon: Users },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+const settingsItems = [
+  { key: 'locations', href: '/dashboard/settings/locations', icon: MapPin },
+  { key: 'team', href: '/dashboard/settings/team', icon: Users },
+  { key: 'settings', href: '/dashboard/settings', icon: Settings },
 ]
 
 // Update navigation to match actual routes
@@ -53,6 +51,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const t = useTranslations('sidebar')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -127,11 +126,12 @@ export default function DashboardLayout({
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-3">
           <ul className="space-y-1.5">
-            {navigation.map((item) => {
+            {navigationItems.map((item) => {
               const isActive = pathname === item.href ||
                 (item.href !== '/dashboard/overview' && pathname.startsWith(item.href))
+              const name = t(item.key)
               return (
-                <li key={item.name}>
+                <li key={item.key}>
                   <Link
                     href={item.href}
                     className={cn(
@@ -141,14 +141,14 @@ export default function DashboardLayout({
                         ? 'bg-primary text-primary-foreground shadow-md'
                         : 'text-muted-foreground hover:bg-accent hover:text-foreground hover:shadow-sm'
                     )}
-                    title={collapsed ? item.name : undefined}
+                    title={collapsed ? name : undefined}
                   >
                     <item.icon className={cn(
                       'flex-shrink-0 transition-transform duration-200',
                       collapsed ? 'h-5 w-5' : 'h-5 w-5',
                       !isActive && 'group-hover:scale-110'
                     )} />
-                    {!collapsed && <span>{item.name}</span>}
+                    {!collapsed && <span>{name}</span>}
                   </Link>
                 </li>
               )
@@ -159,15 +159,16 @@ export default function DashboardLayout({
           <div className="mt-6 pt-4 border-t border-border/50">
             {!collapsed && (
               <p className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Settings
+                {t('settingsSection')}
               </p>
             )}
             <ul className="space-y-1.5">
-              {settingsNavigation.map((item) => {
+              {settingsItems.map((item) => {
                 const isActive = pathname === item.href ||
                   (item.href !== '/dashboard/settings' && pathname.startsWith(item.href))
+                const name = t(item.key)
                 return (
-                  <li key={item.name}>
+                  <li key={item.key}>
                     <Link
                       href={item.href}
                       className={cn(
@@ -177,14 +178,14 @@ export default function DashboardLayout({
                           ? 'bg-primary text-primary-foreground shadow-md'
                           : 'text-muted-foreground hover:bg-accent hover:text-foreground hover:shadow-sm'
                       )}
-                      title={collapsed ? item.name : undefined}
+                      title={collapsed ? name : undefined}
                     >
                       <item.icon className={cn(
                         'flex-shrink-0 transition-transform duration-200',
                         collapsed ? 'h-5 w-5' : 'h-5 w-5',
                         !isActive && 'group-hover:scale-110'
                       )} />
-                      {!collapsed && <span>{item.name}</span>}
+                      {!collapsed && <span>{name}</span>}
                     </Link>
                   </li>
                 )
@@ -208,7 +209,7 @@ export default function DashboardLayout({
             ) : (
               <>
                 <SidebarCloseIcon className="h-5 w-5" />
-                <span>Collapse</span>
+                <span>{t('collapse')}</span>
               </>
             )}
           </Button>
@@ -233,16 +234,8 @@ export default function DashboardLayout({
 
           <div className="flex-1" />
 
-          {/* Theme toggle */}
-          <ThemeToggle />
-
-          {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">
-              3
-            </span>
-          </Button>
+          {/* Language, Theme, Notifications */}
+          <NavbarActions />
         </header>
 
         {/* Page content */}

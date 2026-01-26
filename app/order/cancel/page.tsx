@@ -2,12 +2,14 @@
 
 import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { XCircle, ArrowLeft, RefreshCw, Loader2 } from 'lucide-react'
 
 function OrderCancelContent() {
+  const t = useTranslations('orderCancel')
   const searchParams = useSearchParams()
   const orderId = searchParams.get('order_id')
 
@@ -21,15 +23,14 @@ function OrderCancelContent() {
               <XCircle className="h-10 w-10 text-destructive" />
             </div>
 
-            <h1 className="text-2xl font-bold mb-2">Payment Cancelled</h1>
+            <h1 className="text-2xl font-bold mb-2">{t('title')}</h1>
             <p className="text-muted-foreground mb-6">
-              Your payment was not completed. Don&apos;t worry, no charges were made.
+              {t('description')}
             </p>
 
             {orderId && (
               <p className="text-sm text-muted-foreground mb-6">
-                Order #{orderId.slice(-6).toUpperCase()} has been saved. 
-                You can try again or choose a different payment method.
+                {t('orderSaved', { orderId: orderId.slice(-6).toUpperCase() })}
               </p>
             )}
 
@@ -38,14 +39,14 @@ function OrderCancelContent() {
                 <Link href={`/checkout/${orderId}`}>
                   <Button className="w-full">
                     <RefreshCw className="h-4 w-4 mr-2" />
-                    Try Again
+                    {t('tryAgain')}
                   </Button>
                 </Link>
               )}
               <Link href="/">
                 <Button variant="outline" className="w-full">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Menu
+                  {t('backToMenu')}
                 </Button>
               </Link>
             </div>

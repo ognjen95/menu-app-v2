@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { loginUser } from '@/app/auth/actions'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 
 interface LoginFormData {
   email: string
@@ -18,9 +18,9 @@ interface LoginFormData {
  * Handles login form logic and state management
  */
 export function LoginFormContainer() {
+  const t = useTranslations('loginForm')
   const [error, setError] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>()
 
@@ -44,12 +44,12 @@ export function LoginFormContainer() {
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="grid gap-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{t('email')}</Label>
         <Input
           id="email"
           type="email"
-          placeholder="m@example.com"
-          {...register('email', { required: 'Email is required' })}
+          placeholder={t('emailPlaceholder')}
+          {...register('email', { required: t('emailRequired') })}
           disabled={isLoading}
         />
         {errors.email && (
@@ -58,11 +58,11 @@ export function LoginFormContainer() {
       </div>
       
       <div className="grid gap-2 mt-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">{t('password')}</Label>
         <Input
           id="password"
           type="password"
-          {...register('password', { required: 'Password is required' })}
+          {...register('password', { required: t('passwordRequired') })}
           disabled={isLoading}
         />
         {errors.password && (
@@ -71,7 +71,7 @@ export function LoginFormContainer() {
       </div>
       
       <Button className="w-full mt-4" type="submit" disabled={isLoading}>
-        {isLoading ? 'Signing in...' : 'Sign In'}
+        {isLoading ? t('signingIn') : t('signIn')}
       </Button>
       
       {error && (

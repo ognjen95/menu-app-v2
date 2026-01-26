@@ -35,24 +35,15 @@ const FEATURE_ICONS: Record<string, any> = {
   vegan: Leaf,
 };
 
-export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [] }: {
+export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [], t }: {
   block: { type: string; content: Record<string, unknown>; settings: Record<string, unknown> }
   theme: { primary: string; secondary: string; background: string; foreground: string; accent: string; fontHeading: string; fontBody: string }
   menuItems: Record<string, { id: string; name: string; description: string | null; base_price: number; image_urls: string[] | null }>
   menuLink: string
   locations?: Location[]
+  t: (key: string) => string
 }) {
   const content = block.content || {}
-
-  // Debug log for location blocks
-  if (['contact', 'hours', 'location'].includes(block.type)) {
-    console.log(`[BlockRenderer] ${block.type}:`, { 
-      locationsCount: locations.length, 
-      useLocations: content.use_locations,
-      locationMode: content.location_mode,
-      locationIds: content.location_ids 
-    })
-  }
 
   // Helper to get locations based on block content settings
   const getBlockLocations = (): Location[] => {
@@ -123,7 +114,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
               marginBottom: '1rem',
               color: content.image_url ? '#fff' : theme.foreground,
             }}>
-              {String(content.headline || 'Welcome')}
+              {String(content.headline || t('welcome'))}
             </h1>
             {Boolean(content.subheadline) && (
               <p style={{
@@ -164,14 +155,14 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={String(content.image_url)}
-                  alt={String(content.title || 'About')}
+                  alt={String(content.title || t('aboutUs'))}
                   style={{ width: '100%', borderRadius: '1rem' }}
                 />
               </div>
             )}
             <div style={{ flex: '1', minWidth: '300px' }}>
               <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '1rem' }}>
-                {String(content.title || 'About Us')}
+                {String(content.title || t('aboutUs'))}
               </h2>
               <p style={{ lineHeight: 1.8, opacity: 0.8 }}>
                 {String(content.text || '')}
@@ -230,7 +221,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
         <section style={{ padding: sectionPadding, backgroundColor: theme.secondary }}>
           <div style={contentStyle}>
             <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
-              {String(content.title || 'Contact Us')}
+              {String(content.title || t('contactUs'))}
             </h2>
             
             {useLocationsForContact ? (
@@ -289,14 +280,14 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
         if (!hours) return ''
         const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
         const dayLabels: Record<string, string> = {
-          monday: 'Mon', tuesday: 'Tue', wednesday: 'Wed', thursday: 'Thu',
-          friday: 'Fri', saturday: 'Sat', sunday: 'Sun'
+          monday: t('days.mon'), tuesday: t('days.tue'), wednesday: t('days.wed'), thursday: t('days.thu'),
+          friday: t('days.fri'), saturday: t('days.sat'), sunday: t('days.sun')
         }
         return days
           .map(day => {
             const h = hours[day]
             if (!h) return null
-            if (h.closed) return `${dayLabels[day]}: Closed`
+            if (h.closed) return `${dayLabels[day]}: ${t('closed')}`
             return `${dayLabels[day]}: ${h.open} - ${h.close}`
           })
           .filter(Boolean)
@@ -340,7 +331,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
         <section style={{ padding: sectionPadding }}>
           <div style={contentStyle}>
             <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '1.5rem', textAlign: 'center' }}>
-              {String(content.title || 'Opening Hours')}
+              {String(content.title || t('openingHours'))}
             </h2>
             
             {useLocationsForHours ? (
@@ -383,7 +374,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
       return (
         <GalleryBlock
           images={images}
-          title={String(content.title || 'Gallery')}
+          title={String(content.title || t('gallery'))}
           theme={{
             primary: theme.primary,
             secondary: theme.secondary,
@@ -400,7 +391,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
         <section style={{ padding: sectionPadding, backgroundColor: theme.secondary }}>
           <div style={contentStyle}>
             <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
-              {String(content.title || 'What Our Guests Say')}
+              {String(content.title || t('whatOurGuestsSay'))}
             </h2>
             <div style={{
               display: 'flex',
@@ -447,7 +438,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
         <section style={{ padding: sectionPadding }}>
           <div style={contentStyle}>
           <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
-            {String(content.title || 'Featured Menu Items')}
+            {String(content.title || t('featuredMenuItems'))}
           </h2>
           {selectedItems.length > 0 ? (
             <div style={{
@@ -491,7 +482,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
               ))}
             </div>
           ) : (
-            <p style={{ textAlign: 'center', opacity: 0.6 }}>No menu items selected</p>
+            <p style={{ textAlign: 'center', opacity: 0.6 }}>{t('noMenuItems')}</p>
           )}
           </div>
         </section>
@@ -521,7 +512,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
         <section style={{ padding: sectionPadding }}>
           <div style={{ ...contentStyle, textAlign: 'center' }}>
             <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem' }}>
-              {String(content.title || 'Follow Us')}
+              {String(content.title || t('followUs'))}
             </h2>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
               {activeSocials.map(([platform, url]) => (
@@ -561,7 +552,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
               ))}
             </div>
             {activeSocials.length === 0 && (
-              <p style={{ opacity: 0.6 }}>No social links configured</p>
+              <p style={{ opacity: 0.6 }}>{t('noSocialLinks')}</p>
             )}
           </div>
         </section>
@@ -575,7 +566,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
               <Sparkles size={32} color={theme.primary} style={{ margin: '0 auto 0.5rem' }} />
               <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem' }}>
-                {String(content.title || "Today's Specials")}
+                {String(content.title || t('todaysSpecials'))}
               </h2>
               {Boolean(content.subtitle) && (
                 <p style={{ opacity: 0.7, marginTop: '0.5rem' }}>{String(content.subtitle)}</p>
@@ -599,7 +590,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
                 </div>
               ))}
             </div>
-            {specials.length === 0 && <p style={{ textAlign: 'center', opacity: 0.6 }}>No specials configured</p>}
+            {specials.length === 0 && <p style={{ textAlign: 'center', opacity: 0.6 }}>{t('noSpecials')}</p>}
           </div>
         </section>
       )
@@ -610,7 +601,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
         <section style={{ padding: sectionPadding }}>
           <div style={contentStyle}>
             <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
-              {String(content.title || 'Upcoming Events')}
+              {String(content.title || t('upcomingEvents'))}
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
               {events.map((event, idx) => (
@@ -630,7 +621,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
                 </div>
               ))}
             </div>
-            {events.length === 0 && <p style={{ textAlign: 'center', opacity: 0.6 }}>No events scheduled</p>}
+            {events.length === 0 && <p style={{ textAlign: 'center', opacity: 0.6 }}>{t('noEvents')}</p>}
           </div>
         </section>
       )
@@ -648,7 +639,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
           {Boolean(content.background_image) && <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)' }} />}
           <div style={{ ...contentStyle, position: 'relative', zIndex: 1, textAlign: 'center' }}>
             <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2.5rem', color: '#fff', marginBottom: '1rem' }}>
-              {String(content.title || 'Make a Reservation')}
+              {String(content.title || t('makeReservation'))}
             </h2>
             {Boolean(content.subtitle) && (
               <p style={{ fontSize: '1.125rem', color: '#fff', opacity: 0.9, marginBottom: '2rem' }}>{String(content.subtitle)}</p>
@@ -679,7 +670,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
                   textDecoration: 'none',
                   fontWeight: 600,
                 }}>
-                  {String(content.button_text || 'Book Online')}
+                  {String(content.button_text || t('bookOnline'))}
                 </a>
               )}
             </div>
@@ -693,7 +684,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
         <section style={{ padding: sectionPadding, backgroundColor: theme.secondary }}>
           <div style={contentStyle}>
             <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
-              {String(content.title || 'What We Offer')}
+              {String(content.title || t('whatWeOffer'))}
             </h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'center' }}>
               {features.map((feature, idx) => {
@@ -709,7 +700,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
                 )
               })}
             </div>
-            {features.length === 0 && <p style={{ textAlign: 'center', opacity: 0.6 }}>No features configured</p>}
+            {features.length === 0 && <p style={{ textAlign: 'center', opacity: 0.6 }}>{t('noFeatures')}</p>}
           </div>
         </section>
       )
@@ -750,7 +741,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
             ) : (
               <div style={{ textAlign: 'center', padding: '4rem', backgroundColor: theme.secondary, borderRadius: '1rem' }}>
                 <Play size={48} color={theme.primary} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
-                <p style={{ opacity: 0.6 }}>No video URL configured</p>
+                <p style={{ opacity: 0.6 }}>{t('noVideoUrl')}</p>
               </div>
             )}
           </div>
@@ -773,7 +764,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
           {ctaHasImage && <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)' }} />}
           <div style={{ ...contentStyle, position: 'relative', zIndex: 1 }}>
             <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', color: ctaTextColor, marginBottom: '1rem' }}>
-              {String(content.title || 'Ready to Visit?')}
+              {String(content.title || t('readyToVisit'))}
             </h2>
             {Boolean(content.subtitle) && (
               <p style={{ fontSize: '1.125rem', color: ctaTextColor, opacity: 0.9, marginBottom: '2rem' }}>{String(content.subtitle)}</p>
@@ -801,7 +792,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
         <section style={{ padding: sectionPadding }}>
           <div style={contentStyle}>
             <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
-              {String(content.title || 'Meet Our Team')}
+              {String(content.title || t('meetOurTeam'))}
             </h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'center' }}>
               {members.map((member, idx) => (
@@ -820,7 +811,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
                 </div>
               ))}
             </div>
-            {members.length === 0 && <p style={{ textAlign: 'center', opacity: 0.6 }}>No team members added</p>}
+            {members.length === 0 && <p style={{ textAlign: 'center', opacity: 0.6 }}>{t('noTeamMembers')}</p>}
           </div>
         </section>
       )
@@ -910,7 +901,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
                   }}
                 >
                   <MapPin size={16} />
-                  Get Directions
+                  {t('getDirections')}
                 </a>
               )}
             </div>
@@ -922,7 +913,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
         <section style={{ padding: sectionPadding, backgroundColor: theme.secondary }}>
           <div style={contentStyle}>
             <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
-              {String(content.title || 'Find Us')}
+              {String(content.title || t('findUs'))}
             </h2>
 
             {useLocationsForMap ? (
@@ -979,21 +970,21 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
 
     case 'drinks':
       const drinks = (content.drinks as { name: string; description?: string; price: string; category?: string }[]) || []
-      const drinkCategories = Array.from(new Set(drinks.map(d => d.category || 'Drinks')))
+      const drinkCategories = Array.from(new Set(drinks.map(d => d.category || t('drinks'))))
       return (
         <section style={{ padding: sectionPadding }}>
           <div style={contentStyle}>
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
               <Wine size={32} color={theme.primary} style={{ margin: '0 auto 0.5rem' }} />
               <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem' }}>
-                {String(content.title || 'Drinks Menu')}
+                {String(content.title || t('drinksMenu'))}
               </h2>
             </div>
             {drinkCategories.map(category => (
               <div key={category} style={{ marginBottom: '2rem' }}>
                 <h3 style={{ fontFamily: theme.fontHeading, fontSize: '1.25rem', color: theme.primary, marginBottom: '1rem', borderBottom: `2px solid ${theme.primary}`, paddingBottom: '0.5rem' }}>{category}</h3>
                 <div style={{ display: 'grid', gap: '1rem' }}>
-                  {drinks.filter(d => (d.category || 'Drinks') === category).map((drink, idx) => (
+                  {drinks.filter(d => (d.category || t('drinks')) === category).map((drink, idx) => (
                     <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '0.75rem', backgroundColor: theme.secondary, borderRadius: '0.5rem' }}>
                       <div>
                         <h4 style={{ fontWeight: 600, margin: 0 }}>{drink.name}</h4>
@@ -1005,7 +996,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
                 </div>
               </div>
             ))}
-            {drinks.length === 0 && <p style={{ textAlign: 'center', opacity: 0.6 }}>No drinks configured</p>}
+            {drinks.length === 0 && <p style={{ textAlign: 'center', opacity: 0.6 }}>{t('noDrinks')}</p>}
           </div>
         </section>
       )

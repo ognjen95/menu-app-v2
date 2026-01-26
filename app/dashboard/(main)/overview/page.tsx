@@ -11,32 +11,33 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 // Mock data - will be replaced with real data from API
-const stats = [
+const getStats = (t: ReturnType<typeof useTranslations>) => [
   {
-    title: 'Orders Today',
+    title: t('stats.ordersToday'),
     value: '24',
     change: '+12%',
     changeType: 'positive' as const,
     icon: ShoppingCart,
   },
   {
-    title: 'Revenue Today',
+    title: t('stats.revenueToday'),
     value: '€1,234',
     change: '+8%',
     changeType: 'positive' as const,
     icon: DollarSign,
   },
   {
-    title: 'Active Tables',
+    title: t('stats.activeTables'),
     value: '8/12',
     change: '67%',
     changeType: 'neutral' as const,
     icon: Users,
   },
   {
-    title: 'Avg. Order Time',
+    title: t('stats.avgOrderTime'),
     value: '18 min',
     change: '-2 min',
     changeType: 'positive' as const,
@@ -59,13 +60,17 @@ const topItems = [
 ]
 
 export default function DashboardPage() {
+  const t = useTranslations('dashboard')
+  const tc = useTranslations('common')
+  const stats = getStats(t)
+
   return (
     <div className="space-y-6">
       {/* Page header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
         <p className="text-muted-foreground">
-          Welcome back! Here is what is happening with your restaurant today.
+          {t('welcome')}
         </p>
       </div>
 
@@ -88,7 +93,7 @@ export default function DashboardPage() {
                 }>
                   {stat.change}
                 </span>
-                {' '}from yesterday
+                {' '}{tc('fromYesterday')}
               </p>
             </CardContent>
           </Card>
@@ -100,8 +105,8 @@ export default function DashboardPage() {
         {/* Recent orders */}
         <Card className="col-span-4">
           <CardHeader>
-            <CardTitle>Recent Orders</CardTitle>
-            <CardDescription>Latest orders from your restaurant</CardDescription>
+            <CardTitle>{t('recentOrders.title')}</CardTitle>
+            <CardDescription>{t('recentOrders.description')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -113,7 +118,7 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-4">
                     <div className="font-medium">{order.id}</div>
                     <div className="text-sm text-muted-foreground">{order.table}</div>
-                    <div className="text-sm">{order.items} items</div>
+                    <div className="text-sm">{order.items} {tc('items')}</div>
                   </div>
                   <div className="flex items-center gap-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -136,8 +141,8 @@ export default function DashboardPage() {
         {/* Top items */}
         <Card className="col-span-3">
           <CardHeader>
-            <CardTitle>Top Selling Items</CardTitle>
-            <CardDescription>Best performers today</CardDescription>
+            <CardTitle>{t('topItems.title')}</CardTitle>
+            <CardDescription>{t('topItems.description')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -148,7 +153,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">{item.orders} orders</p>
+                    <p className="text-sm text-muted-foreground">{item.orders} {t('topItems.orders')}</p>
                   </div>
                   <div className="font-medium">{item.revenue}</div>
                 </div>
@@ -161,25 +166,25 @@ export default function DashboardPage() {
       {/* Quick actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+          <CardTitle>{t('quickActions.title')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-4">
             <button className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-dashed hover:border-primary hover:bg-primary/5 transition-colors">
               <UtensilsCrossed className="h-8 w-8 text-muted-foreground" />
-              <span className="text-sm font-medium">Add Menu Item</span>
+              <span className="text-sm font-medium">{t('quickActions.addMenuItem')}</span>
             </button>
             <button className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-dashed hover:border-primary hover:bg-primary/5 transition-colors">
               <ShoppingCart className="h-8 w-8 text-muted-foreground" />
-              <span className="text-sm font-medium">New Order</span>
+              <span className="text-sm font-medium">{t('quickActions.newOrder')}</span>
             </button>
             <button className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-dashed hover:border-primary hover:bg-primary/5 transition-colors">
               <Users className="h-8 w-8 text-muted-foreground" />
-              <span className="text-sm font-medium">Invite Staff</span>
+              <span className="text-sm font-medium">{t('quickActions.inviteStaff')}</span>
             </button>
             <button className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-dashed hover:border-primary hover:bg-primary/5 transition-colors">
               <TrendingUp className="h-8 w-8 text-muted-foreground" />
-              <span className="text-sm font-medium">View Reports</span>
+              <span className="text-sm font-medium">{t('quickActions.viewReports')}</span>
             </button>
           </div>
         </CardContent>

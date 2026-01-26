@@ -1,12 +1,12 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from 'next/link'
 import Image from 'next/image'
-
-import ProviderSigninBlock from '@/components/ProviderSigninBlock'
-import LoginForm from "@/components/LoginForm"
+import { useTranslations } from 'next-intl'
 import { Button } from "@/components/ui/button"
+
 export default function SubscribeSuccess() {
+    const t = useTranslations('subscribe.success')
+
     return (
         <div className="flex items-center justify-center bg-muted min-h-screen">
             <Card className="w-[350px] mx-auto">
@@ -17,14 +17,14 @@ export default function SubscribeSuccess() {
                         </Link>
                     </div>
 
-                    <CardTitle className="text-2xl font-bold">Success</CardTitle>
-                    <CardDescription>Thank you for subscribing!</CardDescription>
+                    <CardTitle className="text-2xl font-bold">{t('title')}</CardTitle>
+                    <CardDescription>{t('description')}</CardDescription>
                 </CardHeader>
 
                 <CardFooter className="flex-col text-center">
                     <Button className="w-full text-sm " >
                         <Link href="/dashboard">
-                            Go To Dashboard
+                            {t('goToDashboard')}
                         </Link>
                     </Button>
                 </CardFooter>

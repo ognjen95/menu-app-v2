@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPost, apiDelete } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -46,15 +47,16 @@ type TeamMember = {
   location_id?: string
 }
 
-const roleConfig: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-  owner: { label: 'Owner', icon: Crown, color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' },
-  manager: { label: 'Manager', icon: Shield, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' },
-  staff: { label: 'Staff', icon: Users, color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
-  kitchen: { label: 'Kitchen', icon: ChefHat, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300' },
-  waiter: { label: 'Waiter', icon: Coffee, color: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' },
+const roleConfig: Record<string, { icon: React.ElementType; color: string }> = {
+  owner: { icon: Crown, color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' },
+  manager: { icon: Shield, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' },
+  staff: { icon: Users, color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
+  kitchen: { icon: ChefHat, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300' },
+  waiter: { icon: Coffee, color: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' },
 }
 
 export default function TeamPage() {
+  const t = useTranslations('teamPage')
   const queryClient = useQueryClient()
   const [isInviteOpen, setIsInviteOpen] = useState(false)
   const [formData, setFormData] = useState({
@@ -95,39 +97,39 @@ export default function TeamPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Team</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Manage your team members and their roles
+            {t('description')}
           </p>
         </div>
         <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Invite Member
+              {t('inviteMember')}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Invite Team Member</DialogTitle>
+              <DialogTitle>{t('inviteTeamMember')}</DialogTitle>
               <DialogDescription>
-                Send an invitation to join your team
+                {t('sendInvitation')}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleInvite} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address *</Label>
+                <Label htmlFor="email">{t('emailAddressRequired')}</Label>
                 <Input
                   id="email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="colleague@example.com"
+                  placeholder={t('emailPlaceholder')}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="role">Role *</Label>
+                <Label htmlFor="role">{t('roleRequired')}</Label>
                 <Select
                   value={formData.role}
                   onValueChange={(value: string) => setFormData({ ...formData, role: value })}
@@ -136,10 +138,10 @@ export default function TeamPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="staff">Staff</SelectItem>
-                    <SelectItem value="kitchen">Kitchen</SelectItem>
-                    <SelectItem value="waiter">Waiter</SelectItem>
+                    <SelectItem value="manager">{t('roles.manager')}</SelectItem>
+                    <SelectItem value="staff">{t('roles.staff')}</SelectItem>
+                    <SelectItem value="kitchen">{t('roles.kitchen')}</SelectItem>
+                    <SelectItem value="waiter">{t('roles.waiter')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -149,13 +151,13 @@ export default function TeamPage() {
                   variant="outline"
                   onClick={() => setIsInviteOpen(false)}
                 >
-                  Cancel
+                  {t('cancel')}
                 </Button>
                 <Button type="submit" disabled={inviteMutation.isPending}>
                   {inviteMutation.isPending && (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   )}
-                  Send Invitation
+                  {t('sendInvitationButton')}
                 </Button>
               </DialogFooter>
             </form>
@@ -172,21 +174,21 @@ export default function TeamPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Users className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No team members yet</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('noMembers')}</h3>
             <p className="text-muted-foreground text-center mb-4">
-              Invite your team to help manage your business
+              {t('noMembersDesc')}
             </p>
             <Button onClick={() => setIsInviteOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Invite Member
+              {t('inviteMember')}
             </Button>
           </CardContent>
         </Card>
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>Team Members</CardTitle>
-            <CardDescription>{members.length} member(s)</CardDescription>
+            <CardTitle>{t('teamMembers')}</CardTitle>
+            <CardDescription>{t('memberCount', { count: members.length })}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -205,14 +207,14 @@ export default function TeamPage() {
                       <div>
                         <p className="font-medium">User #{member.user_id.slice(0, 8)}</p>
                         <p className="text-sm text-muted-foreground">
-                          Joined {new Date(member.joined_at).toLocaleDateString()}
+                          {t('joined')} {new Date(member.joined_at).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge className={config.color}>
                         <RoleIcon className="h-3 w-3 mr-1" />
-                        {config.label}
+                        {t(`roles.${member.role}`)}
                       </Badge>
                       {member.role !== 'owner' && (
                         <Button
@@ -236,8 +238,8 @@ export default function TeamPage() {
       {/* Role descriptions */}
       <Card>
         <CardHeader>
-          <CardTitle>Role Permissions</CardTitle>
-          <CardDescription>What each role can do</CardDescription>
+          <CardTitle>{t('rolePermissions')}</CardTitle>
+          <CardDescription>{t('whatEachRoleCan')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -247,14 +249,10 @@ export default function TeamPage() {
                 <div key={key} className="p-4 rounded-lg border">
                   <div className="flex items-center gap-2 mb-2">
                     <Icon className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-medium">{config.label}</span>
+                    <span className="font-medium">{t(`roles.${key}`)}</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {key === 'owner' && 'Full access to all features and settings'}
-                    {key === 'manager' && 'Manage menu, orders, and staff'}
-                    {key === 'staff' && 'View and update orders'}
-                    {key === 'kitchen' && 'View and manage kitchen orders'}
-                    {key === 'waiter' && 'Take orders and serve tables'}
+                    {t(`roleDescriptions.${key}`)}
                   </p>
                 </div>
               )

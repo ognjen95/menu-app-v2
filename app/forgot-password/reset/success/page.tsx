@@ -1,9 +1,11 @@
-
 import Link from 'next/link'
 import Image from 'next/image'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import ForgotPasswordForm from '@/components/ForgotPasswordForm'
+import { useTranslations } from 'next-intl'
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+
 export default function ResetPasswordSuccess() {
+    const t = useTranslations('auth.resetPassword')
+
     return (
         <div className="flex items-center justify-center bg-muted min-h-screen" >
             <Card className="w-[350px] mx-auto">
@@ -14,8 +16,10 @@ export default function ResetPasswordSuccess() {
                         </Link>
                     </div>
 
-                    <CardTitle className="text-2xl font-bold">Your password has been successfully reset!</CardTitle>
-                    <CardDescription>Login <Link href="/login">here</Link></CardDescription>
+                    <CardTitle className="text-2xl font-bold">{t('successTitle')}</CardTitle>
+                    <CardDescription>
+                        Login <Link href="/login" className="underline">here</Link>
+                    </CardDescription>
                 </CardHeader>
             </Card>
         </div>

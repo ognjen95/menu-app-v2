@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPatch, apiPost, apiDelete } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -52,6 +53,7 @@ type WebsitePage = { id: string; slug: string; title: string; is_published: bool
 type WebsiteBlock = { id: string; page_id: string; type: string; content: Record<string, unknown>; settings: { padding: string; background: string; alignment: string }; is_visible: boolean; sort_order: number }
 
 export default function WebsiteBuilderPage() {
+  const t = useTranslations('websiteBuilder')
   const queryClient = useQueryClient()
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -254,7 +256,7 @@ export default function WebsiteBuilderPage() {
             <iframe ref={iframeRef} src={websiteUrl} className="w-full h-full border-0" title="Preview" />
           ) : (
             <div className="flex items-center justify-center h-full text-zinc-400">
-              <div className="text-center"><Globe className="h-16 w-16 mx-auto mb-4 opacity-50" /><p>Set up your subdomain</p></div>
+              <div className="text-center"><Globe className="h-16 w-16 mx-auto mb-4 opacity-50" /><p>{t('setupSubdomain')}</p></div>
             </div>
           )}
         </div>
@@ -263,8 +265,8 @@ export default function WebsiteBuilderPage() {
       {/* Top Bar */}
       <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild className="text-zinc-400 hover:text-white hover:bg-white/10 gap-1"><a href="/dashboard"><ChevronLeft className="h-4 w-4" />Exit</a></Button>
-          <div><h1 className="text-white font-semibold">Website Builder</h1><p className="text-xs text-zinc-400">{website?.subdomain || 'No subdomain'}.qrmenu.app</p></div>
+          <Button variant="ghost" size="sm" asChild className="text-zinc-400 hover:text-white hover:bg-white/10 gap-1"><a href="/dashboard"><ChevronLeft className="h-4 w-4" />{t('exit')}</a></Button>
+          <div><h1 className="text-white font-semibold">{t('title')}</h1><p className="text-xs text-zinc-400">{website?.subdomain || t('noSubdomain')}.qrmenu.app</p></div>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.1)' }}>
@@ -274,9 +276,9 @@ export default function WebsiteBuilderPage() {
           </div>
           <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white hover:bg-white/10" onClick={() => refreshPreview(true)}><RefreshCw className="h-4 w-4" /></Button>
           {websiteUrl && <Button variant="ghost" size="icon" asChild className="text-zinc-400 hover:text-white hover:bg-white/10"><a href={websiteUrl} target="_blank"><ExternalLink className="h-4 w-4" /></a></Button>}
-          <Badge className={cn("ml-2", website?.is_published ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400")}>{website?.is_published ? 'Live' : 'Draft'}</Badge>
+          <Badge className={cn("ml-2", website?.is_published ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400")}>{website?.is_published ? t('live') : t('draft')}</Badge>
           <Button onClick={() => publishWebsite.mutate()} disabled={publishWebsite.isPending} size="sm" className={website?.is_published ? "bg-zinc-700 text-white" : "bg-green-600 text-white"}>
-            {publishWebsite.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : website?.is_published ? 'Unpublish' : 'Publish'}
+            {publishWebsite.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : website?.is_published ? t('unpublish') : t('publish')}
           </Button>
           <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white hover:bg-white/10 ml-2" onClick={() => setSidebarOpen(!sidebarOpen)}>
             {sidebarOpen ? <PanelRightClose className="h-5 w-5" /> : <PanelRight className="h-5 w-5" />}
@@ -287,9 +289,9 @@ export default function WebsiteBuilderPage() {
       {/* Glass Sidebar */}
       <div className={cn("fixed top-16 right-0 bottom-0 w-[420px] transition-transform duration-300 z-40", sidebarOpen ? "translate-x-0" : "translate-x-full")} style={{ background: 'rgba(24,24,27,0.85)', backdropFilter: 'blur(24px)', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
         <div className="flex border-b border-white/10">
-          {([['design', Paintbrush, 'Design'], ['pages', FileText, 'Pages'], ['blocks', Layers, 'Blocks'], ['settings', Settings, 'Settings']] as const).map(([id, Icon, label]) => (
+          {([['design', Paintbrush], ['pages', FileText], ['blocks', Layers], ['settings', Settings]] as const).map(([id, Icon]) => (
             <button key={id} onClick={() => setActivePanel(id)} className={cn("flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors", activePanel === id ? "text-white bg-white/10" : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5")}>
-              <Icon className="h-4 w-4" />{label}
+              <Icon className="h-4 w-4" />{t(`panels.${id}`)}
             </button>
           ))}
         </div>
@@ -299,7 +301,7 @@ export default function WebsiteBuilderPage() {
             {/* Design Panel */}
             {activePanel === 'design' && (<>
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-white">Dark Themes</h3>
+                <h3 className="text-sm font-medium text-white">{t('design.darkThemes')}</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {THEME_PRESETS.filter(p => p.isDark).slice(0, showAllThemes ? undefined : 4).map((preset) => {
                     const isSelected = website?.primary_color === preset.primary &&
@@ -331,7 +333,7 @@ export default function WebsiteBuilderPage() {
                 </div>
               </div>
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-white">Light Themes</h3>
+                <h3 className="text-sm font-medium text-white">{t('design.lightThemes')}</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {THEME_PRESETS.filter(p => !p.isDark).slice(0, showAllThemes ? undefined : 4).map((preset) => {
                     const isSelected = website?.primary_color === preset.primary &&
@@ -365,16 +367,16 @@ export default function WebsiteBuilderPage() {
                   onClick={() => setShowAllThemes(!showAllThemes)}
                   className="w-full text-xs text-zinc-400 hover:text-white py-1"
                 >
-                  {showAllThemes ? 'Show Less' : `View All ${THEME_PRESETS.length} Themes`}
+                  {showAllThemes ? t('design.showLess') : t('design.viewAllThemes', { count: THEME_PRESETS.length })}
                 </button>
               </div>
               <Separator className="bg-white/10" />
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-white">Colors</h3>
+                <h3 className="text-sm font-medium text-white">{t('design.colors')}</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  {[['primary_color', 'Primary'], ['secondary_color', 'Secondary'], ['background_color', 'Background'], ['foreground_color', 'Text'], ['accent_color', 'Accent']].map(([field, label]) => (
+                  {[['primary_color', 'primary'], ['secondary_color', 'secondary'], ['background_color', 'background'], ['foreground_color', 'text'], ['accent_color', 'accent']].map(([field, labelKey]) => (
                     <div key={field} className="space-y-1">
-                      <label className="text-xs text-zinc-400">{label}</label>
+                      <label className="text-xs text-zinc-400">{t(`design.${labelKey}`)}</label>
                       <div className="flex gap-2">
                         <input type="color" value={website?.[field as keyof Website] as string || '#000'} onChange={(e) => updateWebsite.mutate({ [field]: e.target.value })} className="h-9 w-9 rounded border border-white/20 cursor-pointer bg-transparent" />
                         <Input value={website?.[field as keyof Website] as string || ''} onChange={(e) => updateWebsite.mutate({ [field]: e.target.value })} className="flex-1 h-9 text-xs font-mono bg-white/5 border-white/10 text-white" />
@@ -385,10 +387,10 @@ export default function WebsiteBuilderPage() {
               </div>
               <Separator className="bg-white/10" />
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-white">Typography</h3>
+                <h3 className="text-sm font-medium text-white">{t('design.typography')}</h3>
                 {['font_heading', 'font_body'].map((field) => (
                   <div key={field} className="space-y-1">
-                    <label className="text-xs text-zinc-400">{field === 'font_heading' ? 'Heading' : 'Body'}</label>
+                    <label className="text-xs text-zinc-400">{t(`design.${field === 'font_heading' ? 'heading' : 'body'}`)}</label>
                     <Select value={website?.[field as keyof Website] as string || 'Inter'} onValueChange={(v) => updateWebsite.mutate({ [field]: v })}>
                       <SelectTrigger className="bg-white/5 border-white/10 text-white"><SelectValue /></SelectTrigger>
                       <SelectContent>{FONT_OPTIONS.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent>
@@ -398,7 +400,7 @@ export default function WebsiteBuilderPage() {
               </div>
               <Separator className="bg-white/10" />
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-white">Logo</h3>
+                <h3 className="text-sm font-medium text-white">{t('design.logo')}</h3>
                 <Input value={website?.logo_url || ''} onChange={(e) => updateWebsite.mutate({ logo_url: e.target.value })} placeholder="https://..." className="bg-white/5 border-white/10 text-white text-sm" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 {website?.logo_url && <div className="p-3 rounded-lg bg-white/5 border border-white/10"><img src={website.logo_url} alt="Logo" className="max-h-12 object-contain" /></div>}
@@ -408,10 +410,10 @@ export default function WebsiteBuilderPage() {
             {/* Pages Panel */}
             {activePanel === 'pages' && (<>
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-white">Pages</h3>
-                <Button size="sm" onClick={() => setIsAddPageOpen(true)} className="bg-white/10 hover:bg-white/20 text-white border-0"><Plus className="h-4 w-4 mr-1" />Add</Button>
+                <h3 className="text-sm font-medium text-white">{t('pages.title')}</h3>
+                <Button size="sm" onClick={() => setIsAddPageOpen(true)} className="bg-white/10 hover:bg-white/20 text-white border-0"><Plus className="h-4 w-4 mr-1" />{t('pages.add')}</Button>
               </div>
-              <p className="text-xs text-zinc-500">Click the status badge to publish/unpublish a page</p>
+              <p className="text-xs text-zinc-500">{t('pages.clickToPublish')}</p>
               <div className="space-y-2">
                 {pages.map((page) => (
                   <div key={page.id} className={cn("p-3 rounded-lg border transition-colors cursor-pointer", selectedPageId === page.id ? "border-blue-500/50 bg-blue-500/10" : "border-white/10 bg-white/5 hover:bg-white/10")} onClick={() => { setSelectedPageId(page.id); setActivePanel('blocks') }}>
@@ -426,9 +428,9 @@ export default function WebsiteBuilderPage() {
                               ? "border-green-500/50 bg-green-500/20 text-green-400 hover:bg-green-500/30"
                               : "border-zinc-500/50 bg-zinc-500/20 text-zinc-400 hover:bg-zinc-500/30 hover:border-green-500/50 hover:text-green-400"
                           )}
-                          title={page.is_published ? "Click to unpublish" : "Click to publish"}
+                          title={page.is_published ? t('pages.clickToUnpublish') : t('pages.clickToPublishPage')}
                         >
-                          {page.is_published ? '● Live' : '○ Draft'}
+                          {page.is_published ? t('pages.liveStatus') : t('pages.draftStatus')}
                         </button>
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-500 hover:text-red-400" onClick={(e) => { e.stopPropagation(); deletePage.mutate(page.id) }}><Trash2 className="h-3 w-3" /></Button>
                       </div>
@@ -442,10 +444,10 @@ export default function WebsiteBuilderPage() {
             {activePanel === 'blocks' && (<>
               <div className="flex items-center justify-between">
                 <Select value={selectedPageId || ''} onValueChange={setSelectedPageId}>
-                  <SelectTrigger className="w-[180px] bg-white/5 border-white/10 text-white"><SelectValue placeholder="Select page" /></SelectTrigger>
+                  <SelectTrigger className="w-[180px] bg-white/5 border-white/10 text-white"><SelectValue placeholder={t('blocks.selectPage')} /></SelectTrigger>
                   <SelectContent>{pages.map((p) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent>
                 </Select>
-                <Button size="sm" onClick={() => setIsAddBlockOpen(true)} disabled={!selectedPageId} className="bg-white/10 hover:bg-white/20 text-white border-0"><Plus className="h-4 w-4 mr-1" />Add</Button>
+                <Button size="sm" onClick={() => setIsAddBlockOpen(true)} disabled={!selectedPageId} className="bg-white/10 hover:bg-white/20 text-white border-0"><Plus className="h-4 w-4 mr-1" />{t('blocks.add')}</Button>
               </div>
               <div className="space-y-2">
                 {blocks.sort((a, b) => a.sort_order - b.sort_order).map((block, idx) => {
@@ -469,7 +471,7 @@ export default function WebsiteBuilderPage() {
                   )
                 })}
                 {blocks.length === 0 && selectedPageId && (
-                  <div className="text-center py-8 text-zinc-500"><Layers className="h-10 w-10 mx-auto mb-3 opacity-50" /><p className="text-sm">No blocks</p><Button size="sm" onClick={() => setIsAddBlockOpen(true)} className="mt-3 bg-white/10 text-white border-0"><Plus className="h-4 w-4 mr-1" />Add Block</Button></div>
+                  <div className="text-center py-8 text-zinc-500"><Layers className="h-10 w-10 mx-auto mb-3 opacity-50" /><p className="text-sm">{t('blocks.noBlocks')}</p><Button size="sm" onClick={() => setIsAddBlockOpen(true)} className="mt-3 bg-white/10 text-white border-0"><Plus className="h-4 w-4 mr-1" />{t('blocks.addBlock')}</Button></div>
                 )}
               </div>
             </>)}
@@ -477,7 +479,7 @@ export default function WebsiteBuilderPage() {
             {/* Settings Panel */}
             {activePanel === 'settings' && (<>
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-white">Domain</h3>
+                <h3 className="text-sm font-medium text-white">{t('settings.domain')}</h3>
                 <div className="flex gap-2">
                   <Input value={website?.subdomain || ''} onChange={(e) => updateWebsite.mutate({ subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })} className="bg-white/5 border-white/10 text-white" />
                   <span className="flex items-center text-xs text-zinc-500">.qrmenu.app</span>
@@ -485,13 +487,13 @@ export default function WebsiteBuilderPage() {
               </div>
               <Separator className="bg-white/10" />
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-white">SEO</h3>
-                <div className="space-y-1"><label className="text-xs text-zinc-400">Title</label><Input value={website?.seo_title || ''} onChange={(e) => updateWebsite.mutate({ seo_title: e.target.value })} className="bg-white/5 border-white/10 text-white text-sm" maxLength={60} /></div>
-                <div className="space-y-1"><label className="text-xs text-zinc-400">Description</label><Textarea value={website?.seo_description || ''} onChange={(e) => updateWebsite.mutate({ seo_description: e.target.value })} className="bg-white/5 border-white/10 text-white text-sm resize-none" rows={3} maxLength={160} /></div>
+                <h3 className="text-sm font-medium text-white">{t('settings.seo')}</h3>
+                <div className="space-y-1"><label className="text-xs text-zinc-400">{t('settings.seoTitle')}</label><Input value={website?.seo_title || ''} onChange={(e) => updateWebsite.mutate({ seo_title: e.target.value })} className="bg-white/5 border-white/10 text-white text-sm" maxLength={60} /></div>
+                <div className="space-y-1"><label className="text-xs text-zinc-400">{t('settings.seoDescription')}</label><Textarea value={website?.seo_description || ''} onChange={(e) => updateWebsite.mutate({ seo_description: e.target.value })} className="bg-white/5 border-white/10 text-white text-sm resize-none" rows={3} maxLength={160} /></div>
               </div>
               <Separator className="bg-white/10" />
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-white">Social Links</h3>
+                <h3 className="text-sm font-medium text-white">{t('settings.socialLinks')}</h3>
                 {[['facebook', Facebook, 'facebook.com/...'], ['instagram', Instagram, 'instagram.com/...'], ['twitter', Twitter, 'twitter.com/...']].map(([key, Icon, ph]) => (
                   <div key={key as string} className="flex items-center gap-2">
                     <Icon className="h-4 w-4 text-zinc-500" />
@@ -507,14 +509,14 @@ export default function WebsiteBuilderPage() {
       {/* Add Page Dialog */}
       <Dialog open={isAddPageOpen} onOpenChange={setIsAddPageOpen}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
-          <DialogHeader><DialogTitle>Create Page</DialogTitle><DialogDescription className="text-zinc-400">Add a new page</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>{t('pages.createPage')}</DialogTitle><DialogDescription className="text-zinc-400">{t('pages.addNewPage')}</DialogDescription></DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2"><Label className="text-zinc-300">Title</Label><Input value={newPageForm.title} onChange={(e) => setNewPageForm({ title: e.target.value, slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-') })} className="bg-zinc-800 border-zinc-700 text-white" /></div>
-            <div className="space-y-2"><Label className="text-zinc-300">Slug</Label><Input value={newPageForm.slug} onChange={(e) => setNewPageForm(p => ({ ...p, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))} className="bg-zinc-800 border-zinc-700 text-white" /></div>
+            <div className="space-y-2"><Label className="text-zinc-300">{t('pages.pageTitle')}</Label><Input value={newPageForm.title} onChange={(e) => setNewPageForm({ title: e.target.value, slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-') })} className="bg-zinc-800 border-zinc-700 text-white" /></div>
+            <div className="space-y-2"><Label className="text-zinc-300">{t('pages.slug')}</Label><Input value={newPageForm.slug} onChange={(e) => setNewPageForm(p => ({ ...p, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))} className="bg-zinc-800 border-zinc-700 text-white" /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddPageOpen(false)} className="border-zinc-700 text-zinc-300">Cancel</Button>
-            <Button onClick={() => createPage.mutate(newPageForm)} disabled={createPage.isPending || !newPageForm.title}>{createPage.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Create</Button>
+            <Button variant="outline" onClick={() => setIsAddPageOpen(false)} className="border-zinc-700 text-zinc-300">{t('pages.cancel')}</Button>
+            <Button onClick={() => createPage.mutate(newPageForm)} disabled={createPage.isPending || !newPageForm.title}>{createPage.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}{t('pages.create')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -522,7 +524,7 @@ export default function WebsiteBuilderPage() {
       {/* Add Block Dialog */}
       <Dialog open={isAddBlockOpen} onOpenChange={setIsAddBlockOpen}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-2xl">
-          <DialogHeader><DialogTitle>Add Block</DialogTitle><DialogDescription className="text-zinc-400">Choose block type</DialogDescription></DialogHeader>
+          <DialogHeader><DialogTitle>{t('blocks.addBlockDialog')}</DialogTitle><DialogDescription className="text-zinc-400">{t('blocks.chooseBlockType')}</DialogDescription></DialogHeader>
           <div className="grid grid-cols-2 gap-3 py-4">
             {BLOCK_TYPES.map((bt) => {
               const Icon = bt.icon
@@ -541,8 +543,8 @@ export default function WebsiteBuilderPage() {
       <Dialog open={!!editingBlock} onOpenChange={(o) => !o && setEditingBlock(null)}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-lg max-h-[85vh] overflow-y-auto flex flex-col">
           <DialogHeader>
-            <DialogTitle>Edit Block</DialogTitle>
-            <DialogDescription className="text-zinc-400">Customize content</DialogDescription>
+            <DialogTitle>{t('blocks.editBlock')}</DialogTitle>
+            <DialogDescription className="text-zinc-400">{t('blocks.customizeContent')}</DialogDescription>
           </DialogHeader>
           <div className="min-h-0 flex-1 overflow-y-auto">
             {editingBlock && <BlockEditor block={editingBlock} onSave={(content) => updateBlock.mutate({ blockId: editingBlock.id, content })} isPending={updateBlock.isPending} />}

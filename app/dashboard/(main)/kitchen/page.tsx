@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPatch } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -62,8 +63,8 @@ const STATUS_CONFIG = {
   ready: { label: 'Ready', color: 'bg-green-500', icon: CheckCircle2 },
 }
 
-function formatTimeElapsed(minutes: number): string {
-  if (minutes < 1) return 'Just now'
+function formatTimeElapsed(minutes: number, justNowText: string): string {
+  if (minutes < 1) return justNowText
   if (minutes < 60) return `${Math.floor(minutes)}m`
   const hours = Math.floor(minutes / 60)
   const mins = Math.floor(minutes % 60)
@@ -77,6 +78,7 @@ function getTimerColor(minutes: number): string {
 }
 
 export default function KitchenPage() {
+  const t = useTranslations('kitchenPage')
   const queryClient = useQueryClient()
   const [selectedLocationId, setSelectedLocationId] = useState<string>('')
   const [soundEnabled, setSoundEnabled] = useState(true)
@@ -176,11 +178,11 @@ export default function KitchenPage() {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <ChefHat className="h-6 w-6" />
-            <h1 className="text-xl font-bold">Kitchen View</h1>
+            <h1 className="text-xl font-bold">{t('title')}</h1>
           </div>
           <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Select location" />
+              <SelectValue placeholder={t('allLocations')} />
             </SelectTrigger>
             <SelectContent>
               {locations.map((loc) => (
@@ -196,13 +198,13 @@ export default function KitchenPage() {
             variant="ghost"
             size="icon"
             onClick={() => setSoundEnabled(!soundEnabled)}
-            title={soundEnabled ? 'Disable sound' : 'Enable sound'}
+            title={soundEnabled ? t('disableSound') : t('enableSound')}
           >
             {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
           </Button>
           <Button variant="outline" onClick={() => refetch()} disabled={isLoading}>
             <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
-            Refresh
+            {t('refresh')}
           </Button>
         </div>
       </div>
@@ -214,7 +216,7 @@ export default function KitchenPage() {
           <div className="space-y-4">
             <div className="flex items-center gap-2 sticky top-0 bg-background py-2">
               <div className={cn("h-3 w-3 rounded-full", STATUS_CONFIG.placed.color)} />
-              <h2 className="font-semibold">New Orders</h2>
+              <h2 className="font-semibold">{t('columns.newOrders')}</h2>
               <Badge variant="secondary">{ordersByStatus.placed.length}</Badge>
             </div>
             {ordersByStatus.placed.map((order) => (
@@ -224,12 +226,13 @@ export default function KitchenPage() {
                 onStatusChange={handleStatusChange}
                 nextStatus="accepted"
                 isUpdating={updateStatus.isPending}
+                t={t}
               />
             ))}
             {ordersByStatus.placed.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>No new orders</p>
+                <p>{t('empty.noNewOrders')}</p>
               </div>
             )}
           </div>
@@ -238,7 +241,7 @@ export default function KitchenPage() {
           <div className="space-y-4">
             <div className="flex items-center gap-2 sticky top-0 bg-background py-2">
               <div className={cn("h-3 w-3 rounded-full", STATUS_CONFIG.accepted.color)} />
-              <h2 className="font-semibold">Accepted</h2>
+              <h2 className="font-semibold">{t('columns.accepted')}</h2>
               <Badge variant="secondary">{ordersByStatus.accepted.length}</Badge>
             </div>
             {ordersByStatus.accepted.map((order) => (
@@ -248,12 +251,13 @@ export default function KitchenPage() {
                 onStatusChange={handleStatusChange}
                 nextStatus="preparing"
                 isUpdating={updateStatus.isPending}
+                t={t}
               />
             ))}
             {ordersByStatus.accepted.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>No accepted orders</p>
+                <p>{t('empty.noAcceptedOrders')}</p>
               </div>
             )}
           </div>
@@ -262,7 +266,7 @@ export default function KitchenPage() {
           <div className="space-y-4">
             <div className="flex items-center gap-2 sticky top-0 bg-background py-2">
               <div className={cn("h-3 w-3 rounded-full", STATUS_CONFIG.preparing.color)} />
-              <h2 className="font-semibold">Preparing</h2>
+              <h2 className="font-semibold">{t('columns.preparing')}</h2>
               <Badge variant="secondary">{ordersByStatus.preparing.length}</Badge>
             </div>
             {ordersByStatus.preparing.map((order) => (
@@ -272,12 +276,13 @@ export default function KitchenPage() {
                 onStatusChange={handleStatusChange}
                 nextStatus="ready"
                 isUpdating={updateStatus.isPending}
+                t={t}
               />
             ))}
             {ordersByStatus.preparing.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 <ChefHat className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>Nothing cooking</p>
+                <p>{t('empty.nothingCooking')}</p>
               </div>
             )}
           </div>
@@ -286,7 +291,7 @@ export default function KitchenPage() {
           <div className="space-y-4">
             <div className="flex items-center gap-2 sticky top-0 bg-background py-2">
               <div className={cn("h-3 w-3 rounded-full", STATUS_CONFIG.ready.color)} />
-              <h2 className="font-semibold">Ready to Serve</h2>
+              <h2 className="font-semibold">{t('columns.readyToServe')}</h2>
               <Badge variant="secondary">{ordersByStatus.ready.length}</Badge>
             </div>
             {ordersByStatus.ready.map((order) => (
@@ -296,12 +301,13 @@ export default function KitchenPage() {
                 onStatusChange={handleStatusChange}
                 nextStatus="served"
                 isUpdating={updateStatus.isPending}
+                t={t}
               />
             ))}
             {ordersByStatus.ready.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 <CheckCircle2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>No orders ready</p>
+                <p>{t('empty.noOrdersReady')}</p>
               </div>
             )}
           </div>
@@ -316,9 +322,10 @@ interface OrderCardProps {
   onStatusChange: (orderId: string, status: string) => void
   nextStatus: string
   isUpdating: boolean
+  t: (key: string) => string
 }
 
-function OrderCard({ order, onStatusChange, nextStatus, isUpdating }: OrderCardProps) {
+function OrderCard({ order, onStatusChange, nextStatus, isUpdating, t }: OrderCardProps) {
   const statusConfig = STATUS_CONFIG[order.status as keyof typeof STATUS_CONFIG]
   const timerColor = getTimerColor(order.time_elapsed)
 
@@ -337,12 +344,12 @@ function OrderCard({ order, onStatusChange, nextStatus, isUpdating }: OrderCardP
           </div>
           <div className={cn("flex items-center gap-1 font-mono text-sm", timerColor)}>
             <Timer className="h-4 w-4" />
-            {formatTimeElapsed(order.time_elapsed)}
+            {formatTimeElapsed(order.time_elapsed, t('justNow'))}
           </div>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Badge variant="secondary" className="text-xs">
-            {order.type === 'dine_in' ? 'Dine In' : order.type === 'takeaway' ? 'Takeaway' : 'Delivery'}
+            {t(`type.${order.type}`)}
           </Badge>
           {order.customer_name && <span>{order.customer_name}</span>}
         </div>
@@ -384,10 +391,10 @@ function OrderCard({ order, onStatusChange, nextStatus, isUpdating }: OrderCardP
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
           ) : (
             <>
-              {nextStatus === 'accepted' && 'Accept Order'}
-              {nextStatus === 'preparing' && 'Start Preparing'}
-              {nextStatus === 'ready' && 'Mark Ready'}
-              {nextStatus === 'served' && 'Mark Served'}
+              {nextStatus === 'accepted' && t('actions.acceptOrder')}
+              {nextStatus === 'preparing' && t('actions.startPreparing')}
+              {nextStatus === 'ready' && t('actions.markReady')}
+              {nextStatus === 'served' && t('actions.markServed')}
             </>
           )}
         </Button>

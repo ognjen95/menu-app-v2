@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { useMenus, useCategories, useMenuItems, useCreateMenu, useCreateCategory, useCreateMenuItem, useUpdateMenuItem, useDeleteMenuItem, useAllergens } from '@/lib/hooks/use-menu'
 import type { MenuItem } from '@/lib/types'
 import { Button } from '@/components/ui/button'
@@ -54,6 +55,7 @@ import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 export default function MenuPage() {
+  const t = useTranslations('menuPage')
   const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null)
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -255,19 +257,19 @@ export default function MenuPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Menu Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Create and manage your menus, categories, and items
+            {t('description')}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline">
             <Filter className="h-4 w-4 mr-2" />
-            Filter
+            {t('filter')}
           </Button>
           <Button onClick={() => setIsItemDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Item
+            {t('addItem')}
           </Button>
         </div>
       </div>
@@ -276,7 +278,7 @@ export default function MenuPage() {
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search items..."
+          placeholder={t('searchItems')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
@@ -290,7 +292,7 @@ export default function MenuPage() {
           <Card>
             <CardHeader className="py-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold">Menus</CardTitle>
+                <CardTitle className="text-base font-semibold">{t('menus')}</CardTitle>
                 <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setIsCreateMenuOpen(true)}>
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -298,9 +300,9 @@ export default function MenuPage() {
             </CardHeader>
             <CardContent className="space-y-2 pt-0">
               {menusLoading ? (
-                <div className="text-sm text-muted-foreground">Loading...</div>
+                <div className="text-sm text-muted-foreground">{t('loading')}</div>
               ) : menus.length === 0 ? (
-                <div className="text-sm text-muted-foreground">No menus yet</div>
+                <div className="text-sm text-muted-foreground">{t('noMenus')}</div>
               ) : (
                 menus.map((menu) => (
                   <button
@@ -329,7 +331,7 @@ export default function MenuPage() {
           <Card className="h-full">
             <CardHeader className="py-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold">Categories</CardTitle>
+                <CardTitle className="text-base font-semibold">{t('categories')}</CardTitle>
                 <Button size="icon" variant="ghost" className="h-8 w-8" disabled={!selectedMenuId} onClick={() => setIsCreateCategoryOpen(true)}>
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -337,16 +339,16 @@ export default function MenuPage() {
             </CardHeader>
             <CardContent className="space-y-2 pt-0">
               {!selectedMenuId ? (
-                <div className="text-sm text-muted-foreground">Select a menu first</div>
+                <div className="text-sm text-muted-foreground">{t('selectMenuFirst')}</div>
               ) : categoriesLoading ? (
-                <div className="text-sm text-muted-foreground">Loading...</div>
+                <div className="text-sm text-muted-foreground">{t('loading')}</div>
               ) : categories.length === 0 ? (
                 <div className="text-center py-8">
                   <UtensilsCrossed className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground">No categories yet</p>
+                  <p className="text-sm text-muted-foreground">{t('noCategories')}</p>
                   <Button size="sm" variant="outline" className="mt-2" onClick={() => setIsCreateCategoryOpen(true)}>
                     <Plus className="h-4 w-4 mr-1" />
-                    Add Category
+                    {t('addCategory')}
                   </Button>
                 </div>
               ) : (
@@ -381,16 +383,16 @@ export default function MenuPage() {
                 <div>
                   <CardTitle>
                     {selectedCategoryId 
-                      ? categories.find(c => c.id === selectedCategoryId)?.name || 'Items'
-                      : 'Items'}
+                      ? categories.find(c => c.id === selectedCategoryId)?.name || t('items')
+                      : t('items')}
                   </CardTitle>
                   <CardDescription>
-                    {items.length} {items.length === 1 ? 'item' : 'items'}
+                    {items.length} {items.length === 1 ? t('item') : t('items')}
                   </CardDescription>
                 </div>
                 <Button size="sm" disabled={!selectedCategoryId} onClick={() => setIsItemDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-1" />
-                  Add Item
+                  {t('addItem')}
                 </Button>
               </div>
             </CardHeader>
@@ -398,17 +400,17 @@ export default function MenuPage() {
               {!selectedCategoryId ? (
                 <div className="text-center py-16">
                   <UtensilsCrossed className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-lg text-muted-foreground">Select a category to view items</p>
+                  <p className="text-lg text-muted-foreground">{t('selectCategoryToView')}</p>
                 </div>
               ) : itemsLoading ? (
-                <div className="text-muted-foreground py-8">Loading items...</div>
+                <div className="text-muted-foreground py-8">{t('loadingItems')}</div>
               ) : items.length === 0 ? (
                 <div className="text-center py-16">
                   <UtensilsCrossed className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-lg text-muted-foreground mb-4">No items in this category</p>
+                  <p className="text-lg text-muted-foreground mb-4">{t('noItemsInCategory')}</p>
                   <Button onClick={() => setIsItemDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Add First Item
+                    {t('addFirstItem')}
                   </Button>
                 </div>
               ) : (
@@ -442,14 +444,14 @@ export default function MenuPage() {
                             <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                           )}
                           {item.is_new && (
-                            <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded">New</span>
+                            <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded">{t('new')}</span>
                           )}
                           {!item.is_active && (
-                            <span className="text-xs px-1.5 py-0.5 bg-muted rounded">Hidden</span>
+                            <span className="text-xs px-1.5 py-0.5 bg-muted rounded">{t('hidden')}</span>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground truncate">
-                          {item.description || 'No description'}
+                          {item.description || t('noDescription')}
                         </p>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           {item.dietary_tags?.map((tag) => (
@@ -463,7 +465,7 @@ export default function MenuPage() {
                           {item.item_allergens && item.item_allergens.length > 0 && (
                             <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300 rounded flex items-center gap-1">
                               <AlertTriangle className="h-3 w-3" />
-                              {item.item_allergens.length} allergens
+                              {item.item_allergens.length} {t('allergens')}
                             </span>
                           )}
                           {item.preparation_time && (
@@ -552,36 +554,36 @@ export default function MenuPage() {
       <Dialog open={isCreateMenuOpen} onOpenChange={setIsCreateMenuOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create Menu</DialogTitle>
-            <DialogDescription>Add a new menu to your restaurant</DialogDescription>
+            <DialogTitle>{t('createMenuTitle')}</DialogTitle>
+            <DialogDescription>{t('createMenuDesc')}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreateMenu} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="menu-name">Menu Name *</Label>
+              <Label htmlFor="menu-name">{t('menuName')} *</Label>
               <Input
                 id="menu-name"
                 value={menuForm.name}
                 onChange={(e) => setMenuForm({ ...menuForm, name: e.target.value })}
-                placeholder="Lunch Menu"
+                placeholder={t('menuNamePlaceholder')}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="menu-description">Description</Label>
+              <Label htmlFor="menu-description">{t('menuDescription')}</Label>
               <Input
                 id="menu-description"
                 value={menuForm.description}
                 onChange={(e) => setMenuForm({ ...menuForm, description: e.target.value })}
-                placeholder="Available 11am - 3pm"
+                placeholder={t('menuDescPlaceholder')}
               />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsCreateMenuOpen(false)}>
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={createMenu.isPending}>
                 {createMenu.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Create Menu
+                {t('createMenu')}
               </Button>
             </DialogFooter>
           </form>
@@ -592,36 +594,36 @@ export default function MenuPage() {
       <Dialog open={isCreateCategoryOpen} onOpenChange={setIsCreateCategoryOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create Category</DialogTitle>
-            <DialogDescription>Add a new category to organize your menu items</DialogDescription>
+            <DialogTitle>{t('createCategoryTitle')}</DialogTitle>
+            <DialogDescription>{t('createCategoryDesc')}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreateCategory} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="category-name">Category Name *</Label>
+              <Label htmlFor="category-name">{t('categoryName')} *</Label>
               <Input
                 id="category-name"
                 value={categoryForm.name}
                 onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
-                placeholder="Appetizers"
+                placeholder={t('categoryNamePlaceholder')}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="category-description">Description</Label>
+              <Label htmlFor="category-description">{t('categoryDescription')}</Label>
               <Input
                 id="category-description"
                 value={categoryForm.description}
                 onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
-                placeholder="Start your meal with these delicious options"
+                placeholder={t('categoryDescPlaceholder')}
               />
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsCreateCategoryOpen(false)}>
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={createCategory.isPending}>
                 {createCategory.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Create Category
+                {t('createCategory')}
               </Button>
             </DialogFooter>
           </form>
@@ -632,17 +634,17 @@ export default function MenuPage() {
       <Dialog open={isItemDialogOpen} onOpenChange={(open) => { setIsItemDialogOpen(open); if (!open) resetItemForm() }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>{editingItem ? 'Edit Menu Item' : 'Create Menu Item'}</DialogTitle>
+            <DialogTitle>{editingItem ? t('editMenuItem') : t('createMenuItem')}</DialogTitle>
             <DialogDescription>
-              {editingItem ? 'Update the details of this menu item' : 'Add a new item to your menu with all details'}
+              {editingItem ? t('editMenuItemDesc') : t('createMenuItemDesc')}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmitItem} className="flex-1 overflow-hidden flex flex-col">
             <Tabs defaultValue="basic" className="flex-1 flex flex-col overflow-hidden">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                <TabsTrigger value="details">Details</TabsTrigger>
-                <TabsTrigger value="dietary">Dietary & Allergens</TabsTrigger>
+                <TabsTrigger value="basic">{t('basicInfo')}</TabsTrigger>
+                <TabsTrigger value="details">{t('details')}</TabsTrigger>
+                <TabsTrigger value="dietary">{t('dietaryAllergens')}</TabsTrigger>
               </TabsList>
               
               <ScrollArea className="flex-1 pr-4">
@@ -650,13 +652,13 @@ export default function MenuPage() {
                   {/* Category selector - only show when creating and no category selected */}
                   {!editingItem && !selectedCategoryId && (
                     <div className="space-y-2">
-                      <Label>Category *</Label>
+                      <Label>{t('category')} *</Label>
                       <Select
                         value={itemForm.category_id}
                         onValueChange={(value) => setItemForm(prev => ({ ...prev, category_id: value }))}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
+                          <SelectValue placeholder={t('selectCategory')} />
                         </SelectTrigger>
                         <SelectContent>
                           {categories.map((cat) => (
@@ -671,31 +673,31 @@ export default function MenuPage() {
 
                   {/* Name */}
                   <div className="space-y-2">
-                    <Label htmlFor="item-name">Item Name *</Label>
+                    <Label htmlFor="item-name">{t('itemName')} *</Label>
                     <Input
                       id="item-name"
                       value={itemForm.name}
                       onChange={(e) => setItemForm(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="Margherita Pizza"
+                      placeholder={t('itemNamePlaceholder')}
                       required
                     />
                   </div>
 
                   {/* Description */}
                   <div className="space-y-2">
-                    <Label htmlFor="item-description">Description</Label>
+                    <Label htmlFor="item-description">{t('itemDescription')}</Label>
                     <Textarea
                       id="item-description"
                       value={itemForm.description}
                       onChange={(e) => setItemForm(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Fresh tomatoes, mozzarella, and basil"
+                      placeholder={t('itemDescPlaceholder')}
                       rows={3}
                     />
                   </div>
 
                   {/* Image */}
                   <div className="space-y-2">
-                    <Label>Image</Label>
+                    <Label>{t('image')}</Label>
                     {itemForm.image_url ? (
                       <div className="relative w-32 h-32 rounded-lg overflow-hidden border">
                         <Image
@@ -717,13 +719,13 @@ export default function MenuPage() {
                         {isUploading ? (
                           <div className="flex items-center gap-2">
                             <Loader2 className="h-5 w-5 animate-spin" />
-                            <span className="text-sm">Uploading...</span>
+                            <span className="text-sm">{t('uploading')}</span>
                           </div>
                         ) : (
                           <>
                             <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                            <span className="text-sm text-muted-foreground">Click to upload image</span>
-                            <span className="text-xs text-muted-foreground">PNG, JPG, WebP up to 5MB</span>
+                            <span className="text-sm text-muted-foreground">{t('clickToUpload')}</span>
+                            <span className="text-xs text-muted-foreground">{t('imageFormats')}</span>
                           </>
                         )}
                         <input
@@ -740,7 +742,7 @@ export default function MenuPage() {
                   {/* Prices */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="item-price">Price (€) *</Label>
+                      <Label htmlFor="item-price">{t('price')} *</Label>
                       <Input
                         id="item-price"
                         type="number"
@@ -748,12 +750,12 @@ export default function MenuPage() {
                         min="0"
                         value={itemForm.base_price}
                         onChange={(e) => setItemForm(prev => ({ ...prev, base_price: e.target.value }))}
-                        placeholder="12.50"
+                        placeholder={t('pricePlaceholder')}
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="item-compare-price">Compare Price (€)</Label>
+                      <Label htmlFor="item-compare-price">{t('comparePrice')}</Label>
                       <Input
                         id="item-compare-price"
                         type="number"
@@ -761,9 +763,9 @@ export default function MenuPage() {
                         min="0"
                         value={itemForm.compare_price}
                         onChange={(e) => setItemForm(prev => ({ ...prev, compare_price: e.target.value }))}
-                        placeholder="15.00"
+                        placeholder={t('comparePricePlaceholder')}
                       />
-                      <p className="text-xs text-muted-foreground">Original price for showing discount</p>
+                      <p className="text-xs text-muted-foreground">{t('comparePriceHint')}</p>
                     </div>
                   </div>
                 </TabsContent>
@@ -774,7 +776,7 @@ export default function MenuPage() {
                     <div className="space-y-2">
                       <Label htmlFor="prep-time" className="flex items-center gap-2">
                         <Clock className="h-4 w-4" />
-                        Prep Time (minutes)
+                        {t('prepTime')}
                       </Label>
                       <Input
                         id="prep-time"
@@ -788,7 +790,7 @@ export default function MenuPage() {
                     <div className="space-y-2">
                       <Label htmlFor="calories" className="flex items-center gap-2">
                         <Flame className="h-4 w-4" />
-                        Calories (kcal)
+                        {t('caloriesKcal')}
                       </Label>
                       <Input
                         id="calories"
@@ -805,13 +807,13 @@ export default function MenuPage() {
                   <div className="space-y-4 pt-4 border-t">
                     <h4 className="font-medium flex items-center gap-2">
                       <Tag className="h-4 w-4" />
-                      Item Status
+                      {t('itemStatus')}
                     </h4>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                          <Label htmlFor="is-active">Active</Label>
-                          <p className="text-xs text-muted-foreground">Item is visible in menu</p>
+                          <Label htmlFor="is-active">{t('active')}</Label>
+                          <p className="text-xs text-muted-foreground">{t('activeHint')}</p>
                         </div>
                         <Switch
                           id="is-active"
@@ -823,9 +825,9 @@ export default function MenuPage() {
                         <div className="space-y-0.5">
                           <Label htmlFor="is-featured" className="flex items-center gap-2">
                             <Star className="h-4 w-4 text-yellow-500" />
-                            Featured
+                            {t('featured')}
                           </Label>
-                          <p className="text-xs text-muted-foreground">Highlight this item</p>
+                          <p className="text-xs text-muted-foreground">{t('featuredHint')}</p>
                         </div>
                         <Switch
                           id="is-featured"
@@ -837,9 +839,9 @@ export default function MenuPage() {
                         <div className="space-y-0.5">
                           <Label htmlFor="is-new" className="flex items-center gap-2">
                             <Sparkles className="h-4 w-4 text-blue-500" />
-                            New Item
+                            {t('newItemLabel')}
                           </Label>
-                          <p className="text-xs text-muted-foreground">Show &quot;New&quot; badge</p>
+                          <p className="text-xs text-muted-foreground">{t('newItemHint')}</p>
                         </div>
                         <Switch
                           id="is-new"
@@ -856,7 +858,7 @@ export default function MenuPage() {
                   <div className="space-y-3">
                     <h4 className="font-medium flex items-center gap-2">
                       <Leaf className="h-4 w-4 text-green-600" />
-                      Dietary Tags
+                      {t('dietaryTags')}
                     </h4>
                     <div className="grid grid-cols-2 gap-2">
                       {dietaryTagOptions.map((tag) => (
@@ -887,10 +889,10 @@ export default function MenuPage() {
                   <div className="space-y-3 pt-4 border-t">
                     <h4 className="font-medium flex items-center gap-2">
                       <AlertTriangle className="h-4 w-4 text-orange-500" />
-                      Allergens
+                      {t('allergensTitle')}
                     </h4>
                     <p className="text-xs text-muted-foreground">
-                      Select all allergens present in this item
+                      {t('allergensHint')}
                     </p>
                     <div className="grid grid-cols-2 gap-2">
                       {allergens.map((allergen) => (
@@ -922,14 +924,14 @@ export default function MenuPage() {
 
             <DialogFooter className="mt-4 pt-4 border-t">
               <Button type="button" variant="outline" onClick={() => { setIsItemDialogOpen(false); resetItemForm() }}>
-                Cancel
+                {t('cancel')}
               </Button>
               <Button 
                 type="submit" 
                 disabled={(createItem.isPending || updateItem.isPending) || (!editingItem && !selectedCategoryId && !itemForm.category_id)}
               >
                 {(createItem.isPending || updateItem.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {editingItem ? 'Update Item' : 'Create Item'}
+                {editingItem ? t('updateItem') : t('createItem')}
               </Button>
             </DialogFooter>
           </form>

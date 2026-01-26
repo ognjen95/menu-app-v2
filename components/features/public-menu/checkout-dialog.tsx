@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   X,
   CreditCard,
@@ -74,6 +75,7 @@ export function CheckoutDialog({
   deliveryEnabled = false,
   theme,
 }: CheckoutDialogProps) {
+  const t = useTranslations('checkoutDialog')
   // Default theme fallback
   const colors = {
     primary: theme?.primary || '#3B82F6',

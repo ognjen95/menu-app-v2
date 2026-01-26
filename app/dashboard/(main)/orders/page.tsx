@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useActiveOrders, useUpdateOrderStatus } from '@/lib/hooks/use-orders'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -40,6 +41,7 @@ const typeIcons = {
 }
 
 export default function OrdersPage() {
+  const t = useTranslations('ordersPage')
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | 'all'>('all')
   const { data, isLoading, refetch } = useActiveOrders()
   const updateStatus = useUpdateOrderStatus()
@@ -78,14 +80,14 @@ export default function OrdersPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Manage incoming orders and track their status
+            {t('description')}
           </p>
         </div>
         <Button onClick={() => refetch()} variant="outline" disabled={isLoading}>
           <RefreshCw className={cn('h-4 w-4 mr-2', isLoading && 'animate-spin')} />
-          Refresh
+          {t('refresh')}
         </Button>
       </div>
 
@@ -96,7 +98,7 @@ export default function OrdersPage() {
           size="sm"
           onClick={() => setSelectedStatus('all')}
         >
-          All ({orders.length})
+          {t('all')} ({orders.length})
         </Button>
         {(['placed', 'accepted', 'preparing', 'ready', 'served'] as OrderStatus[]).map((status) => {
           const config = statusConfig[status]
@@ -110,7 +112,7 @@ export default function OrdersPage() {
               className="gap-2"
             >
               <config.icon className="h-4 w-4" />
-              {config.label} ({count})
+              {t(`status.${status}`)} ({count})
             </Button>
           )
         })}
@@ -118,12 +120,12 @@ export default function OrdersPage() {
 
       {/* Orders grid */}
       {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">Loading orders...</div>
+        <div className="text-center py-12 text-muted-foreground">{t('loading')}</div>
       ) : filteredOrders.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No orders found</p>
+            <p className="text-muted-foreground">{t('noOrdersFound')}</p>
           </CardContent>
         </Card>
       ) : (
@@ -150,7 +152,7 @@ export default function OrdersPage() {
                       <span className="text-lg font-bold">{order.order_number}</span>
                       <Badge variant="outline" className="gap-1">
                         <TypeIcon className="h-5 w-5" />
-                        {order.type.replace('_', ' ')}
+                        {t(`type.${order.type}`)}
                       </Badge>
                     </div>
                     <Button size="icon" variant="ghost" className="h-8 w-8">
@@ -176,7 +178,7 @@ export default function OrdersPage() {
                     ))}
                     {(order.items?.length || 0) > 3 && (
                       <div className="text-muted-foreground">
-                        +{(order.items?.length || 0) - 3} more items
+                        {t('moreItems', { count: (order.items?.length || 0) - 3 })}
                       </div>
                     )}
                   </div>
@@ -190,7 +192,7 @@ export default function OrdersPage() {
                     </div>
                     <Badge className={statusConfig[order.status].color}>
                       <StatusIcon className="h-3 w-3 mr-1" />
-                      {statusConfig[order.status].label}
+                      {t(`status.${order.status}`)}
                     </Badge>
                   </div>
 
@@ -203,7 +205,7 @@ export default function OrdersPage() {
                         onClick={() => handleStatusChange(order.id, nextStatus)}
                         disabled={updateStatus.isPending}
                       >
-                        Mark as {statusConfig[nextStatus].label}
+                        {t('markAs', { status: t(`status.${nextStatus}`) })}
                       </Button>
                       {order.status === 'placed' && (
                         <Button

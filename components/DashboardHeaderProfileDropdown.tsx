@@ -6,24 +6,24 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Bell, ReceiptText, User, Settings, HelpCircle, LogOut } from "lucide-react"
+import { ReceiptText, User, Settings, HelpCircle, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { } from "@supabase/supabase-js"
 import { logout } from '@/app/auth/actions'
 import { generateStripeBillingPortalLink } from "@/lib/stripe"
 import { createServerSupabaseClient } from "@/lib/supabase-server"
+import { NavbarActions } from "./NavbarActions"
 
 export default async function DashboardHeaderProfileDropdown() {
     const supabase = await createServerSupabaseClient()
     const { data: { user }, error } = await supabase.auth.getUser()
     const billingPortalURL = await generateStripeBillingPortalLink(user!.email!)
     return (
-        <nav className="flex items-center">
-            <Button variant="ghost" size="icon" className="mr-2">
-                <Bell className="h-4 w-4" />
-                <span className="sr-only">Notifications</span>
-            </Button>
+        <nav className="flex items-center gap-1">
+            {/* Language, Theme, Notifications */}
+            <NavbarActions />
+            
+            {/* Profile Dropdown */}
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">

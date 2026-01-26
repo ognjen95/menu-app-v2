@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 type GalleryBlockProps = {
   images: string[]
@@ -16,6 +17,7 @@ type GalleryBlockProps = {
 }
 
 export function GalleryBlock({ images, title, theme }: GalleryBlockProps) {
+  const t = useTranslations('gallery')
   const [selectedImage, setSelectedImage] = useState<number | null>(null)
   const [isHovering, setIsHovering] = useState<number | null>(null)
   const [zoom, setZoom] = useState(1)
@@ -214,7 +216,7 @@ export function GalleryBlock({ images, title, theme }: GalleryBlockProps) {
                     transform: isHovering === idx ? 'scale(1)' : 'scale(0.9)',
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}>
-                    Click to view
+                    {t('clickToView')}
                   </div>
                 </div>
               </div>
@@ -483,7 +485,7 @@ export function GalleryBlock({ images, title, theme }: GalleryBlockProps) {
           }}>
             <span>{selectedImage + 1} / {images.length}</span>
             <span style={{ opacity: 0.5, fontSize: '0.75rem' }}>
-              ← → to navigate • +/- to zoom • Esc to close
+              {t('navigateHint')}
             </span>
           </div>
         </div>

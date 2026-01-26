@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -37,6 +38,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import type { Table, QrCode as QrCodeType, Location } from '@/lib/types'
 
 export default function TablesPage() {
+  const t = useTranslations('tablesPage')
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [previewQr, setPreviewQr] = useState<QrCodeType | null>(null)
@@ -85,7 +87,7 @@ export default function TablesPage() {
 
   // Group tables by zone
   const tablesByZone = tables.reduce((acc, table) => {
-    const zone = table.zone || 'No Zone'
+    const zone = table.zone || t('noZone')
     if (!acc[zone]) acc[zone] = []
     acc[zone].push(table)
     return acc
@@ -179,19 +181,19 @@ export default function TablesPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tables & QR Codes</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Manage your tables and generate QR codes for ordering
+            {t('description')}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline">
             <Download className="h-4 w-4 mr-2" />
-            Export All QR
+            {t('exportAllQr')}
           </Button>
           <Button disabled={!selectedLocationId} onClick={() => setIsCreateOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Table
+            {t('addTable')}
           </Button>
         </div>
       </div>
@@ -212,9 +214,9 @@ export default function TablesPage() {
         ))}
         {locations.length === 0 && (
           <div className="flex items-center gap-2 text-muted-foreground">
-            No locations found.
+            {t('noLocations')}
             <Link href="/dashboard/settings/locations" className="text-primary underline">
-              Create a location first
+              {t('createLocationFirst')}
             </Link>
           </div>
         )}
@@ -225,19 +227,19 @@ export default function TablesPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <MapPin className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Select a location to manage tables</p>
+            <p className="text-muted-foreground">{t('selectLocation')}</p>
           </CardContent>
         </Card>
       ) : tablesLoading ? (
-        <div className="text-muted-foreground">Loading tables...</div>
+        <div className="text-muted-foreground">{t('loadingTables')}</div>
       ) : tables.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground mb-4">No tables in this location</p>
+            <p className="text-muted-foreground mb-4">{t('noTables')}</p>
             <Button onClick={() => setIsCreateOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Add First Table
+              {t('addFirstTable')}
             </Button>
           </CardContent>
         </Card>
@@ -247,7 +249,7 @@ export default function TablesPage() {
             <div key={zone}>
               <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
                 <span>{zone}</span>
-                <Badge variant="secondary">{zoneTables.length} tables</Badge>
+                <Badge variant="secondary">{zoneTables.length} {t('tables')}</Badge>
               </h2>
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 {zoneTables.map((table) => {
@@ -276,12 +278,12 @@ export default function TablesPage() {
                             table.status === 'available' ? 'default' :
                             table.status === 'occupied' ? 'secondary' : 'outline'
                           }>
-                            {table.status}
+                            {t(`status.${table.status}`)}
                           </Badge>
                         </div>
                         <CardDescription>
                           <Users className="h-3 w-3 inline mr-1" />
-                          Capacity: {table.capacity}
+                          {t('capacity')}: {table.capacity}
                         </CardDescription>
                       </CardHeader>
 
@@ -314,7 +316,7 @@ export default function TablesPage() {
                               ) : (
                                 <QrCodeIcon className="h-4 w-4 mr-2" />
                               )}
-                              Generate QR
+                              {t('generateQr')}
                             </Button>
                           </div>
                         )}
@@ -328,7 +330,7 @@ export default function TablesPage() {
                                 variant="ghost" 
                                 className="h-8 w-8"
                                 onClick={() => copyToClipboard(qrCode.url, qrCode.id)}
-                                title="Copy URL"
+                                title={t('copyUrl')}
                               >
                                 {copiedId === qrCode.id ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                               </Button>
@@ -337,7 +339,7 @@ export default function TablesPage() {
                                 variant="ghost" 
                                 className="h-8 w-8"
                                 onClick={() => downloadQr(qrCode)}
-                                title="Download QR"
+                                title={t('downloadQr')}
                               >
                                 <Download className="h-4 w-4" />
                               </Button>
@@ -346,7 +348,7 @@ export default function TablesPage() {
                                 variant="ghost" 
                                 className="h-8 w-8"
                                 onClick={() => { setEditQr(qrCode); setQrStyle({ color: qrCode.style?.color || '#000000', background: qrCode.style?.background || '#ffffff' }) }}
-                                title="Edit Style"
+                                title={t('editStyle')}
                               >
                                 <Palette className="h-4 w-4" />
                               </Button>
@@ -355,7 +357,7 @@ export default function TablesPage() {
                                 variant="ghost" 
                                 className="h-8 w-8"
                                 onClick={() => window.open(qrCode.url, '_blank')}
-                                title="Open Menu"
+                                title={t('openMenu')}
                               >
                                 <ExternalLink className="h-4 w-4" />
                               </Button>
@@ -366,7 +368,7 @@ export default function TablesPage() {
                             size="icon" 
                             variant="ghost" 
                             className="h-8 w-8 text-destructive"
-                            onClick={() => { if (confirm('Delete this table?')) deleteTable.mutate(table.id) }}
+                            onClick={() => { if (confirm(t('deleteTable'))) deleteTable.mutate(table.id) }}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -383,7 +385,7 @@ export default function TablesPage() {
                 >
                   <CardContent className="py-12 flex flex-col items-center justify-center text-center">
                     <Plus className="h-8 w-8 text-muted-foreground mb-2" />
-                    <span className="text-sm text-muted-foreground">Add Table</span>
+                    <span className="text-sm text-muted-foreground">{t('addTable')}</span>
                   </CardContent>
                 </Card>
               </div>
@@ -396,23 +398,23 @@ export default function TablesPage() {
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Table</DialogTitle>
-            <DialogDescription>Add a new table to this location</DialogDescription>
+            <DialogTitle>{t('addTable')}</DialogTitle>
+            <DialogDescription>{t('addTableDesc')}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Table Name *</Label>
+              <Label htmlFor="name">{t('tableNameRequired')}</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Table 1"
+                placeholder={t('tableNamePlaceholder')}
                 required
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="capacity">Capacity</Label>
+                <Label htmlFor="capacity">{t('capacity')}</Label>
                 <Input
                   id="capacity"
                   type="number"
@@ -423,22 +425,22 @@ export default function TablesPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="zone">Zone</Label>
+                <Label htmlFor="zone">{t('zone')}</Label>
                 <Input
                   id="zone"
                   value={formData.zone}
                   onChange={(e) => setFormData({ ...formData, zone: e.target.value })}
-                  placeholder="Outdoor, Terrace, etc."
+                  placeholder={t('zonePlaceholder')}
                 />
               </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
-                Cancel
+                {t('cancel')}
               </Button>
               <Button type="submit" disabled={createTable.isPending}>
                 {createTable.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Add Table
+                {t('addTable')}
               </Button>
             </DialogFooter>
           </form>
@@ -449,8 +451,8 @@ export default function TablesPage() {
       <Dialog open={!!previewQr} onOpenChange={() => setPreviewQr(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>QR Code Preview</DialogTitle>
-            <DialogDescription>Scan this QR code to open the menu</DialogDescription>
+            <DialogTitle>{t('qrCodePreview')}</DialogTitle>
+            <DialogDescription>{t('scanToOrder')}</DialogDescription>
           </DialogHeader>
           {previewQr && (
             <div className="space-y-4">
@@ -472,15 +474,15 @@ export default function TablesPage() {
               <DialogFooter className="flex-row gap-2 sm:justify-center">
                 <Button variant="outline" onClick={() => copyToClipboard(previewQr.url, previewQr.id)}>
                   {copiedId === previewQr.id ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
-                  Copy URL
+                  {t('copyUrl')}
                 </Button>
                 <Button onClick={() => downloadQr(previewQr)}>
                   <Download className="h-4 w-4 mr-2" />
-                  Download
+                  {t('download')}
                 </Button>
                 <Button variant="outline" onClick={() => window.open(previewQr.url, '_blank')}>
                   <ExternalLink className="h-4 w-4 mr-2" />
-                  Open
+                  {t('open')}
                 </Button>
               </DialogFooter>
             </div>
@@ -492,8 +494,8 @@ export default function TablesPage() {
       <Dialog open={!!editQr} onOpenChange={() => setEditQr(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit QR Code Style</DialogTitle>
-            <DialogDescription>Customize the colors of your QR code</DialogDescription>
+            <DialogTitle>{t('editQrStyle')}</DialogTitle>
+            <DialogDescription>{t('editQrStyleDesc')}</DialogDescription>
           </DialogHeader>
           {editQr && (
             <div className="space-y-6">
@@ -508,7 +510,7 @@ export default function TablesPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="qr-color">QR Color</Label>
+                  <Label htmlFor="qr-color">{t('qrColor')}</Label>
                   <div className="flex gap-2">
                     <Input
                       id="qr-color"
@@ -525,7 +527,7 @@ export default function TablesPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="qr-bg">Background</Label>
+                  <Label htmlFor="qr-bg">{t('background')}</Label>
                   <div className="flex gap-2">
                     <Input
                       id="qr-bg"
@@ -543,13 +545,13 @@ export default function TablesPage() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setEditQr(null)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setEditQr(null)}>{t('cancel')}</Button>
                 <Button 
                   onClick={() => updateQrStyle.mutate({ id: editQr.id, style: qrStyle })}
                   disabled={updateQrStyle.isPending}
                 >
                   {updateQrStyle.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Save Style
+                  {t('saveStyle')}
                 </Button>
               </DialogFooter>
             </div>
