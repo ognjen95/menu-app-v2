@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { useMenus, useCategories, useMenuItems, useCreateMenu, useCreateCategory, useUpdateCategory, useCreateMenuItem, useUpdateMenuItem, useDeleteMenuItem, useAllergens } from '@/lib/hooks/use-menu'
 import type { MenuItem } from '@/lib/types'
@@ -128,10 +128,10 @@ export default function MenuPage() {
   const updateItem = useUpdateMenuItem()
   const deleteItem = useDeleteMenuItem()
 
-  const menus = menusData?.data?.menus || []
-  const allergens = allergensData?.data?.allergens || []
-  const categories = categoriesData?.data?.categories || []
-  const items = itemsData?.data?.items || []
+  const menus = useMemo(() => menusData?.data?.menus || [], [menusData?.data?.menus])
+  const allergens = useMemo(() => allergensData?.data?.allergens || [], [allergensData?.data?.allergens])
+  const categories = useMemo(() => categoriesData?.data?.categories || [], [categoriesData?.data?.categories])
+  const items = useMemo(() => itemsData?.data?.items || [], [itemsData?.data?.items])
 
   // Auto-select first menu if none selected
   useEffect(() => {

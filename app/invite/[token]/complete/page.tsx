@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase-client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,6 +12,7 @@ import { Loader2, UserPlus, Building2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function CompleteInvitationPage() {
+  const t = useTranslations('invitation')
   const params = useParams()
   const router = useRouter()
   const token = params.token as string
@@ -25,11 +27,7 @@ export default function CompleteInvitationPage() {
     confirmPassword: '',
   })
 
-  useEffect(() => {
-    loadInvitation()
-  }, [token])
-
-  const loadInvitation = async () => {
+  const loadInvitation = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('tenant_invitations')
@@ -39,7 +37,7 @@ export default function CompleteInvitationPage() {
         .single()
 
       if (error || !data) {
-        toast.error('Invalid or expired invitation')
+        toast.error(t('invalidOrExpired'))
         router.push('/')
         return
       }
@@ -49,7 +47,7 @@ export default function CompleteInvitationPage() {
       if (user) {
         if (user.email === data.email) {
           // User is logged in with the same email, redirect to accept
-          toast.info('You already have an account with this email')
+          toast.info(t('youAlreadyHaveAccount'))
           router.push(`/invite/${token}`)
           return
         } else {
@@ -61,30 +59,35 @@ export default function CompleteInvitationPage() {
       // Check if expired
       const expiresAt = new Date(data.expires_at)
       if (expiresAt < new Date()) {
-        toast.error('This invitation has expired')
+        toast.error(t('invitationExpired'))
         router.push('/')
         return
       }
 
       setInvitation(data)
     } catch (err) {
-      toast.error('Failed to load invitation')
+      toast.error(t('failedToLoad'))
       router.push('/')
     } finally {
       setLoading(false)
     }
-  }
+  }, [router, supabase, token, t])
+
+    useEffect(() => {
+    loadInvitation()
+  }, [loadInvitation, token])
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match')
+      toast.error(t('passwordsDoNotMatch'))
       return
     }
 
     if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters')
+      toast.error(t('passwordMinLength'))
       return
     }
 
@@ -105,13 +108,13 @@ export default function CompleteInvitationPage() {
       if (signUpError) {
         // Check if user already exists
         if (signUpError.message.includes('already registered')) {
-          throw new Error('An account with this email already exists. Please sign in instead.')
+          throw new Error(t('accountExists'))
         }
         throw signUpError
       }
 
       if (!authData.user) {
-        throw new Error('Failed to create user account')
+        throw new Error(t('failedToCreateUser'))
       }
 
       // Wait a moment for auth to settle
@@ -122,7 +125,7 @@ export default function CompleteInvitationPage() {
       console.log('After signup, current user:', currentUser)
       
       if (!currentUser) {
-        throw new Error('Failed to authenticate after signup. Please try logging in.')
+        throw new Error(t('failedToAuth'))
       }
 
       // Create profile
@@ -148,16 +151,16 @@ export default function CompleteInvitationPage() {
         throw new Error(data.error || 'Failed to accept invitation')
       }
 
-      toast.success('Account created successfully!', {
-        description: 'Welcome to the team!'
+      toast.success(t('accountCreated'), {
+        description: t('welcomeToTeam')
       })
 
       // Redirect to dashboard
       router.push('/dashboard')
     } catch (err: any) {
       console.error('Error:', err)
-      toast.error('Failed to complete setup', {
-        description: err.message || 'Please try again'
+      toast.error(t('failedToComplete'), {
+        description: err.message
       })
       setSubmitting(false)
     }
@@ -169,7 +172,7 @@ export default function CompleteInvitationPage() {
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Loading...</p>
+            <p className="text-muted-foreground">{t('loading')}</p>
           </CardContent>
         </Card>
       </div>
@@ -183,9 +186,9 @@ export default function CompleteInvitationPage() {
           <div className="flex items-center justify-center mb-4">
             <UserPlus className="h-12 w-12 text-primary" />
           </div>
-          <CardTitle className="text-center">Complete Your Profile</CardTitle>
+          <CardTitle className="text-center">{t('completeProfile')}</CardTitle>
           <CardDescription className="text-center">
-            Create your account to join the team
+            {t('createAccountToJoin')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -194,17 +197,17 @@ export default function CompleteInvitationPage() {
             <div className="bg-muted p-4 rounded-lg space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Building2 className="h-4 w-4" />
-                <span>You're joining</span>
+                <span>{t('youreJoining')}</span>
               </div>
               <p className="text-lg font-semibold">{invitation?.tenants?.name}</p>
               <p className="text-sm text-muted-foreground">
-                as a <span className="font-medium capitalize">{invitation?.role}</span>
+                {t('asRole')} <span className="font-medium capitalize">{invitation?.role}</span>
               </p>
             </div>
 
             {/* Email (read-only) */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email">{t('emailAddress')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -216,26 +219,26 @@ export default function CompleteInvitationPage() {
 
             {/* Full Name */}
             <div className="space-y-2">
-              <Label htmlFor="full_name">Full Name *</Label>
+              <Label htmlFor="full_name">{t('fullNameRequired')}</Label>
               <Input
                 id="full_name"
                 type="text"
                 value={formData.full_name}
                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                placeholder="John Doe"
+                placeholder={t('fullNamePlaceholder')}
                 required
               />
             </div>
 
             {/* Password */}
             <div className="space-y-2">
-              <Label htmlFor="password">Password *</Label>
+              <Label htmlFor="password">{t('passwordRequired')}</Label>
               <Input
                 id="password"
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="At least 6 characters"
+                placeholder={t('passwordPlaceholder')}
                 required
                 minLength={6}
               />
@@ -243,13 +246,13 @@ export default function CompleteInvitationPage() {
 
             {/* Confirm Password */}
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password *</Label>
+              <Label htmlFor="confirmPassword">{t('confirmPasswordRequired')}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                placeholder="Re-enter your password"
+                placeholder={t('confirmPasswordPlaceholder')}
                 required
                 minLength={6}
               />
@@ -264,16 +267,15 @@ export default function CompleteInvitationPage() {
               {submitting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Creating Account...
+                  {t('creatingAccount')}
                 </>
               ) : (
-                'Create Account & Join Team'
+                t('createAccountAndJoin')
               )}
             </Button>
 
             <p className="text-xs text-center text-muted-foreground">
-              By creating an account, you agree to join {invitation?.tenants?.name} and 
-              collaborate with the team.
+              {t('termsAgreement', { teamName: invitation?.tenants?.name })}
             </p>
           </form>
         </CardContent>

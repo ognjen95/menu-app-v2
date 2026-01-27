@@ -1,13 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { createClient } from '@/lib/supabase-client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, CheckCircle, XCircle, Mail } from 'lucide-react'
 
 export default function InvitePage() {
+  const t = useTranslations('invitation')
   const params = useParams()
   const router = useRouter()
   const token = params.token as string
@@ -21,11 +23,7 @@ export default function InvitePage() {
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null)
   const [emailMismatch, setEmailMismatch] = useState(false)
 
-  useEffect(() => {
-    loadInvitation()
-  }, [token])
-
-  const loadInvitation = async () => {
+  const loadInvitation = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('tenant_invitations')
@@ -35,14 +33,14 @@ export default function InvitePage() {
         .single()
 
       if (error || !data) {
-        setError('Invalid or expired invitation')
+        setError(t('invalidOrExpired'))
         return
       }
 
       // Check if expired
       const expiresAt = new Date(data.expires_at)
       if (expiresAt < new Date()) {
-        setError('This invitation has expired')
+        setError(t('invitationExpired'))
         return
       }
 
@@ -60,11 +58,15 @@ export default function InvitePage() {
         }
       }
     } catch (err) {
-      setError('Failed to load invitation')
+      setError(t('failedToLoad'))
     } finally {
       setLoading(false)
     }
-  }
+  }, [supabase, token, t])
+
+  useEffect(() => {
+    loadInvitation()
+  }, [loadInvitation])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -109,7 +111,7 @@ export default function InvitePage() {
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Loading invitation...</p>
+            <p className="text-muted-foreground">{t('loadingInvitation')}</p>
           </CardContent>
         </Card>
       </div>
@@ -124,12 +126,12 @@ export default function InvitePage() {
             <div className="flex items-center justify-center mb-4">
               <XCircle className="h-12 w-12 text-destructive" />
             </div>
-            <CardTitle className="text-center">Invalid Invitation</CardTitle>
+            <CardTitle className="text-center">{t('invalidInvitation')}</CardTitle>
             <CardDescription className="text-center">{error}</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
             <Button onClick={() => router.push('/')}>
-              Go to Home
+              {t('goToHome')}
             </Button>
           </CardContent>
         </Card>
@@ -146,19 +148,19 @@ export default function InvitePage() {
             <div className="flex items-center justify-center mb-4">
               <Mail className="h-12 w-12 text-primary" />
             </div>
-            <CardTitle className="text-center">Different Account</CardTitle>
+            <CardTitle className="text-center">{t('differentAccount')}</CardTitle>
             <CardDescription className="text-center">
-              This invitation was sent to a different email address
+              {t('differentAccountDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="bg-muted p-4 rounded-lg space-y-3">
               <div>
-                <p className="text-xs text-muted-foreground">Invitation for:</p>
+                <p className="text-xs text-muted-foreground">{t('invitationFor')}</p>
                 <p className="font-medium">{invitation?.email}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">You're logged in as:</p>
+                <p className="text-xs text-muted-foreground">{t('loggedInAs')}</p>
                 <p className="font-medium">{currentUserEmail}</p>
               </div>
             </div>
@@ -168,19 +170,19 @@ export default function InvitePage() {
                 className="w-full" 
                 onClick={handleSignOut}
               >
-                Sign Out & Create New Account
+                {t('signOutAndCreate')}
               </Button>
               <Button 
                 variant="outline" 
                 className="w-full"
                 onClick={() => router.push('/dashboard')}
               >
-                Go to Dashboard (Keep Current Account)
+                {t('goToDashboard')}
               </Button>
             </div>
 
             <p className="text-xs text-center text-muted-foreground">
-              Sign out to create a new account with {invitation?.email} and accept this invitation.
+              {t('signOutToCreate', { email: invitation?.email })}
             </p>
           </CardContent>
         </Card>
@@ -195,16 +197,16 @@ export default function InvitePage() {
           <div className="flex items-center justify-center mb-4">
             <Mail className="h-12 w-12 text-primary" />
           </div>
-          <CardTitle className="text-center">Team Invitation</CardTitle>
+          <CardTitle className="text-center">{t('teamInvitation')}</CardTitle>
           <CardDescription className="text-center">
-            You've been invited to join a team
+            {t('invitedToJoin')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2 text-center">
-            <p className="text-sm text-muted-foreground">You've been invited to join</p>
+            <p className="text-sm text-muted-foreground">{t('invitedToJoinTeam')}</p>
             <p className="text-2xl font-bold">{invitation?.tenants?.name}</p>
-            <p className="text-sm text-muted-foreground">as a</p>
+            <p className="text-sm text-muted-foreground">{t('asRole')}</p>
             <p className="text-lg font-semibold capitalize">{invitation?.role}</p>
           </div>
 
@@ -217,12 +219,12 @@ export default function InvitePage() {
               {accepting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {isLoggedIn ? 'Accepting...' : 'Redirecting...'}
+                  {isLoggedIn ? t('accepting') : t('redirecting')}
                 </>
               ) : (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  {isLoggedIn ? 'Accept Invitation' : 'Create Account & Accept'}
+                  {isLoggedIn ? t('acceptInvitation') : t('createAccountAndAccept')}
                 </>
               )}
             </Button>
@@ -231,12 +233,12 @@ export default function InvitePage() {
               className="w-full"
               onClick={() => router.push('/')}
             >
-              Decline
+              {t('decline')}
             </Button>
           </div>
 
           <p className="text-xs text-center text-muted-foreground">
-            By accepting, you'll be added to the team and can start collaborating immediately.
+            {t('acceptingTerms')}
           </p>
         </CardContent>
       </Card>

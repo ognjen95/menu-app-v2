@@ -43,6 +43,7 @@ import {
   Clock,
   Edit,
 } from 'lucide-react'
+import Image from 'next/image'
 
 type TeamMember = {
   id: string
@@ -521,10 +522,12 @@ export default function TeamPage() {
                   >
                     <div className="flex items-center gap-4">
                       {member.profiles?.avatar_url ? (
-                        <img 
+                        <Image 
                           src={member.profiles.avatar_url} 
                           alt={member.profiles.full_name || 'User'} 
                           className="h-10 w-10 rounded-full object-cover"
+                          width={40}
+                          height={40}
                         />
                       ) : (
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
@@ -593,10 +596,12 @@ export default function TeamPage() {
             <div className="flex flex-col items-center gap-4">
               <div className="relative">
                 {editFormData.avatar_url ? (
-                  <img
+                  <Image
                     src={editFormData.avatar_url}
                     alt="Avatar"
                     className="h-24 w-24 rounded-full object-cover border-2"
+                    width={96}
+                    height={96}
                   />
                 ) : (
                   <div className="flex h-24 w-24 items-center justify-center rounded-full bg-muted border-2">
