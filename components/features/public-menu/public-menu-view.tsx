@@ -118,6 +118,18 @@ export function PublicMenuView({
     }
   }, [searchParams, languages])
 
+  // Lock body scroll when cart or checkout is open
+  useEffect(() => {
+    if (cartOpen || checkoutOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [cartOpen, checkoutOpen])
+
   // Get translated text for items or categories
   // Always look for translation first, fallback to DB value if not found
   const getTranslatedText = useCallback((
@@ -646,7 +658,7 @@ export function PublicMenuView({
             onClick={() => setCartOpen(true)}
           >
             <ShoppingCart className="h-5 w-5" />
-            View order ({cartItemsCount}) - €{cartTotal.toFixed(2)}
+            {t('viewOrder')} ({cartItemsCount}) - €{cartTotal.toFixed(2)}
           </button>
         </div>
       )}
