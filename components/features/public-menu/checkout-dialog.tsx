@@ -241,9 +241,9 @@ export function CheckoutDialog({
               </button>
             )}
             <h2 className="font-bold text-lg" style={{ color: colors.primary }}>
-              {step === 'details' && 'Checkout'}
-              {step === 'payment' && 'Payment'}
-              {step === 'confirmation' && 'Order Confirmed'}
+              {step === 'details' && t('checkout')}
+              {step === 'payment' && t('payment')}
+              {step === 'confirmation' && t('orderConfirmed')}
             </h2>
             <button 
               onClick={handleClose}
@@ -262,7 +262,7 @@ export function CheckoutDialog({
                 {/* Order Type - only show selector if multiple options enabled */}
                 {showOrderTypeSelector ? (
                   <div className="space-y-3">
-                    <label className="text-base font-semibold" style={{ color: colors.foreground }}>Order Type</label>
+                    <label className="text-base font-semibold" style={{ color: colors.foreground }}>{t('orderType')}</label>
                     <div className={`grid gap-3 ${enabledOrderTypes === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                       {dineInEnabled && (
                         <button
@@ -276,7 +276,7 @@ export function CheckoutDialog({
                           }}
                         >
                           <UtensilsCrossed className="h-6 w-6" />
-                          <span className="font-medium text-sm">Dine In</span>
+                          <span className="font-medium text-sm">{t('dineIn')}</span>
                         </button>
                       )}
                       {takeawayEnabled && (
@@ -291,7 +291,7 @@ export function CheckoutDialog({
                           }}
                         >
                           <ShoppingBag className="h-6 w-6" />
-                          <span className="font-medium text-sm">Takeaway</span>
+                          <span className="font-medium text-sm">{t('takeaway')}</span>
                         </button>
                       )}
                       {deliveryEnabled && (
@@ -306,7 +306,7 @@ export function CheckoutDialog({
                           }}
                         >
                           <Truck className="h-6 w-6" />
-                          <span className="font-medium text-sm">Delivery</span>
+                          <span className="font-medium text-sm">{t('delivery')}</span>
                         </button>
                       )}
                     </div>
@@ -314,13 +314,13 @@ export function CheckoutDialog({
                 ) : (
                   <div className="flex items-center gap-3 p-3 rounded-lg" style={{ backgroundColor: `${colors.foreground}08` }}>
                     {formData.orderType === 'dine_in' && (
-                      <><UtensilsCrossed className="h-5 w-5" style={{ color: colors.primary }} /><span className="font-medium" style={{ color: colors.foreground }}>Dine In Order</span></>
+                      <><UtensilsCrossed className="h-5 w-5" style={{ color: colors.primary }} /><span className="font-medium" style={{ color: colors.foreground }}>{t('dineInOrder')}</span></>
                     )}
                     {formData.orderType === 'takeaway' && (
-                      <><ShoppingBag className="h-5 w-5" style={{ color: colors.primary }} /><span className="font-medium" style={{ color: colors.foreground }}>Takeaway Order</span></>
+                      <><ShoppingBag className="h-5 w-5" style={{ color: colors.primary }} /><span className="font-medium" style={{ color: colors.foreground }}>{t('takeawayOrder')}</span></>
                     )}
                     {formData.orderType === 'delivery' && (
-                      <><Truck className="h-5 w-5" style={{ color: colors.primary }} /><span className="font-medium" style={{ color: colors.foreground }}>Delivery Order</span></>
+                      <><Truck className="h-5 w-5" style={{ color: colors.primary }} /><span className="font-medium" style={{ color: colors.foreground }}>{t('deliveryOrder')}</span></>
                     )}
                   </div>
                 )}
@@ -328,19 +328,19 @@ export function CheckoutDialog({
                 {/* Customer Info */}
                 <div className="space-y-4">
                   <label className="text-base font-semibold" style={{ color: colors.foreground }}>
-                    Your Details {isDelivery ? '(Required)' : '(Optional)'}
+                    {isDelivery ? t('yourDetailsRequired') : t('yourDetailsOptional')}
                   </label>
                   {isDelivery && (
                     <div className="flex items-start gap-2 p-3 rounded-lg text-sm" style={{ backgroundColor: `${colors.accent}15`, color: colors.foreground }}>
                       <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: colors.accent }} />
-                      <span>Name, phone, and delivery address are required for delivery orders</span>
+                      <span>{t('deliveryRequiredMessage')}</span>
                     </div>
                   )}
                   <div className="space-y-3">
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: `${colors.foreground}60` }} />
                       <input
-                        placeholder={isDelivery ? "Name *" : "Name"}
+                        placeholder={isDelivery ? t('nameRequired') : t('name')}
                         value={formData.customerName}
                         onChange={(e) => updateForm('customerName', e.target.value)}
                         className="w-full h-10 pl-10 pr-3 rounded-lg border outline-none transition-colors"
@@ -354,7 +354,7 @@ export function CheckoutDialog({
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: `${colors.foreground}60` }} />
                       <input
-                        placeholder={isDelivery ? "Phone number *" : "Phone number"}
+                        placeholder={isDelivery ? t('phoneRequired') : t('phone')}
                         type="tel"
                         value={formData.customerPhone}
                         onChange={(e) => updateForm('customerPhone', e.target.value)}
@@ -370,7 +370,7 @@ export function CheckoutDialog({
                       <div className="relative">
                         <MapPin className="absolute left-3 top-3 h-4 w-4" style={{ color: `${colors.foreground}60` }} />
                         <textarea
-                          placeholder="Delivery address *"
+                          placeholder={t('deliveryAddress')}
                           value={formData.deliveryAddress}
                           onChange={(e) => updateForm('deliveryAddress', e.target.value)}
                           rows={2}
@@ -386,7 +386,7 @@ export function CheckoutDialog({
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: `${colors.foreground}60` }} />
                       <input
-                        placeholder="Email (for receipt)"
+                        placeholder={t('email')}
                         type="email"
                         value={formData.customerEmail}
                         onChange={(e) => updateForm('customerEmail', e.target.value)}
@@ -403,9 +403,9 @@ export function CheckoutDialog({
 
                 {/* Notes */}
                 <div className="space-y-3">
-                  <label className="text-base font-semibold" style={{ color: colors.foreground }}>Special Requests</label>
+                  <label className="text-base font-semibold" style={{ color: colors.foreground }}>{t('specialRequests')}</label>
                   <textarea
-                    placeholder="Any allergies or special requests..."
+                    placeholder={t('specialRequestsPlaceholder')}
                     value={formData.customerNotes}
                     onChange={(e) => updateForm('customerNotes', e.target.value)}
                     rows={3}
@@ -420,7 +420,7 @@ export function CheckoutDialog({
 
                 {/* Payment Method */}
                 <div className="space-y-3">
-                  <label className="text-base font-semibold" style={{ color: colors.foreground }}>Payment Method</label>
+                  <label className="text-base font-semibold" style={{ color: colors.foreground }}>{t('paymentMethod')}</label>
                   <div className="space-y-2">
                     <button
                       type="button"
@@ -434,8 +434,8 @@ export function CheckoutDialog({
                     >
                       <Banknote className="h-5 w-5" />
                       <div>
-                        <p className="font-medium">Pay at Counter</p>
-                        <p className="text-sm" style={{ opacity: 0.6 }}>Cash or card when ready</p>
+                        <p className="font-medium">{t('payAtCounter')}</p>
+                        <p className="text-sm" style={{ opacity: 0.6 }}>{t('payAtCounterDesc')}</p>
                       </div>
                     </button>
                     {onlinePaymentsEnabled && (
@@ -451,8 +451,8 @@ export function CheckoutDialog({
                       >
                         <CreditCard className="h-5 w-5" />
                         <div>
-                          <p className="font-medium">Pay Online</p>
-                          <p className="text-sm" style={{ opacity: 0.6 }}>Secure card payment</p>
+                          <p className="font-medium">{t('payOnline')}</p>
+                          <p className="text-sm" style={{ opacity: 0.6 }}>{t('payOnlineDesc')}</p>
                         </div>
                       </button>
                     )}
@@ -464,7 +464,7 @@ export function CheckoutDialog({
                   className="space-y-3 p-4 rounded-lg"
                   style={{ backgroundColor: `${colors.foreground}08` }}
                 >
-                  <h3 className="font-semibold" style={{ color: colors.foreground }}>Order Summary</h3>
+                  <h3 className="font-semibold" style={{ color: colors.foreground }}>{t('orderSummary')}</h3>
                   <div className="space-y-2 text-sm">
                     {cart.map((item) => {
                       const itemPrice = item.item.base_price + (item.variant?.price_modifier || 0)
@@ -486,7 +486,7 @@ export function CheckoutDialog({
                     className="pt-2 flex justify-between font-bold"
                     style={{ borderTop: `1px solid ${colors.foreground}15`, color: colors.foreground }}
                   >
-                    <span>Total</span>
+                    <span>{t('total')}</span>
                     <span>{currencySymbol}{cartTotal.toFixed(2)}</span>
                   </div>
                 </div>
@@ -511,23 +511,23 @@ export function CheckoutDialog({
                 >
                   <CheckCircle2 className="h-10 w-10" style={{ color: colors.primary }} />
                 </div>
-                <h3 className="text-2xl font-bold mb-2" style={{ color: colors.primary }}>Order Placed!</h3>
+                <h3 className="text-2xl font-bold mb-2" style={{ color: colors.primary }}>{t('orderPlaced')}</h3>
                 <p className="mb-6" style={{ color: colors.foreground, opacity: 0.7 }}>
-                  Your order has been sent to {tenantName}
+                  {t('orderSentTo', { tenantName })}
                 </p>
                 <div 
                   className="rounded-lg p-4 w-full max-w-xs"
                   style={{ backgroundColor: `${colors.foreground}10` }}
                 >
-                  <p className="text-sm" style={{ color: colors.foreground, opacity: 0.6 }}>Order Number</p>
+                  <p className="text-sm" style={{ color: colors.foreground, opacity: 0.6 }}>{t('orderNumber')}</p>
                   <p className="text-2xl font-bold font-mono" style={{ color: colors.primary }}>
                     #{orderResult.orderNumber || orderResult.orderId.slice(-6).toUpperCase()}
                   </p>
                 </div>
                 <p className="text-sm mt-6" style={{ color: colors.foreground, opacity: 0.6 }}>
                   {formData.paymentMethod === 'cash' 
-                    ? 'Please pay at the counter when your order is ready.'
-                    : 'Payment confirmed. Thank you!'}
+                    ? t('payAtCounterMessage')
+                    : t('paymentConfirmed')}
                 </p>
               </div>
             )}
@@ -545,11 +545,11 @@ export function CheckoutDialog({
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    Placing Order...
+                    {t('placingOrder')}
                   </>
                 ) : (
                   <>
-                    {formData.paymentMethod === 'online' ? 'Proceed to Payment' : 'Place Order'} - {currencySymbol}{cartTotal.toFixed(2)}
+                    {formData.paymentMethod === 'online' ? t('proceedToPayment') : t('placeOrder')} - {currencySymbol}{cartTotal.toFixed(2)}
                   </>
                 )}
               </button>
@@ -563,7 +563,7 @@ export function CheckoutDialog({
                 onClick={handleClose}
                 style={{ backgroundColor: colors.primary, color: '#fff' }}
               >
-                Done
+                {t('done')}
               </button>
             </div>
           )}

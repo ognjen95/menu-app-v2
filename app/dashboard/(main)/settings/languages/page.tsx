@@ -47,9 +47,12 @@ export default function LanguageSettingsPage() {
     }
   })
 
-  const allLanguages = allLangsData?.data?.languages || []
-  const tenantLanguages = tenantLangsData?.data?.languages || []
+  // ! REMOVE THIS HARD CODED LANGUAGE LIMITATION WHEN YOU ADD ALL NEW LANGUAGES JSON FILES AND TRANSLATIONS
+  const ONLY_THIS_LANGUAGES = ['sr', 'en', 'es']
   
+  const allLanguages = allLangsData?.data?.languages.filter(lang => ONLY_THIS_LANGUAGES.includes(lang.code)) || []
+  const tenantLanguages = tenantLangsData?.data?.languages || []
+
   // Create a map of enabled languages
   const enabledMap = new Map(tenantLanguages.map(tl => [tl.language_code, tl]))
   const defaultLang = tenantLanguages.find(tl => tl.is_default)
@@ -100,10 +103,10 @@ export default function LanguageSettingsPage() {
           {allLanguages.map((lang) => {
             const isEnabled = enabledMap.has(lang.code)
             const isDefault = defaultLang?.language_code === lang.code
-            
+
             return (
-              <Card 
-                key={lang.code} 
+              <Card
+                key={lang.code}
                 className={cn(
                   'transition-all',
                   isEnabled && 'border-primary/50 bg-primary/5'

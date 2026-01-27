@@ -1,7 +1,10 @@
 import { notFound } from 'next/navigation'
 import { unstable_noStore as noStore } from 'next/cache'
+import { cookies } from 'next/headers'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { PublicMenuView } from '@/components/features/public-menu/public-menu-view'
+import { PublicIntlProvider } from '@/components/providers/public-intl-provider'
+import { locales, defaultLocale, type Locale } from '@/i18n/config'
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -125,24 +128,49 @@ export default async function PublicMenuPage({ params, searchParams }: PageProps
     notFound()
   }
 
-  // Determine initial language (from URL, or default)
-  const defaultLang = data.languages.find(l => l.isDefault)?.code || data.languages[0]?.code || 'en'
-  const initialLanguage = lang && data.languages.some(l => l.code === lang) ? lang : defaultLang
+  // Determine initial language priority:
+  // 1. URL param (lang)
+  // 2. PUBLIC_LOCALE cookie
+  // 3. Tenant's default language
+  // 4. Fallback to 'en'
+  const cookieStore = await cookies()
+  const cookieLocale = cookieStore.get('PUBLIC_LOCALE')?.value
+  const tenantDefaultLang = data.languages.find(l => l.isDefault)?.code || data.languages[0]?.code || 'en'
+  
+  // Validate the language exists in tenant's enabled languages
+  const getValidLanguage = (langCode: string | undefined) => {
+    if (!langCode) return null
+    return data.languages.some(l => l.code === langCode) ? langCode : null
+  }
+
+  const initialLanguage = getValidLanguage(lang) 
+    || getValidLanguage(cookieLocale) 
+    || tenantDefaultLang
+
+  // Load public translations for the determined language
+  // Check if the locale is valid, otherwise use default
+  const publicLocale: Locale = locales.includes(initialLanguage as Locale) 
+    ? (initialLanguage as Locale) 
+    : defaultLocale
+  
+  const publicMessages = (await import(`@/messages/public/${publicLocale}.json`)).default
 
   return (
-    <PublicMenuView
-      tenant={data.tenant}
-      menus={data.menus}
-      locations={data.locations}
-      allergens={data.allergens}
-      website={data.website}
-      tableId={table}
-      locationId={location}
-      languages={data.languages}
-      translations={data.translations}
-      initialLanguage={initialLanguage}
-      slug={slug}
-    />
+    <PublicIntlProvider locale={publicLocale} messages={publicMessages}>
+      <PublicMenuView
+        tenant={data.tenant}
+        menus={data.menus}
+        locations={data.locations}
+        allergens={data.allergens}
+        website={data.website}
+        tableId={table}
+        locationId={location}
+        languages={data.languages}
+        translations={data.translations}
+        initialLanguage={initialLanguage}
+        slug={slug}
+      />
+    </PublicIntlProvider>
   )
 }
 

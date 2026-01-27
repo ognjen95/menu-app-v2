@@ -131,13 +131,19 @@ export function PublicMenuView({
     return translation?.value || fallback
   }, [currentLanguage, translations])
 
-  // Handle language change - update state immediately, then sync URL
+  // Handle language change - set PUBLIC_LOCALE cookie and refresh to load new translations
   const handleLanguageChange = useCallback((langCode: string) => {
-    setCurrentLanguage(langCode) // Immediate state update
+    setCurrentLanguage(langCode) // Immediate state update for menu content translations
     setLangMenuOpen(false)
+    
+    // Set PUBLIC_LOCALE cookie (expires in 1 year)
+    document.cookie = `PUBLIC_LOCALE=${langCode}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
+    
+    // Update URL param and refresh to load new UI translations from server
     const params = new URLSearchParams(searchParams.toString())
     params.set('lang', langCode)
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false }) // Use replace for cleaner history
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    router.refresh() // Trigger server re-render to load new translations
   }, [router, pathname, searchParams])
 
   const currentLang = languages.find(l => l.code === currentLanguage) || languages[0]
@@ -400,7 +406,7 @@ export function PublicMenuView({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: mutedForeground }} />
             <input
               type="text"
-              placeholder="Search menu..."
+              placeholder={t('searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 rounded-md"
@@ -425,7 +431,7 @@ export function PublicMenuView({
                 }}
                 onClick={() => setSelectedCategory(null)}
               >
-                All
+                {t('all')}
               </button>
               {allCategories.map((category) => (
                 <button
@@ -449,7 +455,7 @@ export function PublicMenuView({
       <main className="container mx-auto px-4 py-6 pb-24">
         {/* Dietary filters */}
         <div className="flex flex-wrap gap-2 mb-6">
-          {['vegetarian', 'vegan', 'gluten-free', 'halal'].map((filter) => (
+          {(['vegetarian', 'vegan', 'gluten-free', 'halal'] as const).map((filter) => (
             <button
               key={filter}
               className="px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 cursor-pointer transition-colors"
@@ -467,7 +473,7 @@ export function PublicMenuView({
               }}
             >
               {filter === 'vegetarian' && <Leaf className="h-3 w-3" />}
-              {filter}
+              {filter === 'vegetarian' ? t('vegetarian') : filter === 'vegan' ? t('vegan') : filter === 'gluten-free' ? t('glutenFree') : t('halal')}
             </button>
           ))}
         </div>
@@ -475,7 +481,7 @@ export function PublicMenuView({
         {/* Items grid */}
         {filteredItems.length === 0 ? (
           <div className="text-center py-12">
-            <p style={{ color: mutedForeground }}>No items found</p>
+            <p style={{ color: mutedForeground }}>{t('noItemsFound')}</p>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -573,7 +579,7 @@ export function PublicMenuView({
                         }}
                       >
                         <Plus className="h-4 w-4" />
-                        Add to order
+                        {t('addToOrder')}
                       </button>
                     </div>
                   </div>
@@ -608,7 +614,7 @@ export function PublicMenuView({
             <div className="flex flex-col h-full">
               {/* Header */}
               <div className="flex items-center justify-between p-4" style={{ borderBottom: `1px solid ${borderColor}` }}>
-                <h2 className="font-bold text-lg" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>Your Order</h2>
+                <h2 className="font-bold text-lg" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>{t('yourOrder')}</h2>
                 <button
                   className="p-2 rounded-md"
                   style={{ color: theme.foreground }}
@@ -623,7 +629,7 @@ export function PublicMenuView({
                 {cart.length === 0 ? (
                   <div className="text-center py-12">
                     <ShoppingCart className="h-12 w-12 mx-auto mb-4" style={{ color: mutedForeground }} />
-                    <p style={{ color: mutedForeground }}>Your cart is empty</p>
+                    <p style={{ color: mutedForeground }}>{t('cartEmpty')}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -682,7 +688,7 @@ export function PublicMenuView({
               {cart.length > 0 && (
                 <div className="p-4 space-y-4" style={{ borderTop: `1px solid ${borderColor}` }}>
                   <div className="flex justify-between text-lg font-bold" style={{ color: theme.foreground }}>
-                    <span>Total</span>
+                    <span>{t('total')}</span>
                     <span>€{cartTotal.toFixed(2)}</span>
                   </div>
                   <button
@@ -693,7 +699,7 @@ export function PublicMenuView({
                       setCheckoutOpen(true)
                     }}
                   >
-                    Place Order
+                    {t('placeOrder')}
                   </button>
                 </div>
               )}
@@ -719,7 +725,7 @@ export function PublicMenuView({
             {/* Item image */}
             {selectedItem.image_urls && selectedItem.image_urls.length > 0 && (
               <div className="aspect-video">
-                <img
+                <Image
                   src={selectedItem.image_urls[0]}
                   alt={selectedItem.name}
                   className="w-full h-full object-cover rounded-t-xl"
@@ -798,7 +804,7 @@ export function PublicMenuView({
               {/* Dietary tags */}
               {selectedItem.dietary_tags && selectedItem.dietary_tags.length > 0 && (
                 <div className="mb-4">
-                  <h3 className="font-semibold mb-2 text-sm" style={{ color: theme.foreground }}>Dietary</h3>
+                  <h3 className="font-semibold mb-2 text-sm" style={{ color: theme.foreground }}>{t('dietary')}</h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedItem.dietary_tags.map((tag) => (
                       <span key={tag} className="text-xs px-2 py-1 rounded flex items-center gap-1" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
@@ -815,7 +821,7 @@ export function PublicMenuView({
                 <div className="mb-6">
                   <h3 className="font-semibold mb-2 text-sm flex items-center gap-1" style={{ color: theme.foreground }}>
                     <AlertTriangle className="h-4 w-4" style={{ color: theme.accent }} />
-                    Allergens
+                    {t('allergens')}
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedItem.item_allergens.map((ia) => (
@@ -830,7 +836,7 @@ export function PublicMenuView({
               {/* Variants */}
               {selectedItem.variants && selectedItem.variants.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="font-semibold mb-2" style={{ color: theme.foreground }}>Size</h3>
+                  <h3 className="font-semibold mb-2" style={{ color: theme.foreground }}>{t('size')}</h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedItem.variants.map((variant) => (
                       <span
@@ -878,7 +884,7 @@ export function PublicMenuView({
                   setSelectedItem(null)
                 }}
               >
-                Add to order - €{selectedItem.base_price.toFixed(2)}
+                {t('addToOrder')} - €{selectedItem.base_price.toFixed(2)}
               </button>
             </div>
           </div>
