@@ -271,19 +271,15 @@ export default function OrdersPage() {
               <span className={cn("font-mono text-xs", timerColor)}>
                 {formatTimeElapsed(order.placed_at)}
               </span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="icon" variant="ghost" className="h-6 w-6">
-                    <MoreVertical className="h-3.5 w-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setSelectedOrderForLogs(order)}>
-                    <History className="h-4 w-4 mr-2" />
-                    {t('viewLogs')}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                className="h-6 w-6"
+                title={t('viewLogs')}
+                onClick={() => setSelectedOrderForLogs(order)}
+              >
+                <History className="h-3.5 w-3.5" />
+              </Button>
             </div>
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
