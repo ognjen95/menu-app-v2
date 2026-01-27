@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '@/lib/api'
-import { useCreateOrder, useActiveOrders } from '@/lib/hooks/use-orders'
+import { useCreateOrder, useActiveOrders, useUpdateOrderStatus } from '@/lib/hooks/use-orders'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -39,7 +39,18 @@ import {
   Home,
   ClipboardList,
   Grid3X3,
+  MoreVertical,
+  Pencil,
+  XCircle,
+  Eye,
 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
 import type { Location, Table, MenuItem, OrderWithRelations, OrderStatus } from '@/lib/types'
@@ -224,6 +235,25 @@ export default function WaiterPage() {
 
   // Create order
   const createOrder = useCreateOrder()
+  const updateOrderStatus = useUpdateOrderStatus()
+
+  // Handle cancel order
+  const handleCancelOrder = (orderId: string) => {
+    updateOrderStatus.mutate(
+      { id: orderId, status: 'cancelled' },
+      {
+        onSuccess: () => {
+          toast.success(t('orderCancelled'))
+        },
+        onError: () => {
+          toast.error(t('orderCancelFailed'))
+        },
+      }
+    )
+  }
+
+  // State for viewing order details
+  const [selectedOrder, setSelectedOrder] = useState<OrderWithRelations | null>(null)
 
   const handleSubmit = async () => {
     if (!selectedLocationId) {
@@ -374,9 +404,32 @@ export default function WaiterPage() {
                     <span className="text-sm font-medium">{order.table.name}</span>
                   )}
                 </div>
-                <span className="text-xs text-muted-foreground">
-                  {order.placed_at && new Date(order.placed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {order.placed_at && new Date(order.placed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setSelectedOrder(order)}>
+                        <Eye className="h-4 w-4 mr-2" />
+                        {t('viewDetails')}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        onClick={() => handleCancelOrder(order.id)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        {t('cancelOrder')}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
               <div className="text-sm text-muted-foreground">
                 {order.items?.slice(0, 2).map(item => (
@@ -556,7 +609,7 @@ export default function WaiterPage() {
 
       {/* Bottom bar - Place order */}
       {cartItemsCount > 0 && (
-        <div className="p-4 border-t bg-background">
+        <div className="p-4 border-t bg-background safe-area-pb">
           <Button
             className="w-full h-14 text-lg font-semibold"
             onClick={handleSubmit}
@@ -637,16 +690,18 @@ export default function WaiterPage() {
         </div>
 
         {/* Submit */}
-        <Button
-          className="w-full h-14 text-lg font-semibold"
-          onClick={() => {
-            setShowCart(false)
-            handleSubmit()
-          }}
-          disabled={createOrder.isPending || cart.length === 0}
-        >
-          {tCreate('placeOrder')} · €{cartTotal.toFixed(2)}
-        </Button>
+        <div className="pb-6 safe-area-pb">
+          <Button
+            className="w-full h-14 text-lg font-semibold"
+            onClick={() => {
+              setShowCart(false)
+              handleSubmit()
+            }}
+            disabled={createOrder.isPending || cart.length === 0}
+          >
+            {tCreate('placeOrder')} · €{cartTotal.toFixed(2)}
+          </Button>
+        </div>
       </SheetContent>
     </Sheet>
   )
@@ -681,6 +736,124 @@ export default function WaiterPage() {
             </button>
           ))}
         </div>
+      </SheetContent>
+    </Sheet>
+  )
+
+  // Order Details Sheet
+  const OrderDetailsSheet = () => (
+    <Sheet open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+      <SheetContent side="bottom" className="h-[80vh] rounded-t-3xl">
+        {selectedOrder && (
+          <>
+            <SheetHeader className="pb-4">
+              <SheetTitle className="flex items-center justify-between">
+                <span>{t('orderDetails')} #{selectedOrder.order_number}</span>
+                <Badge className={cn("text-white", statusColors[selectedOrder.status])}>
+                  {t(`status.${selectedOrder.status}`)}
+                </Badge>
+              </SheetTitle>
+            </SheetHeader>
+            
+            <ScrollArea className="flex-1 -mx-6 px-6">
+              <div className="space-y-4 pb-4">
+                {/* Order info */}
+                <div className="flex items-center gap-4 text-sm">
+                  {selectedOrder.table && (
+                    <div className="flex items-center gap-2">
+                      <UtensilsCrossed className="h-4 w-4 text-muted-foreground" />
+                      <span>{selectedOrder.table.name}</span>
+                    </div>
+                  )}
+                  {selectedOrder.type && (
+                    <Badge variant="outline">
+                      {selectedOrder.type === 'dine_in' ? t('dine_in') : 
+                       selectedOrder.type === 'takeaway' ? t('takeaway') : t('delivery')}
+                    </Badge>
+                  )}
+                  {selectedOrder.placed_at && (
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      <span>{new Date(selectedOrder.placed_at).toLocaleTimeString()}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Customer info */}
+                {(selectedOrder.customer_name || selectedOrder.customer_phone) && (
+                  <div className="p-3 bg-muted/50 rounded-lg text-sm">
+                    {selectedOrder.customer_name && (
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span>{selectedOrder.customer_name}</span>
+                      </div>
+                    )}
+                    {selectedOrder.customer_phone && (
+                      <div className="text-muted-foreground ml-6">{selectedOrder.customer_phone}</div>
+                    )}
+                  </div>
+                )}
+
+                {/* Items */}
+                <div className="space-y-2">
+                  <h4 className="font-medium">{t('items')}</h4>
+                  {selectedOrder.items?.map(item => (
+                    <div key={item.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <div>
+                        <div className="font-medium">{item.quantity}x {item.item_name}</div>
+                        {item.variant_name && (
+                          <div className="text-xs text-muted-foreground">{item.variant_name}</div>
+                        )}
+                        {item.notes && (
+                          <div className="text-xs text-amber-500 mt-1">{item.notes}</div>
+                        )}
+                      </div>
+                      <span className="font-medium">€{item.total_price?.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Notes */}
+                {selectedOrder.customer_notes && (
+                  <div className="p-3 bg-amber-500/10 rounded-lg">
+                    <div className="text-sm font-medium text-amber-500 mb-1">{t('notes')}</div>
+                    <div className="text-sm">{selectedOrder.customer_notes}</div>
+                  </div>
+                )}
+
+                {/* Total */}
+                <div className="flex items-center justify-between text-lg font-semibold pt-3 border-t">
+                  <span>{t('total')}</span>
+                  <span>€{selectedOrder.total.toFixed(2)}</span>
+                </div>
+              </div>
+            </ScrollArea>
+
+            {/* Actions */}
+            <div className="pt-4 pb-6 safe-area-pb space-y-2">
+              {selectedOrder.status !== 'cancelled' && (
+                <Button 
+                  variant="destructive" 
+                  className="w-full h-12"
+                  onClick={() => {
+                    handleCancelOrder(selectedOrder.id)
+                    setSelectedOrder(null)
+                  }}
+                >
+                  <XCircle className="h-5 w-5 mr-2" />
+                  {t('cancelOrder')}
+                </Button>
+              )}
+              <Button 
+                variant="outline" 
+                className="w-full h-12"
+                onClick={() => setSelectedOrder(null)}
+              >
+                {t('close')}
+              </Button>
+            </div>
+          </>
+        )}
       </SheetContent>
     </Sheet>
   )
@@ -742,6 +915,7 @@ export default function WaiterPage() {
       {/* Sheets */}
       <CartSheet />
       <LocationPickerSheet />
+      <OrderDetailsSheet />
     </div>
   )
 }

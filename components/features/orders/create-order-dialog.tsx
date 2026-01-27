@@ -69,7 +69,7 @@ interface CreateOrderDialogProps {
 export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps) {
   const t = useTranslations('createOrder')
   const tCommon = useTranslations('common')
-  
+
   // State
   const [selectedLocationId, setSelectedLocationId] = useState<string>('')
   const [selectedTableId, setSelectedTableId] = useState<string>('')
@@ -177,9 +177,9 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
   // Filter items by search and category
   const filteredItems = useMemo(() => {
     return menuItems.filter(item => {
-      const matchesSearch = !searchQuery || 
+      const matchesSearch = !searchQuery ||
         item.name.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesCategory = !selectedCategoryId || 
+      const matchesCategory = !selectedCategoryId ||
         item.category?.id === selectedCategoryId
       return matchesSearch && matchesCategory
     })
@@ -190,8 +190,8 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
     setCart(prev => {
       const existing = prev.find(c => c.menuItem.id === item.id)
       if (existing) {
-        return prev.map(c => 
-          c.menuItem.id === item.id 
+        return prev.map(c =>
+          c.menuItem.id === item.id
             ? { ...c, quantity: c.quantity + 1 }
             : c
         )
@@ -209,7 +209,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
         }
         return c
       }).filter(c => c.quantity > 0 || delta >= 0)
-      
+
       // Remove if quantity is 0
       if (delta < 0) {
         return updated.filter(c => c.quantity > 0)
@@ -268,7 +268,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
       })
 
       toast.success(t('orderCreated'))
-      
+
       // Reset form
       setCart([])
       setSelectedTableId('')
@@ -422,7 +422,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
 
       {/* Order details */}
       {cart.length > 0 && (
-        <div className="p-4 border-t space-y-3">
+        <div className="p-4 pb-8 border-t space-y-3 safe-area-pb">
           {/* Customer info (optional) */}
           <div className="space-y-2">
             <Input
@@ -530,7 +530,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
         <div className="flex gap-2">
           <Button
             variant={orderType === 'dine_in' ? 'default' : 'outline'}
-            size="sm"
+            size="lg"
             onClick={() => setOrderType('dine_in')}
             className="flex-1"
           >
@@ -539,7 +539,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
           </Button>
           <Button
             variant={orderType === 'takeaway' ? 'default' : 'outline'}
-            size="sm"
+            size="lg"
             onClick={() => setOrderType('takeaway')}
             className="flex-1"
           >
@@ -548,7 +548,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
           </Button>
           <Button
             variant={orderType === 'delivery' ? 'default' : 'outline'}
-            size="sm"
+            size="lg"
             onClick={() => setOrderType('delivery')}
             className="flex-1"
           >
@@ -599,7 +599,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
 
       {/* Mobile cart button */}
       {isMobile && cartItemsCount > 0 && (
-        <div className="p-4 border-t">
+        <div className="p-4 pb-8 border-t safe-area-pb">
           <Button
             className="w-full h-12"
             onClick={() => setShowCart(true)}
@@ -655,7 +655,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
           <div className="flex-1 border-r">
             <MainContent />
           </div>
-          
+
           {/* Cart sidebar */}
           <div className="w-80 lg:w-96">
             <CartSidebar />
