@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import { useQuery } from '@tanstack/react-query'
+import Link from 'next/link'
 import { useActiveOrders, useUpdateOrderStatus } from '@/lib/hooks/use-orders'
 import { apiGet } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -44,9 +45,12 @@ import {
   AlertTriangle,
   MessageSquare,
   Info,
+  Plus,
+  Smartphone,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { OrderLogsDialog } from '@/components/features/orders/OrderLogsDialog'
+import { CreateOrderDialog } from '@/components/features/orders/create-order-dialog'
 import type { OrderStatus, OrderWithRelations, Location } from '@/lib/types'
 
 const statusConfig: Record<OrderStatus, { label: string; color: string; badgeColor: string; buttonColor: string; icon: React.ElementType }> = {
@@ -93,8 +97,9 @@ export default function OrdersPage() {
   const [selectedLocationId, setSelectedLocationId] = useState<string>('all')
   const [layout, setLayout] = useState<'grid' | 'kanban'>('grid')
   const [soundEnabled, setSoundEnabled] = useState(true)
+  const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false)
   const lastOrderCountRef = useRef(0)
-  
+
   // Drag scroll for kanban view
   const kanbanRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -140,7 +145,7 @@ export default function OrdersPage() {
 
   // Track if screen is mobile
   const [isMobile, setIsMobile] = useState(false)
-  
+
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
     checkMobile()
@@ -180,7 +185,7 @@ export default function OrdersPage() {
   useEffect(() => {
     if (soundEnabled && orders.length > lastOrderCountRef.current && lastOrderCountRef.current > 0) {
       const audio = new Audio('/sounds/notification.mp3')
-      audio.play().catch(() => {})
+      audio.play().catch(() => { })
     }
     lastOrderCountRef.current = orders.length
   }, [orders.length, soundEnabled])
@@ -314,7 +319,7 @@ export default function OrdersPage() {
                     €{item.total_price?.toFixed(2) || '0.00'}
                   </span>
                 </div>
-                
+
                 {/* Expanded item details */}
                 {isExpanded && (
                   <div className="pl-4 space-y-0.5">
@@ -324,7 +329,7 @@ export default function OrdersPage() {
                         {item.variant_name}
                       </p>
                     )}
-                    
+
                     {/* Options */}
                     {(item as any).selected_options?.length > 0 && (
                       <div className="text-xs text-muted-foreground">
@@ -336,7 +341,7 @@ export default function OrdersPage() {
                         ))}
                       </div>
                     )}
-                    
+
                     {/* Item notes */}
                     {item.notes && (
                       <div className="flex items-start gap-1 text-xs text-amber-500">
@@ -344,7 +349,7 @@ export default function OrdersPage() {
                         <span>{item.notes}</span>
                       </div>
                     )}
-                    
+
                     {/* Allergens */}
                     {(item as any).allergens?.length > 0 && (
                       <div className="flex items-start gap-1 text-xs text-red-500">
@@ -356,7 +361,7 @@ export default function OrdersPage() {
                 )}
               </div>
             ))}
-            
+
             {/* Show more items indicator (collapsed) */}
             {!isExpanded && (order.items?.length || 0) > 3 && (
               <div className="text-muted-foreground text-xs">
@@ -454,7 +459,7 @@ export default function OrdersPage() {
         <div className="flex items-center gap-2">
           {/* Location selector */}
           <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[120px] md:w-[180px]">
               <SelectValue placeholder={t('allLocations')} />
             </SelectTrigger>
             <SelectContent>
@@ -497,10 +502,24 @@ export default function OrdersPage() {
             </Button>
           </div>
 
+          {/* Waiter Mode */}
+          <Button variant="outline" asChild className="px-3 md:px-4">
+            <Link href="/dashboard/waiter">
+              <Smartphone className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">{t('waiterMode')}</span>
+            </Link>
+          </Button>
+
+
+
           {/* Refresh */}
-          <Button onClick={() => refetch()} variant="outline" disabled={isLoading}>
-            <RefreshCw className={cn('h-4 w-4 mr-2', isLoading && 'animate-spin')} />
-            {t('refresh')}
+          <Button onClick={() => refetch()} variant="outline" disabled={isLoading} size="icon" className="shrink-0">
+            <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
+          </Button>
+          {/* Create Order */}
+          <Button onClick={() => setIsCreateOrderOpen(true)} className="px-3 md:px-4">
+            <Plus className="h-4 w-4 md:mr-2" />
+            <span className="hidden md:inline">{t('createOrder')}</span>
           </Button>
         </div>
       </div>
@@ -555,7 +574,7 @@ export default function OrdersPage() {
         </div>
       ) : (
         /* Kanban Layout */
-        <div 
+        <div
           ref={kanbanRef}
           className="overflow-x-auto -mx-6 px-6 cursor-grab select-none"
           onMouseDown={handleMouseDown}
@@ -596,6 +615,12 @@ export default function OrdersPage() {
         order={selectedOrderForLogs}
         open={!!selectedOrderForLogs}
         onOpenChange={() => setSelectedOrderForLogs(null)}
+      />
+
+      {/* Create Order Dialog */}
+      <CreateOrderDialog
+        open={isCreateOrderOpen}
+        onOpenChange={setIsCreateOrderOpen}
       />
     </div>
   )

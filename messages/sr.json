@@ -221,6 +221,7 @@
     "overview": "Pregled",
     "menu": "Meni",
     "orders": "Porudžbine",
+    "waiter": "Konobar Mod",
     "kitchen": "Kuhinja",
     "tablesQr": "Stolovi i QR",
     "website": "Veb sajt",
@@ -449,6 +450,8 @@
   "ordersPage": {
     "title": "Porudžbine",
     "description": "Upravljajte dolaznim porudžbinama i pratite njihov status",
+    "waiterMode": "Konobar Mod",
+    "createOrder": "Nova Porudžbina",
     "refresh": "Osveži",
     "all": "Sve",
     "allLocations": "Sve lokacije",
@@ -1073,5 +1076,50 @@
     "welcomeToTeam": "Dobrodošli u tim!",
     "failedToComplete": "Greška pri završetku podešavanja",
     "youAlreadyHaveAccount": "Već imate nalog sa ovim emailom"
+  },
+  "waiterPage": {
+    "title": "Konobar Mod",
+    "tables": "Stolovi",
+    "orders": "Porudžbine",
+    "takeaway": "Ponesi",
+    "delivery": "Dostava",
+    "dine_in": "U Restoranu",
+    "noTables": "Nema konfigurisanih stolova",
+    "noActiveOrders": "Nema aktivnih porudžbina",
+    "selectLocation": "Izaberi Lokaciju",
+    "tapToChange": "Dodirni za promenu",
+    "status": {
+      "placed": "Nova",
+      "accepted": "Prihvaćena",
+      "preparing": "Priprema",
+      "ready": "Spremno",
+      "served": "Servirano"
+    }
+  },
+  "createOrder": {
+    "title": "Kreiraj Novu Porudžbinu",
+    "selectLocation": "Izaberi Lokaciju",
+    "selectTable": "Izaberi Sto",
+    "selectStaff": "Izaberi Osoblje",
+    "dineIn": "U Restoranu",
+    "takeaway": "Ponesi",
+    "delivery": "Dostava",
+    "searchItems": "Pretraži meni...",
+    "allCategories": "Sve",
+    "noItemsFound": "Nema pronađenih stavki",
+    "soldOut": "Rasprodato",
+    "cart": "Porudžbina",
+    "clear": "Obriši",
+    "cartEmpty": "Dodajte stavke da započnete porudžbinu",
+    "customerName": "Ime Kupca (opciono)",
+    "customerPhone": "Telefon (opciono)",
+    "notes": "Napomene (opciono)",
+    "total": "Ukupno",
+    "placeOrder": "Naruči",
+    "creating": "Kreiranje...",
+    "viewCart": "Pogledaj Porudžbinu",
+    "orderCreated": "Porudžbina uspešno kreirana!",
+    "orderFailed": "Greška pri kreiranju porudžbine",
+    "addItemsFirst": "Molimo dodajte stavke u porudžbinu"
   }
 }

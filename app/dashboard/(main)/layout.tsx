@@ -26,6 +26,7 @@ import {
   SidebarIcon,
   SidebarOpenIcon,
   SidebarCloseIcon,
+  Smartphone,
 } from 'lucide-react'
 
 const navigationItems = [

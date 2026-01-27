@@ -221,6 +221,7 @@
     "overview": "Overview",
     "menu": "Menu",
     "orders": "Orders",
+    "waiter": "Waiter Mode",
     "kitchen": "Kitchen",
     "tablesQr": "Tables & QR",
     "website": "Website",
@@ -449,6 +450,8 @@
   "ordersPage": {
     "title": "Orders",
     "description": "Manage incoming orders and track their status",
+    "waiterMode": "Waiter Mode",
+    "createOrder": "New Order",
     "refresh": "Refresh",
     "all": "All",
     "allLocations": "All Locations",
@@ -1073,5 +1076,50 @@
     "welcomeToTeam": "Welcome to the team!",
     "failedToComplete": "Failed to complete setup",
     "youAlreadyHaveAccount": "You already have an account with this email"
+  },
+  "waiterPage": {
+    "title": "Waiter Mode",
+    "tables": "Tables",
+    "orders": "Orders",
+    "takeaway": "Takeaway",
+    "delivery": "Delivery",
+    "dine_in": "Dine In",
+    "noTables": "No tables configured",
+    "noActiveOrders": "No active orders",
+    "selectLocation": "Select Location",
+    "tapToChange": "Tap to change",
+    "status": {
+      "placed": "New",
+      "accepted": "Accepted",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "served": "Served"
+    }
+  },
+  "createOrder": {
+    "title": "Create New Order",
+    "selectLocation": "Select Location",
+    "selectTable": "Select Table",
+    "selectStaff": "Select Staff",
+    "dineIn": "Dine In",
+    "takeaway": "Takeaway",
+    "delivery": "Delivery",
+    "searchItems": "Search menu items...",
+    "allCategories": "All",
+    "noItemsFound": "No items found",
+    "soldOut": "Sold Out",
+    "cart": "Order",
+    "clear": "Clear",
+    "cartEmpty": "Add items to start your order",
+    "customerName": "Customer Name (optional)",
+    "customerPhone": "Phone (optional)",
+    "notes": "Notes (optional)",
+    "total": "Total",
+    "placeOrder": "Place Order",
+    "creating": "Creating...",
+    "viewCart": "View Order",
+    "orderCreated": "Order created successfully!",
+    "orderFailed": "Failed to create order",
+    "addItemsFirst": "Please add items to the order"
   }
 }
