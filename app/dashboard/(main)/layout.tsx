@@ -19,6 +19,7 @@ import {
   Users,
   MapPin,
   Menu,
+  Languages,
   X,
   ChevronLeft,
   Store,
@@ -37,6 +38,7 @@ const navigationItems = [
 
 const settingsItems = [
   { key: 'locations', href: '/dashboard/settings/locations', icon: MapPin },
+  { key: 'languages', href: '/dashboard/settings/languages', icon: Languages },
   { key: 'team', href: '/dashboard/settings/team', icon: Users },
   { key: 'settings', href: '/dashboard/settings', icon: Settings },
 ]

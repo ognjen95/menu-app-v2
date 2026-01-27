@@ -5,7 +5,7 @@ import { PublicMenuView } from '@/components/features/public-menu/public-menu-vi
 
 type PageProps = {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ table?: string; location?: string }>
+  searchParams: Promise<{ table?: string; location?: string; lang?: string }>
 }
 
 async function getTenantData(slug: string) {
@@ -74,24 +74,60 @@ async function getTenantData(slug: string) {
     .from('allergens')
     .select('*')
 
+  // Get tenant languages (enabled languages for this tenant)
+  const { data: tenantLanguages } = await supabase
+    .from('tenant_languages')
+    .select(`
+      language_code,
+      is_default,
+      is_enabled,
+      languages (
+        code,
+        name,
+        native_name,
+        flag_emoji
+      )
+    `)
+    .eq('tenant_id', tenant.id)
+    .eq('is_enabled', true)
+    .order('is_default', { ascending: false })
+
+  // Get translations for this tenant's menu content (items and categories)
+  const { data: translations } = await supabase
+    .from('translations')
+    .select('*')
+    .eq('tenant_id', tenant.id)
+    .or('key.like.menu_item.%,key.like.category.%')
+
   return {
     tenant,
     menus: menus || [],
     locations: locations || [],
     allergens: allergens || [],
     website: website || null,
+    languages: tenantLanguages?.map(tl => ({
+      code: tl.language_code,
+      isDefault: tl.is_default,
+      name: (tl.languages as any)?.name || tl.language_code,
+      nativeName: (tl.languages as any)?.native_name || tl.language_code,
+      flagEmoji: (tl.languages as any)?.flag_emoji || '',
+    })) || [],
+    translations: translations || [],
   }
 }
 
 export default async function PublicMenuPage({ params, searchParams }: PageProps) {
   const { slug } = await params
-  const { table, location } = await searchParams
+  const { table, location, lang } = await searchParams
 
   const data = await getTenantData(slug)
-
   if (!data) {
     notFound()
   }
+
+  // Determine initial language (from URL, or default)
+  const defaultLang = data.languages.find(l => l.isDefault)?.code || data.languages[0]?.code || 'en'
+  const initialLanguage = lang && data.languages.some(l => l.code === lang) ? lang : defaultLang
 
   return (
     <PublicMenuView
@@ -102,6 +138,10 @@ export default async function PublicMenuPage({ params, searchParams }: PageProps
       website={data.website}
       tableId={table}
       locationId={location}
+      languages={data.languages}
+      translations={data.translations}
+      initialLanguage={initialLanguage}
+      slug={slug}
     />
   )
 }

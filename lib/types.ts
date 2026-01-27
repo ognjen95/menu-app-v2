@@ -600,3 +600,31 @@ export interface TenantWithRelations extends Tenant {
   users?: TenantUser[]
   website?: Website
 }
+
+// Translation entities
+export interface Language {
+  code: string
+  name: string
+  native_name: string
+  flag_emoji: string | null
+  is_rtl: boolean
+}
+
+export interface TenantLanguage {
+  tenant_id: string
+  language_code: string
+  is_default: boolean
+  is_enabled: boolean
+  language?: Language
+}
+
+export interface Translation {
+  id: string
+  tenant_id: string
+  key: string
+  language_code: string
+  value: string
+  is_auto_translated: boolean
+  created_at: string
+  updated_at: string
+}

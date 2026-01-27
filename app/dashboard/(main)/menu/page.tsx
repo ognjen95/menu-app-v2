@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { useMenus, useCategories, useMenuItems, useCreateMenu, useCreateCategory, useCreateMenuItem, useUpdateMenuItem, useDeleteMenuItem, useAllergens } from '@/lib/hooks/use-menu'
+import { useMenus, useCategories, useMenuItems, useCreateMenu, useCreateCategory, useUpdateCategory, useCreateMenuItem, useUpdateMenuItem, useDeleteMenuItem, useAllergens } from '@/lib/hooks/use-menu'
 import type { MenuItem } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -50,7 +50,11 @@ import {
   AlertTriangle,
   Sparkles,
   Tag,
+  Languages,
 } from 'lucide-react'
+import { useTenantLanguages, useSaveTranslations, generateItemTranslationKey, generateCategoryTranslationKey, useTranslationsByPrefix } from '@/lib/hooks/use-translations'
+import { TranslationEditor } from '@/components/features/translations/translation-editor'
+import type { Category } from '@/lib/types'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
@@ -62,9 +66,10 @@ export default function MenuPage() {
   
   // Dialog states
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false)
-  const [isCreateCategoryOpen, setIsCreateCategoryOpen] = useState(false)
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null)
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   
   // Form states
   const [menuForm, setMenuForm] = useState({ name: '', description: '' })
@@ -85,6 +90,10 @@ export default function MenuPage() {
     allergen_ids: [] as string[],
   })
   const [isUploading, setIsUploading] = useState(false)
+  
+  // Translation state - stores { [language_code]: { name: string, description: string } }
+  const [itemTranslations, setItemTranslations] = useState<Record<string, { name: string; description: string }>>({})
+  const [categoryTranslations, setCategoryTranslations] = useState<Record<string, { name: string; description: string }>>({})
 
   // Dietary tag options
   const dietaryTagOptions = ['vegetarian', 'vegan', 'gluten-free', 'halal', 'kosher', 'dairy-free', 'nut-free']
@@ -94,8 +103,27 @@ export default function MenuPage() {
   const { data: itemsData, isLoading: itemsLoading } = useMenuItems(selectedCategoryId || '')
   const { data: allergensData } = useAllergens()
   
+  // Translation hooks
+  const { data: languagesData } = useTenantLanguages()
+  const saveTranslations = useSaveTranslations()
+  const tenantLanguages = languagesData?.data?.languages || []
+  
+  // Fetch existing translations when editing an item
+  const { data: existingTranslationsData } = useTranslationsByPrefix(
+    editingItem ? `menu_item.${editingItem.id}` : ''
+  )
+  
+  // Fetch existing translations when editing a category
+  const { data: existingCategoryTranslationsData } = useTranslationsByPrefix(
+    editingCategory ? `category.${editingCategory.id}` : ''
+  )
+  
+  // Get default language
+  const defaultLanguage = tenantLanguages.find(tl => tl.is_default)?.language_code
+  
   const createMenu = useCreateMenu()
   const createCategory = useCreateCategory()
+  const updateCategory = useUpdateCategory()
   const createItem = useCreateMenuItem()
   const updateItem = useUpdateMenuItem()
   const deleteItem = useDeleteMenuItem()
@@ -129,15 +157,79 @@ export default function MenuPage() {
     })
   }
   
-  const handleCreateCategory = (e: React.FormEvent) => {
+  const resetCategoryForm = () => {
+    setCategoryForm({ name: '', description: '' })
+    setCategoryTranslations({})
+    setEditingCategory(null)
+  }
+
+  const openEditCategoryDialog = (category: Category) => {
+    setEditingCategory(category)
+    setCategoryForm({
+      name: category.name,
+      description: category.description || '',
+    })
+    setIsCategoryDialogOpen(true)
+  }
+
+  const handleSubmitCategory = (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedMenuId) return
-    createCategory.mutate({ menuId: selectedMenuId, name: categoryForm.name, description: categoryForm.description }, {
-      onSuccess: () => {
-        setIsCreateCategoryOpen(false)
-        setCategoryForm({ name: '', description: '' })
+
+    // Helper to save translations for a category
+    const saveCategoryTranslations = async (categoryId: string) => {
+      const translationsToSave: { key: string; language_code: string; value: string }[] = []
+      
+      Object.entries(categoryTranslations).forEach(([langCode, values]) => {
+        if (values.name) {
+          translationsToSave.push({
+            key: generateCategoryTranslationKey(categoryId, 'name'),
+            language_code: langCode,
+            value: values.name,
+          })
+        }
+        if (values.description) {
+          translationsToSave.push({
+            key: generateCategoryTranslationKey(categoryId, 'description'),
+            language_code: langCode,
+            value: values.description,
+          })
+        }
+      })
+      
+      if (translationsToSave.length > 0) {
+        await saveTranslations.mutateAsync(translationsToSave)
       }
-    })
+    }
+
+    if (editingCategory) {
+      updateCategory.mutate({ 
+        id: editingCategory.id, 
+        menuId: selectedMenuId, 
+        name: categoryForm.name, 
+        description: categoryForm.description 
+      }, {
+        onSuccess: async () => {
+          await saveCategoryTranslations(editingCategory.id)
+          setIsCategoryDialogOpen(false)
+          resetCategoryForm()
+        }
+      })
+    } else {
+      createCategory.mutate({ 
+        menuId: selectedMenuId, 
+        name: categoryForm.name, 
+        description: categoryForm.description 
+      }, {
+        onSuccess: async (data) => {
+          if (data?.category?.id) {
+            await saveCategoryTranslations(data.category.id)
+          }
+          setIsCategoryDialogOpen(false)
+          resetCategoryForm()
+        }
+      })
+    }
   }
   
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,8 +275,52 @@ export default function MenuPage() {
       dietary_tags: [],
       allergen_ids: [],
     })
+    setItemTranslations({})
     setEditingItem(null)
   }
+
+  // Populate translations when editing an item and translations are loaded
+  useEffect(() => {
+    if (editingItem && existingTranslationsData?.data?.translations) {
+      const translations: Record<string, { name: string; description: string }> = {}
+      const existingTranslations = existingTranslationsData.data.translations
+      
+      // Group translations by language
+      existingTranslations.forEach(t => {
+        if (!translations[t.language_code]) {
+          translations[t.language_code] = { name: '', description: '' }
+        }
+        if (t.key.endsWith('.name')) {
+          translations[t.language_code].name = t.value
+        } else if (t.key.endsWith('.description')) {
+          translations[t.language_code].description = t.value
+        }
+      })
+      
+      setItemTranslations(translations)
+    }
+  }, [editingItem, existingTranslationsData])
+
+  // Populate category translations when editing
+  useEffect(() => {
+    if (editingCategory && existingCategoryTranslationsData?.data?.translations) {
+      const translations: Record<string, { name: string; description: string }> = {}
+      const existingTranslations = existingCategoryTranslationsData.data.translations
+      
+      existingTranslations.forEach(t => {
+        if (!translations[t.language_code]) {
+          translations[t.language_code] = { name: '', description: '' }
+        }
+        if (t.key.endsWith('.name')) {
+          translations[t.language_code].name = t.value
+        } else if (t.key.endsWith('.description')) {
+          translations[t.language_code].description = t.value
+        }
+      })
+      
+      setCategoryTranslations(translations)
+    }
+  }, [editingCategory, existingCategoryTranslationsData])
 
   const openEditDialog = (item: MenuItem) => {
     setEditingItem(item)
@@ -226,6 +362,32 @@ export default function MenuPage() {
       allergen_ids: itemForm.allergen_ids,
     }
 
+    // Helper to save translations for an item
+    const saveItemTranslations = async (itemId: string) => {
+      const translationsToSave: { key: string; language_code: string; value: string }[] = []
+      
+      Object.entries(itemTranslations).forEach(([langCode, values]) => {
+        if (values.name) {
+          translationsToSave.push({
+            key: generateItemTranslationKey(itemId, 'name'),
+            language_code: langCode,
+            value: values.name,
+          })
+        }
+        if (values.description) {
+          translationsToSave.push({
+            key: generateItemTranslationKey(itemId, 'description'),
+            language_code: langCode,
+            value: values.description,
+          })
+        }
+      })
+      
+      if (translationsToSave.length > 0) {
+        await saveTranslations.mutateAsync(translationsToSave)
+      }
+    }
+
     if (editingItem) {
       // Update existing item
       updateItem.mutate({ 
@@ -233,7 +395,8 @@ export default function MenuPage() {
         categoryId,
         ...itemData,
       }, {
-        onSuccess: () => {
+        onSuccess: async () => {
+          await saveItemTranslations(editingItem.id)
           setIsItemDialogOpen(false)
           resetItemForm()
         }
@@ -244,7 +407,11 @@ export default function MenuPage() {
         categoryId,
         ...itemData,
       }, {
-        onSuccess: () => {
+        onSuccess: async (data) => {
+          // Save translations for the newly created item
+          if (data?.item?.id) {
+            await saveItemTranslations(data.item.id)
+          }
           setIsItemDialogOpen(false)
           resetItemForm()
         }
@@ -332,7 +499,7 @@ export default function MenuPage() {
             <CardHeader className="py-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-semibold">{t('categories')}</CardTitle>
-                <Button size="icon" variant="ghost" className="h-8 w-8" disabled={!selectedMenuId} onClick={() => setIsCreateCategoryOpen(true)}>
+                <Button size="icon" variant="ghost" className="h-8 w-8" disabled={!selectedMenuId} onClick={() => setIsCategoryDialogOpen(true)}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -346,29 +513,45 @@ export default function MenuPage() {
                 <div className="text-center py-8">
                   <UtensilsCrossed className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                   <p className="text-sm text-muted-foreground">{t('noCategories')}</p>
-                  <Button size="sm" variant="outline" className="mt-2" onClick={() => setIsCreateCategoryOpen(true)}>
+                  <Button size="sm" variant="outline" className="mt-2" onClick={() => setIsCategoryDialogOpen(true)}>
                     <Plus className="h-4 w-4 mr-1" />
                     {t('addCategory')}
                   </Button>
                 </div>
               ) : (
                 categories.map((category) => (
-                  <button
+                  <div
                     key={category.id}
-                    onClick={() => setSelectedCategoryId(category.id)}
                     className={cn(
-                      'w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-colors group',
+                      'w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-colors group cursor-pointer',
                       selectedCategoryId === category.id
                         ? 'bg-primary text-primary-foreground'
                         : 'hover:bg-accent'
                     )}
+                    onClick={() => setSelectedCategoryId(category.id)}
                   >
                     <div className="flex items-center gap-2">
                       <GripVertical className="h-4 w-4 opacity-0 group-hover:opacity-50 cursor-grab" />
                       <span>{category.name}</span>
                     </div>
-                    <ChevronRight className="h-4 w-4 opacity-50" />
-                  </button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className={cn(
+                          "h-7 w-7 opacity-0 group-hover:opacity-100",
+                          selectedCategoryId === category.id && "text-primary-foreground hover:bg-primary-foreground/10"
+                        )}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          openEditCategoryDialog(category)
+                        }}
+                      >
+                        <Edit className="h-3.5 w-3.5" />
+                      </Button>
+                      <ChevronRight className="h-4 w-4 opacity-50" />
+                    </div>
+                  </div>
                 ))
               )}
             </CardContent>
@@ -590,40 +773,73 @@ export default function MenuPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Create Category Dialog */}
-      <Dialog open={isCreateCategoryOpen} onOpenChange={setIsCreateCategoryOpen}>
-        <DialogContent>
+      {/* Create/Edit Category Dialog */}
+      <Dialog open={isCategoryDialogOpen} onOpenChange={(open) => { setIsCategoryDialogOpen(open); if (!open) resetCategoryForm() }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>{t('createCategoryTitle')}</DialogTitle>
-            <DialogDescription>{t('createCategoryDesc')}</DialogDescription>
+            <DialogTitle>{editingCategory ? t('editCategoryTitle') : t('createCategoryTitle')}</DialogTitle>
+            <DialogDescription>
+              {editingCategory ? t('editCategoryDesc') : t('createCategoryDesc')}
+            </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleCreateCategory} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="category-name">{t('categoryName')} *</Label>
-              <Input
-                id="category-name"
-                value={categoryForm.name}
-                onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
-                placeholder={t('categoryNamePlaceholder')}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="category-description">{t('categoryDescription')}</Label>
-              <Input
-                id="category-description"
-                value={categoryForm.description}
-                onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
-                placeholder={t('categoryDescPlaceholder')}
-              />
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsCreateCategoryOpen(false)}>
+          <form onSubmit={handleSubmitCategory} className="flex-1 overflow-hidden flex flex-col">
+            <Tabs defaultValue="basic" className="flex-1 flex flex-col overflow-hidden">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="basic">{t('basicInfo')}</TabsTrigger>
+                <TabsTrigger value="translations" className="gap-1">
+                  <Languages className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{t('translations')}</span>
+                </TabsTrigger>
+              </TabsList>
+              
+              <ScrollArea className="flex-1 pr-4">
+                {/* Basic Info Tab */}
+                <TabsContent value="basic" className="space-y-4 mt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="category-name">{t('categoryName')} *</Label>
+                    <Input
+                      id="category-name"
+                      value={categoryForm.name}
+                      onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                      placeholder={t('categoryNamePlaceholder')}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="category-description">{t('categoryDescription')}</Label>
+                    <Textarea
+                      id="category-description"
+                      value={categoryForm.description}
+                      onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                      placeholder={t('categoryDescPlaceholder')}
+                      rows={3}
+                    />
+                  </div>
+                </TabsContent>
+
+                {/* Translations Tab */}
+                <TabsContent value="translations" className="mt-4">
+                  <TranslationEditor
+                    languages={tenantLanguages}
+                    translations={categoryTranslations}
+                    onTranslationsChange={(vals) => setCategoryTranslations(vals as Record<string, { name: string; description: string }>)}
+                    fields={[
+                      { key: 'name', label: t('categoryName'), type: 'input', placeholder: t('categoryNamePlaceholder') },
+                      { key: 'description', label: t('categoryDescription'), type: 'textarea', placeholder: t('categoryDescPlaceholder'), rows: 3 },
+                    ]}
+                    defaultValues={{ name: categoryForm.name, description: categoryForm.description }}
+                  />
+                </TabsContent>
+              </ScrollArea>
+            </Tabs>
+
+            <DialogFooter className="mt-4 pt-4 border-t">
+              <Button type="button" variant="outline" onClick={() => { setIsCategoryDialogOpen(false); resetCategoryForm() }}>
                 {t('cancel')}
               </Button>
-              <Button type="submit" disabled={createCategory.isPending}>
-                {createCategory.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {t('createCategory')}
+              <Button type="submit" disabled={createCategory.isPending || updateCategory.isPending}>
+                {(createCategory.isPending || updateCategory.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {editingCategory ? t('updateCategory') : t('createCategory')}
               </Button>
             </DialogFooter>
           </form>
@@ -641,10 +857,14 @@ export default function MenuPage() {
           </DialogHeader>
           <form onSubmit={handleSubmitItem} className="flex-1 overflow-hidden flex flex-col">
             <Tabs defaultValue="basic" className="flex-1 flex flex-col overflow-hidden">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="basic">{t('basicInfo')}</TabsTrigger>
                 <TabsTrigger value="details">{t('details')}</TabsTrigger>
                 <TabsTrigger value="dietary">{t('dietaryAllergens')}</TabsTrigger>
+                <TabsTrigger value="translations" className="gap-1">
+                  <Languages className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{t('translations')}</span>
+                </TabsTrigger>
               </TabsList>
               
               <ScrollArea className="flex-1 pr-4">
@@ -918,6 +1138,20 @@ export default function MenuPage() {
                       ))}
                     </div>
                   </div>
+                </TabsContent>
+
+                {/* Translations Tab */}
+                <TabsContent value="translations" className="mt-4">
+                  <TranslationEditor
+                    languages={tenantLanguages}
+                    translations={itemTranslations}
+                    onTranslationsChange={(vals) => setItemTranslations(vals as Record<string, { name: string; description: string }>)}
+                    fields={[
+                      { key: 'name', label: t('itemName'), type: 'input', placeholder: t('itemNamePlaceholder') },
+                      { key: 'description', label: t('itemDescription'), type: 'textarea', placeholder: t('itemDescPlaceholder'), rows: 3 },
+                    ]}
+                    defaultValues={{ name: itemForm.name, description: itemForm.description }}
+                  />
                 </TabsContent>
               </ScrollArea>
             </Tabs>

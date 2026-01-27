@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import {
   Search,
   ShoppingCart,
@@ -14,10 +15,21 @@ import {
   Clock,
   Flame,
   Trash2,
+  Globe,
+  ChevronDown,
 } from 'lucide-react'
-import type { Tenant, Menu, MenuItem, Allergen, Location, Website } from '@/lib/types'
+import type { Tenant, Menu, MenuItem, Allergen, Location, Website, Translation } from '@/lib/types'
 import { CheckoutDialog } from './checkout-dialog'
 import Image from 'next/image'
+
+// Language type for public menu
+type PublicLanguage = {
+  code: string
+  isDefault: boolean
+  name: string
+  nativeName: string
+  flagEmoji: string
+}
 
 type MenuWithCategories = Menu & {
   categories: (CategoryWithItems)[]
@@ -63,6 +75,10 @@ interface PublicMenuViewProps {
   website: Website | null
   tableId?: string
   locationId?: string
+  languages?: PublicLanguage[]
+  translations?: Translation[]
+  initialLanguage?: string
+  slug?: string
 }
 
 export function PublicMenuView({
@@ -73,8 +89,16 @@ export function PublicMenuView({
   website,
   tableId,
   locationId,
+  languages = [],
+  translations = [],
+  initialLanguage = 'en',
+  slug,
 }: PublicMenuViewProps) {
   const t = useTranslations('publicMenuView')
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedFilters, setSelectedFilters] = useState<string[]>([])
@@ -83,6 +107,40 @@ export function PublicMenuView({
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<MenuItemWithRelations | null>(null)
   const [cartAnimation, setCartAnimation] = useState<number[]>([])
+  const [langMenuOpen, setLangMenuOpen] = useState(false)
+  const [currentLanguage, setCurrentLanguage] = useState(initialLanguage)
+
+  // Sync language from URL on mount and when searchParams change
+  useEffect(() => {
+    const langFromUrl = searchParams.get('lang')
+    if (langFromUrl && languages.some(l => l.code === langFromUrl)) {
+      setCurrentLanguage(langFromUrl)
+    }
+  }, [searchParams, languages])
+
+  // Get translated text for items or categories
+  // Always look for translation first, fallback to DB value if not found
+  const getTranslatedText = useCallback((
+    id: string,
+    field: 'name' | 'description',
+    fallback: string,
+    type: 'menu_item' | 'category' = 'menu_item'
+  ) => {
+    const key = `${type}.${id}.${field}`
+    const translation = translations.find(t => t.key === key && t.language_code === currentLanguage)
+    return translation?.value || fallback
+  }, [currentLanguage, translations])
+
+  // Handle language change - update state immediately, then sync URL
+  const handleLanguageChange = useCallback((langCode: string) => {
+    setCurrentLanguage(langCode) // Immediate state update
+    setLangMenuOpen(false)
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('lang', langCode)
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false }) // Use replace for cleaner history
+  }, [router, pathname, searchParams])
+
+  const currentLang = languages.find(l => l.code === currentLanguage) || languages[0]
 
   // Theme from website settings
   const theme = {
@@ -121,13 +179,13 @@ export function PublicMenuView({
 
   // Flatten all categories and items
   const allCategories = useMemo(() => {
-    return menus.flatMap(menu => 
+    return menus.flatMap(menu =>
       menu.categories.filter(cat => cat.is_active)
     ).sort((a, b) => a.sort_order - b.sort_order)
   }, [menus])
 
   const allItems = useMemo(() => {
-    return allCategories.flatMap(cat => 
+    return allCategories.flatMap(cat =>
       cat.items.filter(item => item.is_active && !item.is_sold_out)
     )
   }, [allCategories])
@@ -208,19 +266,19 @@ export function PublicMenuView({
   }, [cart])
 
   return (
-    <div 
-      className="min-h-screen" 
-      style={{ 
-        backgroundColor: theme.background, 
+    <div
+      className="min-h-screen"
+      style={{
+        backgroundColor: theme.background,
         color: theme.foreground,
         fontFamily: `${theme.fontBody}, sans-serif`,
       }}
     >
       {/* Header */}
-      <header 
+      <header
         className="sticky top-0 z-40"
-        style={{ 
-          backgroundColor: theme.background, 
+        style={{
+          backgroundColor: theme.background,
           borderBottom: `1px solid ${borderColor}`,
         }}
       >
@@ -243,42 +301,98 @@ export function PublicMenuView({
                 )}
               </div>
             </div>
-            
-            <button
-              className={`relative p-2 rounded-md ${cartAnimation.length > 0 ? 'animate-cart-shake' : ''}`}
-              style={{ 
-                border: `1px solid ${borderColor}`,
-                backgroundColor: 'transparent',
-                color: theme.foreground,
-              }}
-              onClick={() => setCartOpen(true)}
-            >
-              <ShoppingCart className="h-5 w-5" />
-              {cartItemsCount > 0 && (
-                <span 
-                  key={cartItemsCount}
-                  className="absolute -top-2 -right-2 h-5 w-5 rounded-full text-xs flex items-center justify-center animate-cart-bounce"
-                  style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
-                >
-                  {cartItemsCount}
-                </span>
+
+            <div className="flex items-center gap-2">
+              {/* Language selector */}
+              {languages.length > 1 && (
+                <div className="relative">
+                  <button
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium"
+                    style={{
+                      border: `1px solid ${borderColor}`,
+                      backgroundColor: 'transparent',
+                      color: theme.foreground,
+                    }}
+                    onClick={() => setLangMenuOpen(!langMenuOpen)}
+                  >
+                    <span className="text-base">{currentLang?.flagEmoji}</span>
+                    <span className="hidden sm:inline">{currentLang?.nativeName}</span>
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </button>
+
+                  {/* Language dropdown */}
+                  {langMenuOpen && (
+                    <>
+                      {/* Backdrop */}
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setLangMenuOpen(false)}
+                      />
+                      {/* Dropdown menu */}
+                      <div
+                        className="absolute right-0 top-full mt-1 z-50 min-w-[140px] py-1 rounded-md shadow-lg"
+                        style={{
+                          backgroundColor: theme.background,
+                          border: `1px solid ${borderColor}`,
+                        }}
+                      >
+                        {languages.map((lang) => (
+                          <button
+                            key={lang.code}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors"
+                            style={{
+                              backgroundColor: lang.code === currentLanguage ? cardBg : 'transparent',
+                              color: theme.foreground,
+                            }}
+                            onClick={() => handleLanguageChange(lang.code)}
+                          >
+                            <span>{lang.flagEmoji}</span>
+                            <span>{lang.nativeName}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
-              {/* +1 confetti animation */}
-              {cartAnimation.map((id) => (
-                <span
-                  key={id}
-                  className="absolute pointer-events-none font-extrabold text-lg animate-cart-pop"
-                  style={{
-                    color: theme.primary,
-                    top: '-4px',
-                    right: '-4px',
-                    textShadow: `0 1px 2px rgba(0,0,0,0.3), 0 0 8px ${theme.primary}66`,
-                  }}
-                >
-                  +1
-                </span>
-              ))}
-            </button>
+
+              {/* Cart button */}
+              <button
+                className={`relative p-2 rounded-md ${cartAnimation.length > 0 ? 'animate-cart-shake' : ''}`}
+                style={{
+                  border: `1px solid ${borderColor}`,
+                  backgroundColor: 'transparent',
+                  color: theme.foreground,
+                }}
+                onClick={() => setCartOpen(true)}
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {cartItemsCount > 0 && (
+                  <span
+                    key={cartItemsCount}
+                    className="absolute -top-2 -right-2 h-5 w-5 rounded-full text-xs flex items-center justify-center animate-cart-bounce"
+                    style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
+                  >
+                    {cartItemsCount}
+                  </span>
+                )}
+                {/* +1 confetti animation */}
+                {cartAnimation.map((id) => (
+                  <span
+                    key={id}
+                    className="absolute pointer-events-none font-extrabold text-lg animate-cart-pop"
+                    style={{
+                      color: theme.primary,
+                      top: '-4px',
+                      right: '-4px',
+                      textShadow: `0 1px 2px rgba(0,0,0,0.3), 0 0 8px ${theme.primary}66`,
+                    }}
+                  >
+                    +1
+                  </span>
+                ))}
+              </button>
+            </div>
           </div>
 
           {/* Search */}
@@ -290,8 +404,8 @@ export function PublicMenuView({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 rounded-md"
-              style={{ 
-                backgroundColor: cardBg, 
+              style={{
+                backgroundColor: cardBg,
                 border: `1px solid ${borderColor}`,
                 color: theme.foreground,
               }}
@@ -305,7 +419,7 @@ export function PublicMenuView({
             <div className="flex gap-2 py-2">
               <button
                 className="px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors"
-                style={{ 
+                style={{
                   backgroundColor: selectedCategory === null ? theme.primary : 'transparent',
                   color: selectedCategory === null ? getContrastColor(theme.primary) : theme.foreground,
                 }}
@@ -317,13 +431,13 @@ export function PublicMenuView({
                 <button
                   key={category.id}
                   className="px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors"
-                  style={{ 
+                  style={{
                     backgroundColor: selectedCategory === category.id ? theme.primary : 'transparent',
                     color: selectedCategory === category.id ? getContrastColor(theme.primary) : theme.foreground,
                   }}
                   onClick={() => setSelectedCategory(category.id)}
                 >
-                  {category.name}
+                  {getTranslatedText(category.id, 'name', category.name, 'category')}
                 </button>
               ))}
             </div>
@@ -339,7 +453,7 @@ export function PublicMenuView({
             <button
               key={filter}
               className="px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 cursor-pointer transition-colors"
-              style={{ 
+              style={{
                 backgroundColor: selectedFilters.includes(filter) ? theme.primary : 'transparent',
                 color: selectedFilters.includes(filter) ? getContrastColor(theme.primary) : theme.foreground,
                 border: `1px solid ${selectedFilters.includes(filter) ? theme.primary : borderColor}`,
@@ -367,7 +481,7 @@ export function PublicMenuView({
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredItems.map((item) => {
               const itemAllergens = item.item_allergens?.map(ia => ia.allergens) || []
-              
+
               return (
                 <div
                   key={item.id}
@@ -395,14 +509,16 @@ export function PublicMenuView({
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                          <h3 className="font-semibold truncate" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>{item.name}</h3>
+                          <h3 className="font-semibold truncate" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>
+                            {getTranslatedText(item.id, 'name', item.name)}
+                          </h3>
                           {item.is_featured && (
                             <Star className="h-4 w-4 fill-current" style={{ color: theme.accent }} />
                           )}
                         </div>
                         {item.description && (
                           <p className="text-sm line-clamp-2 mt-1" style={{ color: mutedForeground }}>
-                            {item.description}
+                            {getTranslatedText(item.id, 'description', item.description)}
                           </p>
                         )}
                       </div>
@@ -485,7 +601,7 @@ export function PublicMenuView({
       {/* Cart sidebar */}
       {cartOpen && (
         <div className="fixed inset-0 z-50 backdrop-blur-sm" style={{ backgroundColor: `${theme.background}cc` }}>
-          <div 
+          <div
             className="fixed right-0 top-0 bottom-0 w-full max-w-md shadow-xl"
             style={{ backgroundColor: theme.background, borderLeft: `1px solid ${borderColor}` }}
           >
@@ -493,7 +609,7 @@ export function PublicMenuView({
               {/* Header */}
               <div className="flex items-center justify-between p-4" style={{ borderBottom: `1px solid ${borderColor}` }}>
                 <h2 className="font-bold text-lg" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>Your Order</h2>
-                <button 
+                <button
                   className="p-2 rounded-md"
                   style={{ color: theme.foreground }}
                   onClick={() => setCartOpen(false)}
@@ -569,7 +685,7 @@ export function PublicMenuView({
                     <span>Total</span>
                     <span>€{cartTotal.toFixed(2)}</span>
                   </div>
-                  <button 
+                  <button
                     className="w-full h-12 text-lg rounded-md font-medium"
                     style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
                     onClick={() => {
@@ -588,13 +704,13 @@ export function PublicMenuView({
 
       {/* Item detail modal would go here */}
       {selectedItem && (
-        <div 
+        <div
           className="fixed inset-0 z-50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
           style={{ backgroundColor: `${theme.background}cc` }}
         >
-          <div 
+          <div
             className="rounded-xl sm:rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl"
-            style={{ 
+            style={{
               backgroundColor: theme.background,
               border: `1px solid ${borderColor}`,
               boxShadow: `0 25px 50px -12px ${theme.foreground}33`,
@@ -615,16 +731,20 @@ export function PublicMenuView({
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-bold" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>{selectedItem.name}</h2>
+                    <h2 className="text-xl font-bold" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>
+                      {getTranslatedText(selectedItem.id, 'name', selectedItem.name)}
+                    </h2>
                     {selectedItem.is_featured && (
                       <Star className="h-5 w-5 fill-current" style={{ color: theme.accent }} />
                     )}
                   </div>
                   {selectedItem.description && (
-                    <p className="mt-1" style={{ color: mutedForeground }}>{selectedItem.description}</p>
+                    <p className="mt-1" style={{ color: mutedForeground }}>
+                      {getTranslatedText(selectedItem.id, 'description', selectedItem.description)}
+                    </p>
                   )}
                 </div>
-                <button 
+                <button
                   className="p-2 rounded-md"
                   style={{ color: theme.foreground }}
                   onClick={() => setSelectedItem(null)}
