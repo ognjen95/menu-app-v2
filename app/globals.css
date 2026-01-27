@@ -208,3 +208,12 @@
 .animate-cart-bounce {
   animation: cart-bounce 0.3s ease-out;
 }
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

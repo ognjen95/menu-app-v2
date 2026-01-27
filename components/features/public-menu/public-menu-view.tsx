@@ -12,14 +12,13 @@ import {
   Leaf,
   AlertTriangle,
   Star,
-  Clock,
-  Flame,
   Trash2,
   Globe,
   ChevronDown,
 } from 'lucide-react'
 import type { Tenant, Menu, MenuItem, Allergen, Location, Website, Translation } from '@/lib/types'
 import { CheckoutDialog } from './checkout-dialog'
+import { ItemDetailModal } from './item-detail-modal'
 import Image from 'next/image'
 
 // Language type for public menu
@@ -95,6 +94,7 @@ export function PublicMenuView({
   slug,
 }: PublicMenuViewProps) {
   const t = useTranslations('publicMenuView')
+  const tDietary = useTranslations('dietaryTags')
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -196,28 +196,53 @@ export function PublicMenuView({
     )
   }, [allCategories])
 
-  // Filter items
-  const filteredItems = useMemo(() => {
-    let items = selectedCategory
-      ? allCategories.find(c => c.id === selectedCategory)?.items || []
-      : allItems
+  // Filter items and group by category
+  const filteredCategories = useMemo(() => {
+    const categoriesToShow = selectedCategory
+      ? allCategories.filter(c => c.id === selectedCategory)
+      : allCategories
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      items = items.filter(item =>
-        item.name.toLowerCase().includes(query) ||
-        item.description?.toLowerCase().includes(query)
-      )
-    }
+    return categoriesToShow
+      .map(category => {
+        let items = category.items.filter(item => item.is_active && !item.is_sold_out)
 
-    if (selectedFilters.length > 0) {
-      items = items.filter(item =>
-        selectedFilters.every(filter => item.dietary_tags?.includes(filter))
-      )
-    }
+        if (searchQuery) {
+          const query = searchQuery.toLowerCase()
+          items = items.filter(item => {
+            // Search in original values
+            const matchesOriginal = 
+              item.name.toLowerCase().includes(query) ||
+              item.description?.toLowerCase().includes(query)
+            
+            // Search in translated values
+            const translatedName = translations.find(
+              t => t.key === `menu_item.${item.id}.name` && t.language_code === currentLanguage
+            )?.value?.toLowerCase()
+            const translatedDesc = translations.find(
+              t => t.key === `menu_item.${item.id}.description` && t.language_code === currentLanguage
+            )?.value?.toLowerCase()
+            
+            const matchesTranslation = 
+              translatedName?.includes(query) ||
+              translatedDesc?.includes(query)
+            
+            return matchesOriginal || matchesTranslation
+          })
+        }
 
-    return items.filter(item => item.is_active && !item.is_sold_out)
-  }, [allItems, allCategories, selectedCategory, searchQuery, selectedFilters])
+        if (selectedFilters.length > 0) {
+          items = items.filter(item =>
+            selectedFilters.every(filter => item.dietary_tags?.includes(filter))
+          )
+        }
+
+        return { ...category, items }
+      })
+      .filter(category => category.items.length > 0)
+  }, [allCategories, selectedCategory, searchQuery, selectedFilters, translations, currentLanguage])
+
+  // Total filtered items count for empty state
+  const totalFilteredItems = filteredCategories.reduce((sum, cat) => sum + cat.items.length, 0)
 
   // Cart functions
   const addToCart = (item: MenuItemWithRelations, variant?: CartItem['variant'], options: CartItem['selectedOptions'] = []) => {
@@ -473,119 +498,141 @@ export function PublicMenuView({
               }}
             >
               {filter === 'vegetarian' && <Leaf className="h-3 w-3" />}
-              {filter === 'vegetarian' ? t('vegetarian') : filter === 'vegan' ? t('vegan') : filter === 'gluten-free' ? t('glutenFree') : t('halal')}
+              {tDietary(filter)}
             </button>
           ))}
         </div>
 
-        {/* Items grid */}
-        {filteredItems.length === 0 ? (
+        {/* Items grouped by category */}
+        {totalFilteredItems === 0 ? (
           <div className="text-center py-12">
             <p style={{ color: mutedForeground }}>{t('noItemsFound')}</p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredItems.map((item) => {
-              const itemAllergens = item.item_allergens?.map(ia => ia.allergens) || []
-
-              return (
-                <div
-                  key={item.id}
-                  className="rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                  style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}
-                  onClick={() => setSelectedItem(item)}
-                >
-                  {/* Image - fixed height */}
-                  {item.image_urls && item.image_urls.length > 0 ? (
-                    <div className="h-40 flex-shrink-0" style={{ backgroundColor: theme.secondary }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={item.image_urls[0]}
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="h-40 flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: theme.secondary }}>
-                      <span className="text-4xl">🍽️</span>
-                    </div>
+          <div className="space-y-10">
+            {filteredCategories.map((category) => (
+              <section key={category.id} id={`category-${category.id}`}>
+                {/* Category header */}
+                <div className="mb-4">
+                  <h2 
+                    className="text-2xl font-bold" 
+                    style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}
+                  >
+                    {getTranslatedText(category.id, 'name', category.name, 'category')}
+                  </h2>
+                  {category.description && (
+                    <p className="text-sm mt-1" style={{ color: mutedForeground }}>
+                      {getTranslatedText(category.id, 'description', category.description, 'category')}
+                    </p>
                   )}
+                </div>
 
-                  <div className="p-5 flex-1 flex flex-col">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <h3 className="font-semibold truncate" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>
-                            {getTranslatedText(item.id, 'name', item.name)}
-                          </h3>
-                          {item.is_featured && (
-                            <Star className="h-4 w-4 fill-current" style={{ color: theme.accent }} />
-                          )}
-                        </div>
-                        {item.description && (
-                          <p className="text-sm line-clamp-2 mt-1" style={{ color: mutedForeground }}>
-                            {getTranslatedText(item.id, 'description', item.description)}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <span className="font-bold whitespace-nowrap" style={{ color: theme.primary }}>
-                          €{item.base_price.toFixed(2)}
-                        </span>
-                        {item.compare_price && item.compare_price > item.base_price && (
-                          <div className="text-xs line-through" style={{ color: mutedForeground }}>
-                            €{item.compare_price.toFixed(2)}
+                {/* Items grid */}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {category.items.map((item) => {
+                    const itemAllergens = item.item_allergens?.map((ia: { allergens: Allergen }) => ia.allergens) || []
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer flex flex-col"
+                        style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}
+                        onClick={() => setSelectedItem(item)}
+                      >
+                        {/* Image - fixed height */}
+                        {item.image_urls && item.image_urls.length > 0 ? (
+                          <div className="h-40 flex-shrink-0" style={{ backgroundColor: theme.secondary }}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={item.image_urls[0]}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-40 flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: theme.secondary }}>
+                            <span className="text-4xl">🍽️</span>
                           </div>
                         )}
-                      </div>
-                    </div>
 
-                    {/* Tags and info - limited to prevent overflow */}
-                    {(item.is_new || (item.compare_price && item.compare_price > item.base_price) || item.dietary_tags?.length || itemAllergens.length > 0) && (
-                      <div className="flex flex-wrap gap-1.5 mt-3 max-h-14 overflow-hidden">
-                        {item.is_new && (
-                          <span className="text-xs px-2 py-0.5 rounded font-medium flex-shrink-0" style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}>New</span>
-                        )}
-                        {item.compare_price && item.compare_price > item.base_price && (
-                          <span className="text-xs px-2 py-0.5 rounded font-medium flex-shrink-0" style={{ backgroundColor: theme.accent, color: getContrastColor(theme.accent) }}>Sale</span>
-                        )}
-                        {item.dietary_tags?.slice(0, 2).map((tag) => (
-                          <span key={tag} className="text-xs px-2 py-0.5 rounded flex items-center gap-1 flex-shrink-0 max-w-24 truncate" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
-                            <Leaf className="h-3 w-3 flex-shrink-0" />
-                            <span className="truncate">{tag}</span>
-                          </span>
-                        ))}
-                        {itemAllergens.length > 0 && (
-                          <span className="text-xs px-2 py-0.5 rounded flex items-center gap-1 flex-shrink-0" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
-                            <AlertTriangle className="h-3 w-3" />
-                            {itemAllergens.length}
-                          </span>
-                        )}
-                      </div>
-                    )}
+                        <div className="p-5 flex-1 flex flex-col">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <h3 className="font-semibold truncate" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>
+                                  {getTranslatedText(item.id, 'name', item.name)}
+                                </h3>
+                                {item.is_featured && (
+                                  <Star className="h-4 w-4 fill-current" style={{ color: theme.accent }} />
+                                )}
+                              </div>
+                              {item.description && (
+                                <p className="text-sm line-clamp-2 mt-1" style={{ color: mutedForeground }}>
+                                  {getTranslatedText(item.id, 'description', item.description)}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <span className="font-bold whitespace-nowrap" style={{ color: theme.primary }}>
+                                €{item.base_price.toFixed(2)}
+                              </span>
+                              {item.compare_price && item.compare_price > item.base_price && (
+                                <div className="text-xs line-through" style={{ color: mutedForeground }}>
+                                  €{item.compare_price.toFixed(2)}
+                                </div>
+                              )}
+                            </div>
+                          </div>
 
-                    {/* Add to cart button */}
-                    <div className="mt-auto pt-5">
-                      <button
-                        className="w-full py-2.5 px-4 rounded-md font-medium flex items-center justify-center gap-2 transition-colors"
-                        style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (item.variants?.length || item.option_groups?.length) {
-                            setSelectedItem(item)
-                          } else {
-                            addToCart(item)
-                          }
-                        }}
-                      >
-                        <Plus className="h-4 w-4" />
-                        {t('addToOrder')}
-                      </button>
-                    </div>
-                  </div>
+                          {/* Tags and info - limited to prevent overflow */}
+                          {(item.is_new || (item.compare_price && item.compare_price > item.base_price) || item.dietary_tags?.length || itemAllergens.length > 0) && (
+                            <div className="flex flex-wrap gap-1.5 mt-3 max-h-14 overflow-hidden">
+                              {item.is_new && (
+                                <span className="text-xs px-2 py-0.5 rounded font-medium flex-shrink-0" style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}>{t('new')}</span>
+                              )}
+                              {item.compare_price && item.compare_price > item.base_price && (
+                                <span className="text-xs px-2 py-0.5 rounded font-medium flex-shrink-0" style={{ backgroundColor: theme.accent, color: getContrastColor(theme.accent) }}>{t('sale')}</span>
+                              )}
+                              {item.dietary_tags?.slice(0, 2).map((tag: string) => (
+                                <span key={tag} className="text-xs px-2 py-0.5 rounded flex items-center gap-1 flex-shrink-0 max-w-24 truncate" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
+                                  <Leaf className="h-3 w-3 flex-shrink-0" />
+                                  <span className="truncate">{tDietary(tag as any) || tag}</span>
+                                </span>
+                              ))}
+                              {itemAllergens.length > 0 && (
+                                <span className="text-xs px-2 py-0.5 rounded flex items-center gap-1 flex-shrink-0" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
+                                  <AlertTriangle className="h-3 w-3" />
+                                  {itemAllergens.length}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Add to cart button */}
+                          <div className="mt-auto pt-5">
+                            <button
+                              className="w-full py-2.5 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] active:shadow-md"
+                              style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: `0 4px 14px 0 ${theme.primary}40` }}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (item.variants?.length || item.option_groups?.length) {
+                                  setSelectedItem(item)
+                                } else {
+                                  addToCart(item)
+                                }
+                              }}
+                            >
+                              <Plus className="h-4 w-4" />
+                              {t('addToOrder')}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-              )
-            })}
+              </section>
+            ))}
           </div>
         )}
       </main>
@@ -594,8 +641,8 @@ export function PublicMenuView({
       {cartItemsCount > 0 && (
         <div className="fixed bottom-4 left-4 right-4 z-50 lg:hidden">
           <button
-            className="w-full h-14 text-lg rounded-md font-medium flex items-center justify-center gap-2"
-            style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
+            className="w-full h-14 text-lg rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
+            style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: `0 8px 24px 0 ${theme.primary}50` }}
             onClick={() => setCartOpen(true)}
           >
             <ShoppingCart className="h-5 w-5" />
@@ -692,8 +739,8 @@ export function PublicMenuView({
                     <span>€{cartTotal.toFixed(2)}</span>
                   </div>
                   <button
-                    className="w-full h-12 text-lg rounded-md font-medium"
-                    style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
+                    className="w-full h-12 text-lg rounded-xl font-semibold transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
+                    style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: `0 6px 20px 0 ${theme.primary}50` }}
                     onClick={() => {
                       setCartOpen(false)
                       setCheckoutOpen(true)
@@ -708,188 +755,15 @@ export function PublicMenuView({
         </div>
       )}
 
-      {/* Item detail modal would go here */}
-      {selectedItem && (
-        <div
-          className="fixed inset-0 z-50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
-          style={{ backgroundColor: `${theme.background}cc` }}
-        >
-          <div
-            className="rounded-xl sm:rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl"
-            style={{
-              backgroundColor: theme.background,
-              border: `1px solid ${borderColor}`,
-              boxShadow: `0 25px 50px -12px ${theme.foreground}33`,
-            }}
-          >
-            {/* Item image */}
-            {selectedItem.image_urls && selectedItem.image_urls.length > 0 && (
-              <div className="aspect-video">
-                <Image
-                  src={selectedItem.image_urls[0]}
-                  alt={selectedItem.name}
-                  className="w-full h-full object-cover rounded-t-xl"
-                />
-              </div>
-            )}
-
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-bold" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>
-                      {getTranslatedText(selectedItem.id, 'name', selectedItem.name)}
-                    </h2>
-                    {selectedItem.is_featured && (
-                      <Star className="h-5 w-5 fill-current" style={{ color: theme.accent }} />
-                    )}
-                  </div>
-                  {selectedItem.description && (
-                    <p className="mt-1" style={{ color: mutedForeground }}>
-                      {getTranslatedText(selectedItem.id, 'description', selectedItem.description)}
-                    </p>
-                  )}
-                </div>
-                <button
-                  className="p-2 rounded-md"
-                  style={{ color: theme.foreground }}
-                  onClick={() => setSelectedItem(null)}
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Price section */}
-              <div className="flex items-baseline gap-2 mb-4">
-                <span className="text-2xl font-bold" style={{ color: theme.primary }}>
-                  €{selectedItem.base_price.toFixed(2)}
-                </span>
-                {selectedItem.compare_price && selectedItem.compare_price > selectedItem.base_price && (
-                  <span className="text-lg line-through" style={{ color: mutedForeground }}>
-                    €{selectedItem.compare_price.toFixed(2)}
-                  </span>
-                )}
-              </div>
-
-              {/* Badges */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {selectedItem.is_new && (
-                  <span className="text-xs px-2 py-1 rounded font-medium" style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}>New</span>
-                )}
-                {selectedItem.compare_price && selectedItem.compare_price > selectedItem.base_price && (
-                  <span className="text-xs px-2 py-1 rounded font-medium" style={{ backgroundColor: theme.accent, color: getContrastColor(theme.accent) }}>
-                    Save €{(selectedItem.compare_price - selectedItem.base_price).toFixed(2)}
-                  </span>
-                )}
-              </div>
-
-              {/* Info row: prep time, calories */}
-              {(selectedItem.preparation_time || selectedItem.calories) && (
-                <div className="flex flex-wrap gap-4 mb-4 py-3 px-4 rounded-lg" style={{ backgroundColor: cardBg }}>
-                  {selectedItem.preparation_time && (
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" style={{ color: mutedForeground }} />
-                      <span className="text-sm" style={{ color: theme.foreground }}>{selectedItem.preparation_time} min</span>
-                    </div>
-                  )}
-                  {selectedItem.calories && (
-                    <div className="flex items-center gap-2">
-                      <Flame className="h-4 w-4" style={{ color: mutedForeground }} />
-                      <span className="text-sm" style={{ color: theme.foreground }}>{selectedItem.calories} kcal</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Dietary tags */}
-              {selectedItem.dietary_tags && selectedItem.dietary_tags.length > 0 && (
-                <div className="mb-4">
-                  <h3 className="font-semibold mb-2 text-sm" style={{ color: theme.foreground }}>{t('dietary')}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedItem.dietary_tags.map((tag) => (
-                      <span key={tag} className="text-xs px-2 py-1 rounded flex items-center gap-1" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
-                        <Leaf className="h-3 w-3" />
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Allergens */}
-              {selectedItem.item_allergens && selectedItem.item_allergens.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="font-semibold mb-2 text-sm flex items-center gap-1" style={{ color: theme.foreground }}>
-                    <AlertTriangle className="h-4 w-4" style={{ color: theme.accent }} />
-                    {t('allergens')}
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedItem.item_allergens.map((ia) => (
-                      <span key={ia.allergen_id} className="text-xs px-2 py-1 rounded" style={{ backgroundColor: cardBg, color: theme.foreground }}>
-                        {ia.allergens.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Variants */}
-              {selectedItem.variants && selectedItem.variants.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="font-semibold mb-2" style={{ color: theme.foreground }}>{t('size')}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedItem.variants.map((variant) => (
-                      <span
-                        key={variant.id}
-                        className="cursor-pointer px-4 py-2 rounded-md"
-                        style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}
-                      >
-                        {variant.name}
-                        {variant.price_modifier > 0 && ` (+€${variant.price_modifier.toFixed(2)})`}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Option groups */}
-              {selectedItem.option_groups?.map((group) => (
-                <div key={group.id} className="mb-6">
-                  <h3 className="font-semibold mb-2" style={{ color: theme.foreground }}>
-                    {group.name}
-                    {group.is_required && <span style={{ color: '#EF4444' }} className="ml-1">*</span>}
-                  </h3>
-                  <div className="space-y-2">
-                    {group.options.map((option) => (
-                      <label
-                        key={option.id}
-                        className="flex items-center justify-between p-3 rounded-lg cursor-pointer"
-                        style={{ backgroundColor: cardBg, color: theme.foreground }}
-                      >
-                        <span>{option.name}</span>
-                        <span style={{ color: mutedForeground }}>
-                          {option.price > 0 && `+€${option.price.toFixed(2)}`}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              <button
-                className="w-full h-12 rounded-md font-medium"
-                style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
-                onClick={() => {
-                  addToCart(selectedItem)
-                  setSelectedItem(null)
-                }}
-              >
-                {t('addToOrder')} - €{selectedItem.base_price.toFixed(2)}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Item detail modal */}
+      <ItemDetailModal
+        item={selectedItem}
+        isOpen={!!selectedItem}
+        onClose={() => setSelectedItem(null)}
+        onAddToCart={addToCart}
+        theme={theme}
+        getTranslatedText={getTranslatedText}
+      />
 
       {/* Checkout Dialog */}
       <CheckoutDialog

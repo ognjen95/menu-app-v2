@@ -65,11 +65,8 @@
     "outOfStock": "Out of Stock",
     "popular": "Popular",
     "new": "New",
+    "sale": "Sale",
     "spicy": "Spicy",
-    "vegetarian": "Vegetarian",
-    "vegan": "Vegan",
-    "glutenFree": "Gluten-Free",
-    "halal": "Halal",
     "dietary": "Dietary",
     "allergens": "Allergens",
     "size": "Size",
@@ -88,6 +85,34 @@
     "customize": "Customize",
     "quantity": "Quantity",
     "notes": "Notes",
-    "notesPlaceholder": "Special requests..."
+    "notesPlaceholder": "Special requests...",
+    "save": "Save",
+    "min": "min",
+    "kcal": "kcal"
+  },
+  "dietaryTags": {
+    "vegetarian": "Vegetarian",
+    "vegan": "Vegan",
+    "gluten-free": "Gluten-Free",
+    "halal": "Halal",
+    "kosher": "Kosher",
+    "dairy-free": "Dairy-Free",
+    "nut-free": "Nut-Free"
+  },
+  "allergens": {
+    "celery": "Celery",
+    "dairy": "Dairy",
+    "eggs": "Eggs",
+    "fish": "Fish",
+    "gluten": "Gluten",
+    "lupin": "Lupin",
+    "molluscs": "Molluscs",
+    "mustard": "Mustard",
+    "peanuts": "Peanuts",
+    "sesame": "Sesame",
+    "shellfish": "Shellfish",
+    "soy": "Soy",
+    "sulphites": "Sulphites",
+    "nuts": "Tree Nuts"
   }
 }

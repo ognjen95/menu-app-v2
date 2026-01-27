@@ -65,11 +65,8 @@
     "outOfStock": "Agotado",
     "popular": "Popular",
     "new": "Nuevo",
+    "sale": "Oferta",
     "spicy": "Picante",
-    "vegetarian": "Vegetariano",
-    "vegan": "Vegano",
-    "glutenFree": "Sin Gluten",
-    "halal": "Halal",
     "dietary": "Dietético",
     "allergens": "Alérgenos",
     "size": "Tamaño",
@@ -88,6 +85,34 @@
     "customize": "Personalizar",
     "quantity": "Cantidad",
     "notes": "Notas",
-    "notesPlaceholder": "Solicitudes especiales..."
+    "notesPlaceholder": "Solicitudes especiales...",
+    "save": "Ahorra",
+    "min": "min",
+    "kcal": "kcal"
+  },
+  "dietaryTags": {
+    "vegetarian": "Vegetariano",
+    "vegan": "Vegano",
+    "gluten-free": "Sin Gluten",
+    "halal": "Halal",
+    "kosher": "Kosher",
+    "dairy-free": "Sin Lácteos",
+    "nut-free": "Sin Frutos Secos"
+  },
+  "allergens": {
+    "celery": "Apio",
+    "dairy": "Lácteos",
+    "eggs": "Huevos",
+    "fish": "Pescado",
+    "gluten": "Gluten",
+    "lupin": "Altramuces",
+    "molluscs": "Moluscos",
+    "mustard": "Mostaza",
+    "peanuts": "Cacahuetes",
+    "sesame": "Sésamo",
+    "shellfish": "Mariscos",
+    "soy": "Soja",
+    "sulphites": "Sulfitos",
+    "nuts": "Frutos Secos"
   }
 }

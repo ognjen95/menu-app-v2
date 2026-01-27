@@ -537,10 +537,10 @@ export function CheckoutDialog({
           {step === 'details' && (
             <div className="p-4" style={{ borderTop: `1px solid ${colors.foreground}15` }}>
               <button
-                className="w-full h-12 text-lg font-semibold rounded-lg disabled:opacity-50 transition-opacity flex items-center justify-center"
+                className="w-full h-12 text-lg font-semibold rounded-xl disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] flex items-center justify-center"
                 onClick={handleSubmitOrder}
                 disabled={isSubmitting || cart.length === 0 || !deliveryValid}
-                style={{ backgroundColor: colors.primary, color: '#fff' }}
+                style={{ backgroundColor: colors.primary, color: '#fff', boxShadow: `0 6px 20px 0 ${colors.primary}50` }}
               >
                 {isSubmitting ? (
                   <>
@@ -559,9 +559,9 @@ export function CheckoutDialog({
           {step === 'confirmation' && (
             <div className="p-4" style={{ borderTop: `1px solid ${colors.foreground}15` }}>
               <button 
-                className="w-full h-12 font-semibold rounded-lg transition-opacity"
+                className="w-full h-12 font-semibold rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
                 onClick={handleClose}
-                style={{ backgroundColor: colors.primary, color: '#fff' }}
+                style={{ backgroundColor: colors.primary, color: '#fff', boxShadow: `0 6px 20px 0 ${colors.primary}50` }}
               >
                 {t('done')}
               </button>

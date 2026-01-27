@@ -65,11 +65,8 @@
     "outOfStock": "Nema na stanju",
     "popular": "Popularno",
     "new": "Novo",
+    "sale": "Akcija",
     "spicy": "Ljuto",
-    "vegetarian": "Vegetarijanski",
-    "vegan": "Veganski",
-    "glutenFree": "Bez glutena",
-    "halal": "Halal",
     "dietary": "Dijetetski",
     "allergens": "Alergeni",
     "size": "Veličina",
@@ -88,6 +85,34 @@
     "customize": "Prilagodi",
     "quantity": "Količina",
     "notes": "Napomene",
-    "notesPlaceholder": "Posebni zahtevi..."
+    "notesPlaceholder": "Posebni zahtevi...",
+    "save": "Ušteda",
+    "min": "min",
+    "kcal": "kcal"
+  },
+  "dietaryTags": {
+    "vegetarian": "Vegetarijansko",
+    "vegan": "Vegansko",
+    "gluten-free": "Bez glutena",
+    "halal": "Halal",
+    "kosher": "Košer",
+    "dairy-free": "Bez mlečnih proizvoda",
+    "nut-free": "Bez orašastih plodova"
+  },
+  "allergens": {
+    "celery": "Celer",
+    "dairy": "Mlečni proizvodi",
+    "eggs": "Jaja",
+    "fish": "Riba",
+    "gluten": "Gluten",
+    "lupin": "Lupina",
+    "molluscs": "Mekušci",
+    "mustard": "Senf",
+    "peanuts": "Kikiriki",
+    "sesame": "Susam",
+    "shellfish": "Školjke",
+    "soy": "Soja",
+    "sulphites": "Sulfiti",
+    "nuts": "Orašasti plodovi"
   }
 }
