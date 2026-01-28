@@ -313,7 +313,7 @@ export default function WaiterPage() {
   const TablesView = () => (
     <div className="flex flex-col h-full">
       {/* Quick order buttons */}
-      <div className="p-3 border-b bg-muted/30">
+      <div className="py-3 border-b">
         <div className="grid grid-cols-3 gap-2">
           <button
             className="flex flex-col items-center justify-center gap-1 h-14 px-2 rounded-lg border bg-background hover:bg-muted transition-colors"
@@ -340,7 +340,7 @@ export default function WaiterPage() {
       </div>
 
       {/* Tables grid */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 pb-20">
+      <div className="flex-1 overflow-y-hidden overflow-x-hidden py-4 pb-24">
         <div className="grid grid-cols-2 gap-3">
           {tables.map(table => {
             const tableOrders = getTableOrders(table.id)
@@ -460,7 +460,7 @@ export default function WaiterPage() {
   const MenuView = () => (
     <div className="flex flex-col h-full">
       {/* Header with back and table info */}
-      <div className="p-4 border-b bg-background sticky top-0 z-10">
+      <div className="pb-4 border-b bg-background sticky top-0 z-10">
         <div className="flex items-center gap-3 mb-3">
           <Button
             variant="ghost"
@@ -511,7 +511,7 @@ export default function WaiterPage() {
 
       {/* Category tabs */}
       <div className="border-b overflow-x-auto overflow-y-hidden">
-        <div className="flex p-2 gap-2">
+        <div className="flex py-2 gap-2">
           <Button
             variant={selectedCategoryId === null ? 'default' : 'ghost'}
             size="sm"
@@ -536,7 +536,7 @@ export default function WaiterPage() {
 
       {/* Items list */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden">
-        <div className="p-3 space-y-2 pb-20">
+        <div className="py-3 space-y-2 pb-20">
           {filteredItems.map(item => {
             const cartItem = cart.find(c => c.menuItem.id === item.id)
             const quantity = cartItem?.quantity || 0
@@ -859,9 +859,9 @@ export default function WaiterPage() {
   )
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] bg-background overflow-x-hidden">
+    <div className="flex flex-col h-[calc(100vh-1rem)] bg-background overflow-x-hidden">
       {/* Top header */}
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between pb-4 border-b">
         <button 
           onClick={() => setShowLocationPicker(true)}
           className="flex items-center gap-2 text-left"

@@ -7,8 +7,9 @@ export async function GET(request: NextRequest) {
     const tenantId = requireTenant(user)
     const locationId = params.get('location_id')
 
+    // Return empty array if no location ID provided
     if (!locationId) {
-      throw new Error('Location ID is required')
+      return { tables: [] }
     }
 
     const { data: tables, error } = await supabase
