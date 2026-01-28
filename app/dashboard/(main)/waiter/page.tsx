@@ -336,7 +336,7 @@ export default function WaiterPage() {
       {/* Tables grid */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden py-4 pb-5 scrollbar-hide">
         <div className="grid grid-cols-2 gap-3">
-          {[...tables, ...tables, ...tables].map(table => {
+          {tables.map(table => {
             const tableOrders = getTableOrders(table.id)
             const hasOrders = tableOrders.length > 0
             const latestOrder = tableOrders[0]
