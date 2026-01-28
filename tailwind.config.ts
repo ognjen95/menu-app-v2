@@ -66,6 +66,9 @@ const config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      padding: {
+        'safe': 'env(safe-area-inset-bottom)',
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },

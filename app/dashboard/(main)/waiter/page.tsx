@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '@/lib/api'
@@ -97,6 +97,8 @@ export default function WaiterPage() {
   const [customerName, setCustomerName] = useState('')
   const [showCart, setShowCart] = useState(false)
   const [showLocationPicker, setShowLocationPicker] = useState(false)
+  const [showSearch, setShowSearch] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Load location from localStorage
   useEffect(() => {
@@ -201,18 +203,10 @@ export default function WaiterPage() {
   }, [])
 
   const updateQuantity = useCallback((cartItemId: string, delta: number) => {
-    setCart(prev => prev.map(c => {
-      if (c.id === cartItemId) {
-        const newQty = c.quantity + delta
-        return newQty > 0 ? { ...c, quantity: newQty } : c
-      }
-      return c
-    }).filter(c => c.quantity > 0 || delta >= 0))
-    
-    // Remove if quantity becomes 0
-    if (delta < 0) {
-      setCart(prev => prev.filter(c => c.quantity > 0))
-    }
+    setCart(prev => prev
+      .map(c => c.id === cartItemId ? { ...c, quantity: c.quantity + delta } : c)
+      .filter(c => c.quantity > 0)
+    )
   }, [])
 
   const removeFromCart = useCallback((cartItemId: string) => {
@@ -340,9 +334,9 @@ export default function WaiterPage() {
       </div>
 
       {/* Tables grid */}
-      <div className="flex-1 overflow-y-hidden overflow-x-hidden py-4 pb-24">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden py-4 pb-5 scrollbar-hide">
         <div className="grid grid-cols-2 gap-3">
-          {tables.map(table => {
+          {[...tables, ...tables, ...tables].map(table => {
             const tableOrders = getTableOrders(table.id)
             const hasOrders = tableOrders.length > 0
             const latestOrder = tableOrders[0]
@@ -390,7 +384,7 @@ export default function WaiterPage() {
 
   // Orders View
   const OrdersView = () => (
-    <div className="h-full overflow-y-auto overflow-x-hidden p-4 pb-20">
+    <div className="h-full overflow-y-auto overflow-x-hidden py-4 pb-20 scrollbar-hide">
       <div className="space-y-3">
         {orders.map(order => (
           <Card key={order.id} className="overflow-hidden">
@@ -460,8 +454,8 @@ export default function WaiterPage() {
   const MenuView = () => (
     <div className="flex flex-col h-full">
       {/* Header with back and table info */}
-      <div className="pb-4 border-b bg-background sticky top-0 z-10">
-        <div className="flex items-center gap-3 mb-3">
+      <div className="py-3 border-b bg-background sticky top-0 z-10">
+        <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
@@ -485,28 +479,57 @@ export default function WaiterPage() {
               </div>
             )}
           </div>
-          {cartItemsCount > 0 && (
+          <div className="flex items-center gap-2">
             <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowCart(true)}
+              size="icon"
+              variant="ghost"
+              onClick={() => {
+                setShowSearch(!showSearch)
+                if (!showSearch) {
+                  setTimeout(() => searchInputRef.current?.focus(), 100)
+                } else {
+                  setSearchQuery('')
+                }
+              }}
             >
-              <ShoppingCart className="h-4 w-4 mr-1" />
-              {cartItemsCount}
+              <Search className="h-5 w-5" />
             </Button>
-          )}
+            {cartItemsCount > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowCart(true)}
+              >
+                <ShoppingCart className="h-4 w-4 mr-1" />
+                {cartItemsCount}
+              </Button>
+            )}
+          </div>
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={tCreate('searchItems')}
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="pl-10 h-12 text-base"
-          />
-        </div>
+        {/* Search Input - Collapsible */}
+        {showSearch && (
+          <div className="relative mt-3 mx-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              ref={searchInputRef}
+              placeholder={tCreate('searchItems')}
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-10 h-12 text-base"
+            />
+            {searchQuery && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                onClick={() => setSearchQuery('')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Category tabs */}
@@ -535,7 +558,7 @@ export default function WaiterPage() {
       </div>
 
       {/* Items list */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
         <div className="py-3 space-y-2 pb-20">
           {filteredItems.map(item => {
             const cartItem = cart.find(c => c.menuItem.id === item.id)
@@ -609,7 +632,7 @@ export default function WaiterPage() {
 
       {/* Bottom bar - Place order */}
       {cartItemsCount > 0 && (
-        <div className="p-4 border-t bg-background safe-area-pb">
+        <div className="shrink-0 p-4 pb-safe border-t bg-background">
           <Button
             className="w-full h-14 text-lg font-semibold"
             onClick={handleSubmit}
@@ -632,8 +655,8 @@ export default function WaiterPage() {
   // Cart Sheet
   const CartSheet = () => (
     <Sheet open={showCart} onOpenChange={setShowCart}>
-      <SheetContent side="bottom" className="h-[80vh] rounded-t-3xl">
-        <SheetHeader className="pb-4">
+      <SheetContent side="bottom" className="h-[70vh] rounded-t-3xl flex flex-col">
+        <SheetHeader className="shrink-0 pb-4">
           <SheetTitle className="flex items-center justify-between">
             <span>{tCreate('cart')} ({cartItemsCount})</span>
             {cart.length > 0 && (
@@ -645,8 +668,8 @@ export default function WaiterPage() {
           </SheetTitle>
         </SheetHeader>
         
-        <ScrollArea className="h-[calc(80vh-180px)]">
-          <div className="space-y-3 pr-4">
+        <div className="flex-1 overflow-y-auto scrollbar-hide min-h-0">
+          <div className="space-y-3">
             {cart.map(item => (
               <div key={item.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl">
                 <div className="flex-1 min-w-0">
@@ -677,20 +700,16 @@ export default function WaiterPage() {
               </div>
             ))}
           </div>
-        </ScrollArea>
+        </div>
 
-        {/* Customer name */}
-        <div className="py-4">
+        {/* Bottom section */}
+        <div className="shrink-0 pt-4 pb-safe space-y-3">
           <Input
             placeholder={tCreate('customerName')}
             value={customerName}
             onChange={e => setCustomerName(e.target.value)}
             className="h-12"
           />
-        </div>
-
-        {/* Submit */}
-        <div className="pb-6 safe-area-pb">
           <Button
             className="w-full h-14 text-lg font-semibold"
             onClick={() => {
@@ -859,7 +878,7 @@ export default function WaiterPage() {
   )
 
   return (
-    <div className="flex flex-col h-[calc(100vh-1rem)] bg-background overflow-x-hidden">
+    <div className="flex flex-col h-[calc(100dvh-4rem-2rem)] lg:h-[calc(100dvh-4rem-3rem)] bg-background overflow-x-hidden">
       {/* Top header */}
       <div className="flex items-center justify-between pb-4 border-b">
         <button 
@@ -883,11 +902,11 @@ export default function WaiterPage() {
 
       {/* Bottom navigation - only show when not in menu */}
       {activeTab !== 'menu' && (
-        <div className="fixed bottom-0 left-0 right-0 lg:left-64 flex border-t bg-background/95 backdrop-blur-sm shadow-[0_-4px_20px_rgba(0,0,0,0.15)] z-40 pb-safe">
+        <div className="shrink-0 flex border-t bg-background/95 backdrop-blur-sm shadow-[0_-4px_20px_rgba(0,0,0,0.15)] z-40 pb-safe">
           <button
             onClick={() => setActiveTab('tables')}
             className={cn(
-              "flex-1 flex flex-col items-center gap-1 py-3 transition-colors",
+              "flex-1 flex flex-col items-center gap-1 pt-3 transition-colors",
               activeTab === 'tables' ? "text-primary" : "text-muted-foreground"
             )}
           >
@@ -897,7 +916,7 @@ export default function WaiterPage() {
           <button
             onClick={() => setActiveTab('orders')}
             className={cn(
-              "flex-1 flex flex-col items-center gap-1 py-3 transition-colors relative",
+              "flex-1 flex flex-col items-center gap-1 pt-3 transition-colors relative",
               activeTab === 'orders' ? "text-primary" : "text-muted-foreground"
             )}
           >
