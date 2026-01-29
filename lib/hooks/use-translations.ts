@@ -113,3 +113,13 @@ export function generateCategoryTranslationKey(categoryId: string, field: 'name'
 export function generateMenuTranslationKey(menuId: string, field: 'name' | 'description'): string {
   return `menu.${menuId}.${field}`
 }
+
+// Helper to generate translation key for website blocks
+export function generateBlockTranslationKey(blockId: string, field: string): string {
+  return `website_block.${blockId}.${field}`
+}
+
+// Helper to generate translation key prefix for website blocks
+export function getBlockTranslationPrefix(blockId: string): string {
+  return `website_block.${blockId}.`
+}

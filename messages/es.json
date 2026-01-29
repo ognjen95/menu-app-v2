@@ -1006,6 +1006,21 @@
       "seoTitle": "Título",
       "seoDescription": "Descripción",
       "socialLinks": "Enlaces Sociales"
+    },
+    "tabs": {
+      "content": "Contenido",
+      "translations": "Traducciones"
+    },
+    "saveContent": "Guardar contenido",
+    "translations": {
+      "noLanguages": "No hay idiomas habilitados",
+      "enableLanguagesHint": "Habilita idiomas en Configuración → Idiomas para traducir tu contenido",
+      "noTranslatableFields": "No hay campos traducibles",
+      "blockNoTextContent": "Este bloque no tiene contenido de texto para traducir",
+      "saveTranslations": "Guardar traducciones",
+      "savedSuccess": "Traducciones guardadas exitosamente",
+      "saveFailed": "Error al guardar traducciones",
+      "noTranslationsToSave": "No hay traducciones para guardar"
     }
   },
   "orderLogs": {

@@ -1006,6 +1006,21 @@
       "seoTitle": "Naslov",
       "seoDescription": "Opis",
       "socialLinks": "Društvene mreže"
+    },
+    "tabs": {
+      "content": "Sadržaj",
+      "translations": "Prevodi"
+    },
+    "saveContent": "Sačuvaj sadržaj",
+    "translations": {
+      "noLanguages": "Nema omogućenih jezika",
+      "enableLanguagesHint": "Omogućite jezike u Podešavanja → Jezici da biste preveli svoj sadržaj",
+      "noTranslatableFields": "Nema polja za prevod",
+      "blockNoTextContent": "Ovaj blok nema tekstualni sadržaj za prevod",
+      "saveTranslations": "Sačuvaj prevode",
+      "savedSuccess": "Prevodi su uspešno sačuvani",
+      "saveFailed": "Čuvanje prevoda nije uspelo",
+      "noTranslationsToSave": "Nema prevoda za čuvanje"
     }
   },
   "orderLogs": {

@@ -1006,6 +1006,21 @@
       "seoTitle": "Title",
       "seoDescription": "Description",
       "socialLinks": "Social Links"
+    },
+    "tabs": {
+      "content": "Content",
+      "translations": "Translations"
+    },
+    "saveContent": "Save Content",
+    "translations": {
+      "noLanguages": "No languages enabled",
+      "enableLanguagesHint": "Enable languages in Settings → Languages to translate your content",
+      "noTranslatableFields": "No translatable fields",
+      "blockNoTextContent": "This block has no text content to translate",
+      "saveTranslations": "Save Translations",
+      "savedSuccess": "Translations saved successfully",
+      "saveFailed": "Failed to save translations",
+      "noTranslationsToSave": "No translations to save"
     }
   },
   "orderLogs": {

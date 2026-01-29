@@ -541,7 +541,7 @@ export default function WebsiteBuilderPage() {
 
       {/* Edit Block Dialog */}
       <Dialog open={!!editingBlock} onOpenChange={(o) => !o && setEditingBlock(null)}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-lg max-h-[85vh] overflow-y-auto flex flex-col">
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-3xl max-h-[85vh] overflow-y-auto flex flex-col">
           <DialogHeader>
             <DialogTitle>{t('blocks.editBlock')}</DialogTitle>
             <DialogDescription className="text-zinc-400">{t('blocks.customizeContent')}</DialogDescription>

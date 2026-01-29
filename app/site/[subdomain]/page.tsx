@@ -1,10 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { cookies } from 'next/headers'
 import { FaFacebookF, FaInstagram, FaXTwitter } from 'react-icons/fa6'
 import { unstable_noStore as noStore } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { BlockRenderer } from '@/components/features/public-menu/block-renderer'
+import { WebsiteLanguageSelector } from '@/components/features/public-menu/website-language-selector'
+import type { Translation } from '@/lib/types'
 
 // Public Supabase client (no auth required for public website)
 const supabase = createClient(
@@ -12,9 +15,18 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+// Language type for public website
+type PublicLanguage = {
+  code: string
+  isDefault: boolean
+  name: string
+  nativeName: string
+  flagEmoji: string
+}
+
 type PageProps = {
   params: Promise<{ subdomain: string }>
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{ page?: string; lang?: string }>
 }
 
 export default async function PublicWebsitePage({ params, searchParams }: PageProps) {
@@ -22,7 +34,7 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
   noStore()
 
   const { subdomain } = await params
-  const { page: pageSlug } = await searchParams
+  const { page: pageSlug, lang } = await searchParams
   const t = await getTranslations('blockRenderer')
 
   // Fetch website by subdomain with tenant join
@@ -30,7 +42,7 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
     .from('websites')
     .select(`
       *,
-      tenant:tenants(name, slug)
+      tenant:tenants(id, name, slug)
     `)
     .eq('subdomain', subdomain)
     .eq('is_published', true)
@@ -39,6 +51,47 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
   if (websiteError || !website) {
     notFound()
   }
+
+  const tenantId = (website.tenant as { id: string; name?: string; slug?: string })?.id
+
+  // Fetch tenant languages
+  const { data: tenantLanguages } = await supabase
+    .from('tenant_languages')
+    .select(`
+      language_code,
+      is_default,
+      is_enabled,
+      languages (
+        code,
+        name,
+        native_name,
+        flag_emoji
+      )
+    `)
+    .eq('tenant_id', tenantId)
+    .eq('is_enabled', true)
+    .order('is_default', { ascending: false })
+
+  // Transform languages
+  const languages: PublicLanguage[] = tenantLanguages?.map(tl => ({
+    code: tl.language_code,
+    isDefault: tl.is_default,
+    name: (tl.languages as any)?.name || tl.language_code,
+    nativeName: (tl.languages as any)?.native_name || tl.language_code,
+    flagEmoji: (tl.languages as any)?.flag_emoji || '',
+  })) || []
+
+  // Determine current language
+  const cookieStore = await cookies()
+  const cookieLocale = cookieStore.get('WEBSITE_LOCALE')?.value
+  const defaultLang = languages.find(l => l.isDefault)?.code || languages[0]?.code || 'en'
+  
+  const getValidLanguage = (langCode: string | undefined) => {
+    if (!langCode) return null
+    return languages.some(l => l.code === langCode) ? langCode : null
+  }
+  
+  const currentLanguage = getValidLanguage(lang) || getValidLanguage(cookieLocale) || defaultLang
 
   // Fetch pages for navigation
   const { data: pages } = await supabase
@@ -59,6 +112,16 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
     .eq('page_id', currentPage.id)
     .eq('is_visible', true)
     .order('sort_order') : { data: [] }
+
+  // Fetch translations for blocks and menu items
+  let translations: Translation[] = []
+  const { data: allTranslations } = await supabase
+    .from('translations')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .or('key.like.website_block.%,key.like.menu_item.%')
+  
+  translations = allTranslations || []
 
   // Extract menu item IDs from menu_preview blocks
   const menuItemIds: string[] = []
@@ -88,7 +151,7 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
   const { data: locations } = await supabase
     .from('locations')
     .select('id, name, slug, address, city, postal_code, country, latitude, longitude, phone, email, opening_hours, is_active')
-    .eq('tenant_id', website.tenant_id)
+    .eq('tenant_id', tenantId)
     .eq('is_active', true)
     .order('name')
 
@@ -105,8 +168,8 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
 
   const navPages = pages?.filter(p => p.is_in_navigation) || []
 
-  const tenantName = (website.tenant as { name?: string; slug?: string })?.name
-  const tenantSlug = (website.tenant as { name?: string; slug?: string })?.slug
+  const tenantName = (website.tenant as { id: string; name?: string; slug?: string })?.name
+  const tenantSlug = (website.tenant as { id: string; name?: string; slug?: string })?.slug
   const menuLink = `/m/${tenantSlug}`
 
   return (
@@ -161,6 +224,16 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
           ))}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {/* Language Selector */}
+          {languages.length > 1 && (
+            <WebsiteLanguageSelector
+              languages={languages}
+              currentLanguage={currentLanguage}
+              subdomain={subdomain}
+              currentPage={currentSlug}
+              theme={theme}
+            />
+          )}
           <Link
             href={`/m/${tenantSlug}`}
             style={{
@@ -184,7 +257,17 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
       {/* Page Content - Render Blocks */}
       <main>
         {blocks?.map((block) => (
-          <BlockRenderer key={block.id} block={block} theme={theme} menuItems={menuItemsMap} menuLink={menuLink} locations={locations || []} t={t} />
+          <BlockRenderer 
+            key={block.id} 
+            block={block} 
+            theme={theme} 
+            menuItems={menuItemsMap} 
+            menuLink={menuLink} 
+            locations={locations || []} 
+            t={t}
+            translations={translations}
+            currentLanguage={currentLanguage}
+          />
         ))}
 
         {(!blocks || blocks.length === 0) && (

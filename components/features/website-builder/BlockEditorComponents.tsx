@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { apiGet } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,7 +11,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { DialogFooter } from '@/components/ui/dialog'
-import { Loader2, Plus, X, Upload, UtensilsCrossed } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Loader2, Plus, X, Upload, UtensilsCrossed, Languages, FileText } from 'lucide-react'
+import { BlockTranslationEditor } from './BlockTranslationEditor'
 import { FaFacebookF, FaInstagram, FaXTwitter, FaTiktok, FaYoutube, FaLinkedinIn, FaYelp } from 'react-icons/fa6'
 import { SiTripadvisor } from 'react-icons/si'
 
@@ -283,7 +286,9 @@ export function LocationsSelector({
 
 // Block Editor
 export function BlockEditor({ block, onSave, isPending }: { block: WebsiteBlock; onSave: (content: Record<string, unknown>) => void; isPending: boolean }) {
+  const t = useTranslations('websiteBuilder')
   const [content, setContent] = useState(block.content)
+  const [activeTab, setActiveTab] = useState<'content' | 'translations'>('content')
   const inputClass = "bg-zinc-800 border-zinc-700 text-white"
 
   const renderFields = () => {
@@ -633,5 +638,48 @@ export function BlockEditor({ block, onSave, isPending }: { block: WebsiteBlock;
     }
   }
 
-  return (<ScrollArea className="space-y-4">{renderFields()}<DialogFooter><Button onClick={() => onSave(content)} disabled={isPending}>{isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Save</Button></DialogFooter></ScrollArea>)
+  return (
+    <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'content' | 'translations')} className="w-full">
+      <TabsList className="grid w-full grid-cols-2 bg-zinc-800/50">
+        <TabsTrigger 
+          value="content" 
+          className="flex items-center gap-2 data-[state=active]:bg-zinc-700"
+        >
+          <FileText className="h-4 w-4" />
+          {t('tabs.content')}
+        </TabsTrigger>
+        <TabsTrigger 
+          value="translations" 
+          className="flex items-center gap-2 data-[state=active]:bg-zinc-700"
+        >
+          <Languages className="h-4 w-4" />
+          {t('tabs.translations')}
+        </TabsTrigger>
+      </TabsList>
+      
+      {/* Content Tab */}
+      <TabsContent value="content" className="mt-4">
+        <ScrollArea className="max-h-[50vh]">
+          <div className="space-y-4 pr-4">
+            {renderFields()}
+          </div>
+        </ScrollArea>
+        <DialogFooter className="mt-4 pt-4 border-t border-zinc-800">
+          <Button onClick={() => onSave(content)} disabled={isPending}>
+            {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {t('saveContent')}
+          </Button>
+        </DialogFooter>
+      </TabsContent>
+      
+      {/* Translations Tab */}
+      <TabsContent value="translations" className="mt-4">
+        <BlockTranslationEditor
+          blockId={block.id}
+          blockType={block.type}
+          content={content}
+        />
+      </TabsContent>
+    </Tabs>
+  )
 }
