@@ -1099,6 +1099,7 @@
     "takeaway": "Takeaway",
     "delivery": "Delivery",
     "dine_in": "Dine In",
+    "selectTableFirst": "Please select a table first for dine-in orders",
     "noTables": "No tables configured",
     "noActiveOrders": "No active orders",
     "selectLocation": "Select Location",

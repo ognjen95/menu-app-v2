@@ -1,8 +1,8 @@
-# QR Menu SaaS - Architecture Documentation
+# Klopay.app SaaS - Architecture Documentation
 
 ## Overview
 
-QR Menu is a multi-tenant SaaS platform for restaurants and small businesses (car shops, hair salons, etc.) to create digital menus, manage orders, and build websites.
+Klopay.app is a multi-tenant SaaS platform for restaurants and small businesses (car shops, hair salons, etc.) to create digital menus, manage orders, and build websites.
 
 ## Tech Stack
 
@@ -59,7 +59,7 @@ Platform
 - Manual translations only
 - Limited themes (2)
 - Basic analytics
-- QR menu generation
+- Klopay.app generation
 - Order management
 - 1 location included
 
@@ -134,7 +134,7 @@ Platform
 ├── /(auth) - Authentication pages
 ├── /(public) - Public-facing pages
 │   └── /[tenant-slug] - Tenant public pages
-│       ├── /menu - QR Menu
+│       ├── /menu - Klopay.app
 │       └── /order - Order flow
 ├── /dashboard - Restaurant dashboard
 │   ├── /menu - Menu management

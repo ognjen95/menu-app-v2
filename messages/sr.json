@@ -1099,6 +1099,7 @@
     "takeaway": "Ponesi",
     "delivery": "Dostava",
     "dine_in": "U Restoranu",
+    "selectTableFirst": "Molimo prvo izaberite sto za narudžbine u restoranu",
     "noTables": "Nema konfigurisanih stolova",
     "noActiveOrders": "Nema aktivnih porudžbina",
     "selectLocation": "Izaberi Lokaciju",

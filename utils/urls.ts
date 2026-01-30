@@ -18,5 +18,5 @@ export const getWebsiteUrl = (website?: any): string | null => {
     return `http://localhost:3000/site/${website.subdomain}`
   }
   
-  return `https://${website.subdomain}.qrmenu.app`
+  return `https://${website.subdomain}.klopay.app`
 }

@@ -1,4 +1,4 @@
-# QR Menu SaaS - Development Progress
+# Klopay.app SaaS - Development Progress
 
 ## Completed Features
 

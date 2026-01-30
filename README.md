@@ -1,4 +1,4 @@
-# QR Menu SaaS - Multi-Tenant Digital Menu Platform
+# Klopay.app SaaS - Multi-Tenant Digital Menu Platform
 
 A modern, multi-tenant SaaS platform for restaurants and small businesses to create digital menus, manage orders, and build websites.
 

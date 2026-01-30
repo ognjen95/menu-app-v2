@@ -357,7 +357,7 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
           borderTop: `1px solid ${theme.foreground}20`,
           opacity: 0.6,
         }}>
-          <p>© {new Date().getFullYear()} {tenantName}. Powered by QR Menu</p>
+          <p>© {new Date().getFullYear()} {tenantName}. Powered by Klopay.app</p>
         </div>
       </footer>
     </>

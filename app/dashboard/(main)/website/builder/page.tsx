@@ -243,7 +243,7 @@ export default function WebsiteBuilderPage() {
 
   if (isLoading) return <div className="fixed inset-0 flex items-center justify-center bg-zinc-950"><Loader2 className="h-8 w-8 animate-spin text-zinc-500" /></div>
 
-  // const websiteUrl = website?.subdomain ? (process.env.NODE_ENV === 'development' ? `http://localhost:3000/site/${website.subdomain}` : `https://${website.subdomain}.qrmenu.app`) : null
+  // const websiteUrl = website?.subdomain ? (process.env.NODE_ENV === 'development' ? `http://localhost:3000/site/${website.subdomain}` : `https://${website.subdomain}.klopay.app`) : null
   const previewWidth = previewMode === 'desktop' ? '100%' : previewMode === 'tablet' ? '768px' : '375px'
   const websiteUrl = getWebsiteUrl(website)
 
@@ -266,7 +266,7 @@ export default function WebsiteBuilderPage() {
       <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild className="text-zinc-400 hover:text-white hover:bg-white/10 gap-1"><a href="/dashboard"><ChevronLeft className="h-4 w-4" />{t('exit')}</a></Button>
-          <div><h1 className="text-white font-semibold">{t('title')}</h1><p className="text-xs text-zinc-400">{website?.subdomain || t('noSubdomain')}.qrmenu.app</p></div>
+          <div><h1 className="text-white font-semibold">{t('title')}</h1><p className="text-xs text-zinc-400">{website?.subdomain || t('noSubdomain')}.klopay.app</p></div>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.1)' }}>
@@ -482,7 +482,7 @@ export default function WebsiteBuilderPage() {
                 <h3 className="text-sm font-medium text-white">{t('settings.domain')}</h3>
                 <div className="flex gap-2">
                   <Input value={website?.subdomain || ''} onChange={(e) => updateWebsite.mutate({ subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })} className="bg-white/5 border-white/10 text-white" />
-                  <span className="flex items-center text-xs text-zinc-500">.qrmenu.app</span>
+                  <span className="flex items-center text-xs text-zinc-500">.klopay.app</span>
                 </div>
               </div>
               <Separator className="bg-white/10" />

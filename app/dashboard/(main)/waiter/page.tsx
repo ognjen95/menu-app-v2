@@ -296,6 +296,17 @@ export default function WaiterPage() {
 
   // Start takeaway/delivery order
   const handleQuickOrder = (type: OrderType) => {
+    // For dine_in, require table selection first
+    if (type === 'dine_in') {
+      if (!selectedTable) {
+        toast.info(t('selectTableFirst'))
+        return
+      }
+      setOrderType('dine_in')
+      setActiveTab('menu')
+      return
+    }
+    // For takeaway/delivery, clear table and proceed
     setSelectedTable(null)
     setOrderType(type)
     setActiveTab('menu')
@@ -310,21 +321,36 @@ export default function WaiterPage() {
       <div className="py-3 border-b">
         <div className="grid grid-cols-3 gap-2">
           <button
-            className="flex flex-col items-center justify-center gap-1 h-14 px-2 rounded-lg border bg-background hover:bg-muted transition-colors"
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 h-14 px-2 rounded-lg border-2 bg-background transition-colors",
+              orderType === 'dine_in' 
+                ? "border-primary bg-primary/5 text-primary" 
+                : "border-border hover:bg-muted"
+            )}
             onClick={() => handleQuickOrder('dine_in')}
           >
             <Store className="h-5 w-5" />
             <span className="text-[10px] font-medium truncate max-w-full">{t('dine_in')}</span>
           </button>
           <button
-            className="flex flex-col items-center justify-center gap-1 h-14 px-2 rounded-lg border bg-background hover:bg-muted transition-colors"
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 h-14 px-2 rounded-lg border-2 bg-background transition-colors",
+              orderType === 'takeaway' 
+                ? "border-primary bg-primary/5 text-primary" 
+                : "border-border hover:bg-muted"
+            )}
             onClick={() => handleQuickOrder('takeaway')}
           >
             <Package className="h-5 w-5" />
             <span className="text-[10px] font-medium truncate max-w-full">{t('takeaway')}</span>
           </button>
           <button
-            className="flex flex-col items-center justify-center gap-1 h-14 px-2 rounded-lg border bg-background hover:bg-muted transition-colors"
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 h-14 px-2 rounded-lg border-2 bg-background transition-colors",
+              orderType === 'delivery' 
+                ? "border-primary bg-primary/5 text-primary" 
+                : "border-border hover:bg-muted"
+            )}
             onClick={() => handleQuickOrder('delivery')}
           >
             <Truck className="h-5 w-5" />

@@ -111,7 +111,7 @@ export default function DashboardLayout({
               <Store className="h-5 w-5 text-primary" />
             </div>
             {!collapsed && (
-              <span className="font-bold text-lg tracking-tight">QR Menu</span>
+              <span className="font-bold text-lg tracking-tight">Klopay.app</span>
             )}
           </Link>
           <Button

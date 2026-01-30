@@ -1099,6 +1099,7 @@
     "takeaway": "Para Llevar",
     "delivery": "Entrega",
     "dine_in": "Comer Aquí",
+    "selectTableFirst": "Por favor selecciona una mesa primero para pedidos en el local",
     "noTables": "No hay mesas configuradas",
     "noActiveOrders": "No hay pedidos activos",
     "selectLocation": "Seleccionar Ubicación",

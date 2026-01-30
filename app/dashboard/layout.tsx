@@ -3,7 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { redirect } from "next/navigation"
 
 export const metadata: Metadata = {
-    title: "QR Menu - Dashboard",
+    title: "Klopay.app - Dashboard",
     description: "Manage your restaurant menu and orders",
 };
 

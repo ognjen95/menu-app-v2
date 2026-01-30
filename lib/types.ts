@@ -1,4 +1,4 @@
-// Core type definitions for QR Menu SaaS
+// Core type definitions for Klopay.app SaaS
 
 export type Json =
   | string

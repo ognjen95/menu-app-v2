@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the complete database schema for the QR Menu SaaS platform.
+This document describes the complete database schema for the Klopay.app SaaS platform.
 
 ## Entity Relationship Diagram (Text)
 
@@ -332,7 +332,7 @@ Website configurations
 |--------|------|-------------|
 | id | uuid | Primary key |
 | tenant_id | uuid | FK to tenants |
-| subdomain | text | subdomain.qrmenu.app |
+| subdomain | text | subdomain.klopay.app |
 | custom_domain | text | Custom domain |
 | is_published | boolean | Site live |
 | theme_id | uuid | FK to themes |

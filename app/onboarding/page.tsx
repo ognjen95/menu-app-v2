@@ -201,7 +201,7 @@ export default function OnboardingPage() {
               <div className="space-y-2">
                 <Label htmlFor="slug">{t('urlSlug')} *</Label>
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground text-sm">qrmenu.app/m/</span>
+                  <span className="text-muted-foreground text-sm">klopay.app/m/</span>
                   <Input
                     id="slug"
                     placeholder="the-italian-kitchen"

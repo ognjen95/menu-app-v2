@@ -1,6 +1,6 @@
 # Public Menu Feature
 
-This feature provides the customer-facing QR menu experience that guests see when scanning a table QR code.
+This feature provides the customer-facing Klopay.app experience that guests see when scanning a table QR code.
 
 ## Components
 

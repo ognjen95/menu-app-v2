@@ -124,7 +124,7 @@ export async function sendTeamInvitation({
         </div>
         
         <div style="text-align: center; margin-top: 30px; color: #9ca3af; font-size: 12px;">
-          <p>© ${new Date().getFullYear()} QR Menu. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} Klopay.app. All rights reserved.</p>
         </div>
       </body>
     </html>
