@@ -362,6 +362,12 @@
   "menuPage": {
     "title": "Upravljanje menijem",
     "description": "Kreirajte i upravljajte vašim menijima, kategorijama i stavkama",
+    "selectMenuToStart": "Izaberite meni da započnete upravljanje stavkama",
+    "noMenusYet": "Još nema menija",
+    "createFirstMenuDesc": "Kreirajte svoj prvi meni da biste počeli dodavati kategorije i stavke",
+    "createFirstMenu": "Kreiraj prvi meni",
+    "selectCategoryDesc": "Izaberite kategoriju iz tabova iznad za pregled i upravljanje stavkama",
+    "addFirstItemDesc": "Počnite dodavati stavke u ovu kategoriju",
     "menus": "Meniji",
     "categories": "Kategorije",
     "items": "Stavke",
@@ -1036,6 +1042,30 @@
       "accepted": "Porudžbina prihvaćena",
       "preparing": "Priprema",
       "ready": "Spremno za preuzimanje",
+      "served": "Servirano",
+      "completed": "Završeno",
+      "cancelled": "Otkazano"
+    }
+  },
+  "orderDetail": {
+    "tabs": {
+      "actions": "Akcije",
+      "history": "Istorija"
+    },
+    "changeStatus": "Promeni status",
+    "selectStatus": "Izaberi status",
+    "assignUser": "Dodeli korisniku",
+    "selectUser": "Izaberi člana tima",
+    "you": "Vi",
+    "updateOrder": "Ažuriraj porudžbinu",
+    "updating": "Ažuriranje...",
+    "noHistory": "Nema dostupne istorije",
+    "status": {
+      "draft": "Nacrt",
+      "placed": "Primljena",
+      "accepted": "Prihvaćena",
+      "preparing": "Priprema",
+      "ready": "Spremno",
       "served": "Servirano",
       "completed": "Završeno",
       "cancelled": "Otkazano"

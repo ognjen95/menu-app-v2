@@ -1,9 +1,28 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
-import { useMenus, useCategories, useMenuItems, useCreateMenu, useCreateCategory, useUpdateCategory, useCreateMenuItem, useUpdateMenuItem, useDeleteMenuItem, useAllergens } from '@/lib/hooks/use-menu'
+import { useMenus, useCategories, useMenuItems, useCreateMenu, useCreateCategory, useUpdateCategory, useCreateMenuItem, useUpdateMenuItem, useDeleteMenuItem, useAllergens, useReorderCategories, useReorderMenuItems, menuKeys } from '@/lib/hooks/use-menu'
+import { useQueryClient } from '@tanstack/react-query'
 import type { MenuItem } from '@/lib/types'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable'
+
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -29,6 +48,15 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
+import { Badge } from '@/components/ui/badge'
+import { motion, AnimatePresence, staggerContainer, staggerItem, staggerItemScale } from '@/components/ui/animated'
+import {
   Plus,
   Edit,
   Trash2,
@@ -39,6 +67,7 @@ import {
   Search,
   Filter,
   ChevronRight,
+  ChevronDown,
   UtensilsCrossed,
   ImageIcon,
   Loader2,
@@ -51,6 +80,7 @@ import {
   Sparkles,
   Tag,
   Languages,
+  BookOpen,
 } from 'lucide-react'
 import { useTenantLanguages, useSaveTranslations, generateItemTranslationKey, generateCategoryTranslationKey, useTranslationsByPrefix } from '@/lib/hooks/use-translations'
 import { TranslationEditor } from '@/components/features/translations/translation-editor'
@@ -127,25 +157,34 @@ export default function MenuPage() {
   const createItem = useCreateMenuItem()
   const updateItem = useUpdateMenuItem()
   const deleteItem = useDeleteMenuItem()
+  const reorderCategories = useReorderCategories()
+  const reorderItems = useReorderMenuItems()
+  const queryClient = useQueryClient()
+
+  // DnD sensors - minimal delay for responsive feel
+  const sensors = useSensors(
+    useSensor(PointerSensor, { 
+      activationConstraint: { 
+        distance: 5,
+      } 
+    }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
 
   const menus = useMemo(() => menusData?.data?.menus || [], [menusData?.data?.menus])
   const allergens = useMemo(() => allergensData?.data?.allergens || [], [allergensData?.data?.allergens])
   const categories = useMemo(() => categoriesData?.data?.categories || [], [categoriesData?.data?.categories])
   const items = useMemo(() => itemsData?.data?.items || [], [itemsData?.data?.items])
 
-  // Auto-select first menu if none selected
-  useEffect(() => {
-    if (!selectedMenuId && menus.length > 0 && !menusLoading) {
-      setSelectedMenuId(menus[0].id)
-    }
-  }, [menus, menusLoading, selectedMenuId])
-
-  // Auto-select first category if none selected
+  // Auto-select first category when menu changes
   useEffect(() => {
     if (!selectedCategoryId && categories.length > 0 && !categoriesLoading && selectedMenuId) {
       setSelectedCategoryId(categories[0].id)
     }
   }, [categories, categoriesLoading, selectedMenuId, selectedCategoryId])
+
+  // Get current menu
+  const currentMenu = menus.find(m => m.id === selectedMenuId)
   
   const handleCreateMenu = (e: React.FormEvent) => {
     e.preventDefault()
@@ -419,317 +458,376 @@ export default function MenuPage() {
     }
   }
 
+  // Handle category reorder with optimistic update
+  const handleCategoryDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id || !selectedMenuId) return
+
+    const oldIndex = categories.findIndex(c => c.id === active.id)
+    const newIndex = categories.findIndex(c => c.id === over.id)
+    
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const newOrder = arrayMove(categories, oldIndex, newIndex)
+      
+      // Optimistically update the cache
+      queryClient.setQueryData(menuKeys.categories(selectedMenuId), (old: any) => {
+        if (!old?.data?.categories) return old
+        return { ...old, data: { ...old.data, categories: newOrder } }
+      })
+      
+      reorderCategories.mutate({
+        menuId: selectedMenuId,
+        categoryIds: newOrder.map(c => c.id)
+      })
+    }
+  }, [categories, selectedMenuId, reorderCategories, queryClient])
+
+  // Handle item reorder with optimistic update
+  const handleItemDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id || !selectedCategoryId) return
+
+    const oldIndex = items.findIndex(i => i.id === active.id)
+    const newIndex = items.findIndex(i => i.id === over.id)
+    
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const newOrder = arrayMove(items, oldIndex, newIndex)
+      
+      // Optimistically update the cache
+      queryClient.setQueryData(menuKeys.items(selectedCategoryId), (old: any) => {
+        if (!old?.data?.items) return old
+        return { ...old, data: { ...old.data, items: newOrder } }
+      })
+      
+      reorderItems.mutate({
+        categoryId: selectedCategoryId,
+        itemIds: newOrder.map(i => i.id)
+      })
+    }
+  }, [items, selectedCategoryId, reorderItems, queryClient])
+
+  // Menu Selection Screen
+  if (!selectedMenuId) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
+            <p className="text-sm md:text-base text-muted-foreground">{t('selectMenuToStart')}</p>
+          </div>
+          <Button onClick={() => setIsCreateMenuOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            {t('createMenu')}
+          </Button>
+        </div>
+
+        {menusLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : menus.length === 0 ? (
+          <Card className="p-12">
+            <div className="text-center">
+              <BookOpen className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+              <h2 className="text-xl font-semibold mb-2">{t('noMenusYet')}</h2>
+              <p className="text-muted-foreground mb-6">{t('createFirstMenuDesc')}</p>
+              <Button onClick={() => setIsCreateMenuOpen(true)} size="lg">
+                <Plus className="h-4 w-4 mr-2" />
+                {t('createFirstMenu')}
+              </Button>
+            </div>
+          </Card>
+        ) : (
+          <motion.div 
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            initial="initial"
+            animate="animate"
+            variants={staggerContainer}
+          >
+            {menus.map((menu, index) => (
+              <motion.div key={menu.id} variants={staggerItemScale} custom={index}>
+                <Card 
+                  className="cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all hover:shadow-lg"
+                  onClick={() => {
+                    setSelectedMenuId(menu.id)
+                    setSelectedCategoryId(null)
+                  }}
+                >
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <BookOpen className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">{menu.name}</CardTitle>
+                        {menu.description && (
+                          <CardDescription className="line-clamp-1">{menu.description}</CardDescription>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+
+        {/* Create Menu Dialog */}
+        <Dialog open={isCreateMenuOpen} onOpenChange={setIsCreateMenuOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('createMenuTitle')}</DialogTitle>
+              <DialogDescription>{t('createMenuDesc')}</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleCreateMenu} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="menu-name">{t('menuName')} *</Label>
+                <Input
+                  id="menu-name"
+                  value={menuForm.name}
+                  onChange={(e) => setMenuForm({ ...menuForm, name: e.target.value })}
+                  placeholder={t('menuNamePlaceholder')}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="menu-description">{t('menuDescription')}</Label>
+                <Input
+                  id="menu-description"
+                  value={menuForm.description}
+                  onChange={(e) => setMenuForm({ ...menuForm, description: e.target.value })}
+                  placeholder={t('menuDescPlaceholder')}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsCreateMenuOpen(false)}>
+                  {t('cancel')}
+                </Button>
+                <Button type="submit" disabled={createMenu.isPending}>
+                  {createMenu.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  {t('createMenu')}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+    )
+  }
+
+  // Sortable Category Item
+  const SortableCategoryItem = ({ category }: { category: Category }) => {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: category.id })
+    const style = {
+      transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+      transition,
+      zIndex: isDragging ? 50 : undefined,
+    }
+
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={cn(
+          'flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer group touch-none',
+          selectedCategoryId === category.id ? 'bg-primary text-primary-foreground' : 'hover:bg-accent',
+          isDragging && 'opacity-80 shadow-lg'
+        )}
+        onClick={() => setSelectedCategoryId(category.id)}
+      >
+        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+          <GripVertical className="h-4 w-4 opacity-50 hover:opacity-100" />
+        </div>
+        <span className="flex-1 truncate">{category.name}</span>
+        <Button
+          size="icon"
+          variant="ghost"
+          className={cn(
+            "h-7 w-7 opacity-0 group-hover:opacity-100 shrink-0",
+            selectedCategoryId === category.id && "text-primary-foreground hover:bg-primary-foreground/20"
+          )}
+          onClick={(e) => { e.stopPropagation(); openEditCategoryDialog(category) }}
+        >
+          <Edit className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    )
+  }
+
+  // Sortable Menu Item
+  const SortableMenuItem = ({ item }: { item: MenuItem }) => {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
+    const style: React.CSSProperties = {
+      transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+      // Only apply transition when not actively dragging (for smooth settle animation)
+      transition: isDragging ? undefined : transition,
+      zIndex: isDragging ? 50 : undefined,
+      willChange: isDragging ? 'transform' : undefined,
+    }
+
+    return (
+      <Card ref={setNodeRef} style={style} className={cn("overflow-hidden group touch-none select-none", isDragging && "opacity-90 shadow-2xl ring-2 ring-primary scale-[1.02]")}>
+        <div className="relative h-36 bg-muted">
+          {item.image_urls && item.image_urls.length > 0 ? (
+            <Image src={item.image_urls[0]} alt={item.name} fill className="object-cover" />
+          ) : (
+            <div className="flex items-center justify-center h-full"><ImageIcon className="h-10 w-10 text-muted-foreground" /></div>
+          )}
+          <div {...attributes} {...listeners} className="absolute top-2 left-2 p-1.5 rounded-md bg-background/90 backdrop-blur-sm cursor-grab active:cursor-grabbing shadow-sm">
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div className="absolute top-2 left-12 flex gap-1">
+            {item.is_featured && <Badge className="bg-yellow-500 hover:bg-yellow-600"><Star className="h-3 w-3 mr-1 fill-current" />Featured</Badge>}
+            {item.is_new && <Badge className="bg-blue-500 hover:bg-blue-600">{t('new')}</Badge>}
+            {!item.is_active && <Badge variant="secondary">{t('hidden')}</Badge>}
+          </div>
+          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => openEditDialog(item)}><Edit className="h-4 w-4" /></Button>
+            <Button size="icon" variant="secondary" className="h-8 w-8" onClick={() => selectedCategoryId && updateItem.mutate({ id: item.id, categoryId: selectedCategoryId, is_active: !item.is_active })}>
+              {item.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
+            <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => selectedCategoryId && deleteItem.mutate({ id: item.id, categoryId: selectedCategoryId })}><Trash2 className="h-4 w-4" /></Button>
+          </div>
+        </div>
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <h3 className="font-semibold line-clamp-1">{item.name}</h3>
+            <div className="text-right shrink-0">
+              <div className="font-bold text-lg">€{item.base_price.toFixed(2)}</div>
+              {item.compare_price && <div className="text-sm text-muted-foreground line-through">€{item.compare_price.toFixed(2)}</div>}
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{item.description || t('noDescription')}</p>
+          <div className="flex flex-wrap gap-1">
+            {item.dietary_tags?.map((tag) => <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>)}
+            {item.item_allergens && item.item_allergens.length > 0 && (
+              <Badge variant="outline" className="text-xs text-orange-600 border-orange-300"><AlertTriangle className="h-3 w-3 mr-1" />{item.item_allergens.length} {t('allergens')}</Badge>
+            )}
+            {item.preparation_time && <Badge variant="outline" className="text-xs"><Clock className="h-3 w-3 mr-1" />{item.preparation_time}min</Badge>}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Main Menu Management View (when menu is selected)
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-4">
       {/* Page header */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
-          <p className="text-sm md:text-base text-muted-foreground">
-            {t('description')}
-          </p>
+        <div className="flex items-center gap-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <BookOpen className="h-4 w-4" />
+                <span className="font-semibold">{currentMenu?.name}</span>
+                <ChevronDown className="h-4 w-4 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              {menus.map((menu) => (
+                <DropdownMenuItem key={menu.id} onClick={() => { setSelectedMenuId(menu.id); setSelectedCategoryId(null) }} className={cn(selectedMenuId === menu.id && "bg-accent")}>
+                  <BookOpen className="h-4 w-4 mr-2" />{menu.name}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setIsCreateMenuOpen(true)}><Plus className="h-4 w-4 mr-2" />{t('createMenu')}</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="md:size-default">
-            <Filter className="h-4 w-4 md:mr-2" />
-            <span className="hidden md:inline">{t('filter')}</span>
-          </Button>
-          <Button onClick={() => setIsItemDialogOpen(true)} size="sm" className="md:size-default">
-            <Plus className="h-4 w-4 md:mr-2" />
-            <span className="hidden sm:inline">{t('addItem')}</span>
+          <div className="relative flex-1 md:flex-none md:w-64">
+            {/* <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder={t('searchItems')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 h-9" /> */}
+          </div>
+          <Button onClick={() => setIsItemDialogOpen(true)} size="sm" disabled={!selectedCategoryId}>
+            <Plus className="h-4 w-4 md:mr-2" /><span className="hidden md:inline">{t('addItem')}</span>
           </Button>
         </div>
       </div>
 
-      {/* Search bar */}
-      <div className="relative w-full md:max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder={t('searchItems')}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-10"
-        />
-      </div>
-
-      {/* Main layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 md:gap-6">
-        {/* Menus sidebar */}
-        <div className="md:col-span-1 lg:col-span-3">
+      {/* Main layout with sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Categories Sidebar */}
+        <div className="lg:col-span-3">
           <Card>
-            <CardHeader className="py-4">
+            <CardHeader className="py-3 px-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold">{t('menus')}</CardTitle>
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setIsCreateMenuOpen(true)}>
-                  <Plus className="h-4 w-4" />
-                </Button>
+                <CardTitle className="text-base">{t('categories')}</CardTitle>
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setIsCategoryDialogOpen(true)}><Plus className="h-4 w-4" /></Button>
               </div>
             </CardHeader>
-            <CardContent className="space-y-2 pt-0">
-              {menusLoading ? (
-                <div className="text-sm text-muted-foreground">{t('loading')}</div>
-              ) : menus.length === 0 ? (
-                <div className="text-sm text-muted-foreground">{t('noMenus')}</div>
-              ) : (
-                menus.map((menu) => (
-                  <button
-                    key={menu.id}
-                    onClick={() => {
-                      setSelectedMenuId(menu.id)
-                      setSelectedCategoryId(null)
-                    }}
-                    className={cn(
-                      'w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors',
-                      selectedMenuId === menu.id
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-accent'
-                    )}
-                  >
-                    {menu.name}
-                  </button>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Categories */}
-        <div className="md:col-span-1 lg:col-span-3">
-          <Card className="h-full">
-            <CardHeader className="py-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold">{t('categories')}</CardTitle>
-                <Button size="icon" variant="ghost" className="h-8 w-8" disabled={!selectedMenuId} onClick={() => setIsCategoryDialogOpen(true)}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-2 pt-0">
-              {!selectedMenuId ? (
-                <div className="text-sm text-muted-foreground">{t('selectMenuFirst')}</div>
-              ) : categoriesLoading ? (
-                <div className="text-sm text-muted-foreground">{t('loading')}</div>
+            <CardContent className="p-2">
+              {categoriesLoading ? (
+                <div className="text-sm text-muted-foreground p-2">{t('loading')}</div>
               ) : categories.length === 0 ? (
                 <div className="text-center py-8">
                   <UtensilsCrossed className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground">{t('noCategories')}</p>
-                  <Button size="sm" variant="outline" className="mt-2" onClick={() => setIsCategoryDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    {t('addCategory')}
-                  </Button>
+                  <p className="text-sm text-muted-foreground mb-2">{t('noCategories')}</p>
+                  <Button size="sm" variant="outline" onClick={() => setIsCategoryDialogOpen(true)}><Plus className="h-4 w-4 mr-1" />{t('addCategory')}</Button>
                 </div>
               ) : (
-                categories.map((category) => (
-                  <div
-                    key={category.id}
-                    className={cn(
-                      'w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-colors group cursor-pointer',
-                      selectedCategoryId === category.id
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-accent'
-                    )}
-                    onClick={() => setSelectedCategoryId(category.id)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <GripVertical className="h-4 w-4 opacity-0 group-hover:opacity-50 cursor-grab" />
-                      <span>{category.name}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className={cn(
-                          "h-7 w-7 opacity-0 group-hover:opacity-100",
-                          selectedCategoryId === category.id && "text-primary-foreground hover:bg-primary-foreground/10"
-                        )}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          openEditCategoryDialog(category)
-                        }}
-                      >
-                        <Edit className="h-3.5 w-3.5" />
-                      </Button>
-                      <ChevronRight className="h-4 w-4 opacity-50" />
-                    </div>
-                  </div>
-                ))
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>
+                  <SortableContext items={categories.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                    <motion.div 
+                      className="space-y-1"
+                      initial="initial"
+                      animate="animate"
+                      variants={staggerContainer}
+                    >
+                      {categories.map((category, index) => (
+                        <motion.div key={category.id} variants={staggerItem} custom={index}>
+                          <SortableCategoryItem category={category} />
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  </SortableContext>
+                </DndContext>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Items */}
-        <div className="md:col-span-2 lg:col-span-6">
-          <Card className="h-full min-h-[400px]">
-            <CardHeader className="py-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>
-                    {selectedCategoryId 
-                      ? categories.find(c => c.id === selectedCategoryId)?.name || t('items')
-                      : t('items')}
-                  </CardTitle>
-                  <CardDescription>
-                    {items.length} {items.length === 1 ? t('item') : t('items')}
-                  </CardDescription>
-                </div>
-                <Button size="sm" disabled={!selectedCategoryId} onClick={() => setIsItemDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  {t('addItem')}
-                </Button>
+        {/* Items Grid */}
+        <div className="lg:col-span-9">
+          {!selectedCategoryId ? (
+            <Card className="p-12">
+              <div className="text-center">
+                <UtensilsCrossed className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                <h2 className="text-xl font-semibold mb-2">{t('selectCategoryToView')}</h2>
+                <p className="text-muted-foreground">{t('selectCategoryDesc')}</p>
               </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {!selectedCategoryId ? (
-                <div className="text-center py-16">
-                  <UtensilsCrossed className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-lg text-muted-foreground">{t('selectCategoryToView')}</p>
-                </div>
-              ) : itemsLoading ? (
-                <div className="text-muted-foreground py-8">{t('loadingItems')}</div>
-              ) : items.length === 0 ? (
-                <div className="text-center py-16">
-                  <UtensilsCrossed className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-lg text-muted-foreground mb-4">{t('noItemsInCategory')}</p>
-                  <Button onClick={() => setIsItemDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    {t('addFirstItem')}
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border hover:bg-accent/50 transition-colors group"
-                    >
-                      <GripVertical className="hidden lg:block h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 cursor-grab" />
-                      
-                      {/* Image */}
-                      <div className="relative h-20 w-20 sm:h-16 sm:w-16 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        {item.image_urls && item.image_urls.length > 0 ? (
-                          <Image
-                            src={item.image_urls[0]}
-                            alt={item.name}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : (
-                          <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                        )}
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0 w-full sm:w-auto">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-medium text-base sm:text-sm">{item.name}</h3>
-                          {item.is_featured && (
-                            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                          )}
-                          {item.is_new && (
-                            <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded">{t('new')}</span>
-                          )}
-                          {!item.is_active && (
-                            <span className="text-xs px-1.5 py-0.5 bg-muted rounded">{t('hidden')}</span>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground line-clamp-2 sm:line-clamp-1">
-                          {item.description || t('noDescription')}
-                        </p>
-                        <div className="flex items-center gap-1.5 sm:gap-2 mt-1 flex-wrap">
-                          {item.dietary_tags?.map((tag) => (
-                            <span
-                              key={tag}
-                              className="text-xs px-1.5 py-0.5 bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 rounded"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                          {item.item_allergens && item.item_allergens.length > 0 && (
-                            <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300 rounded flex items-center gap-1">
-                              <AlertTriangle className="h-3 w-3" />
-                              {item.item_allergens.length} {t('allergens')}
-                            </span>
-                          )}
-                          {item.preparation_time && (
-                            <span className="text-xs px-1.5 py-0.5 bg-muted rounded flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {item.preparation_time}min
-                            </span>
-                          )}
-                          {item.calories && (
-                            <span className="text-xs px-1.5 py-0.5 bg-muted rounded flex items-center gap-1">
-                              <Flame className="h-3 w-3" />
-                              {item.calories}kcal
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Price */}
-                      <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-0 sm:text-right ml-auto sm:ml-0">
-                        <div className="font-semibold text-lg sm:text-base">
-                          €{item.base_price.toFixed(2)}
-                        </div>
-                        {item.compare_price && (
-                          <div className="text-sm text-muted-foreground line-through">
-                            €{item.compare_price.toFixed(2)}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="h-8 w-8"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            openEditDialog(item)
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="h-8 w-8"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (selectedCategoryId) {
-                              updateItem.mutate({ 
-                                id: item.id, 
-                                categoryId: selectedCategoryId,
-                                is_active: !item.is_active 
-                              })
-                            }
-                          }}
-                        >
-                          {item.is_active ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="h-8 w-8 text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            selectedCategoryId && deleteItem.mutate({ id: item.id, categoryId: selectedCategoryId })
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
+            </Card>
+          ) : itemsLoading ? (
+            <div className="flex items-center justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+          ) : items.length === 0 ? (
+            <Card className="p-12">
+              <div className="text-center">
+                <UtensilsCrossed className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                <h2 className="text-xl font-semibold mb-2">{t('noItemsInCategory')}</h2>
+                <p className="text-muted-foreground mb-6">{t('addFirstItemDesc')}</p>
+                <Button onClick={() => setIsItemDialogOpen(true)}><Plus className="h-4 w-4 mr-2" />{t('addFirstItem')}</Button>
+              </div>
+            </Card>
+          ) : (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleItemDragEnd}>
+              <SortableContext items={items.map(i => i.id)} strategy={rectSortingStrategy}>
+                <motion.div 
+                  className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
+                  initial="initial"
+                  animate="animate"
+                  variants={staggerContainer}
+                  key={selectedCategoryId} // Re-animate when category changes
+                >
+                  {items.map((item, index) => (
+                    <motion.div key={item.id} variants={staggerItemScale} custom={index}>
+                      <SortableMenuItem item={item} />
+                    </motion.div>
                   ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                </motion.div>
+              </SortableContext>
+            </DndContext>
+          )}
         </div>
       </div>
 

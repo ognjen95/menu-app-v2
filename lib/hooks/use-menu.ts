@@ -290,3 +290,28 @@ export function useCreateOption() {
     },
   })
 }
+
+// Reorder hooks
+export function useReorderCategories() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ menuId, categoryIds }: { menuId: string; categoryIds: string[] }) =>
+      apiPut<{ success: boolean }>(`/menu/${menuId}/categories/reorder`, { categoryIds }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: menuKeys.categories(variables.menuId) })
+    },
+  })
+}
+
+export function useReorderMenuItems() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ categoryId, itemIds }: { categoryId: string; itemIds: string[] }) =>
+      apiPut<{ success: boolean }>(`/menu/categories/${categoryId}/items/reorder`, { itemIds }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: menuKeys.items(variables.categoryId) })
+    },
+  })
+}

@@ -50,6 +50,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { OrderLogsDialog } from '@/components/features/orders/OrderLogsDialog'
+import { OrderDetailDialog } from '@/components/features/orders/OrderDetailDialog'
 import { CreateOrderDialog } from '@/components/features/orders/create-order-dialog'
 import type { OrderStatus, OrderWithRelations, Location } from '@/lib/types'
 
@@ -94,6 +95,7 @@ export default function OrdersPage() {
   const t = useTranslations('ordersPage')
   const [selectedStatuses, setSelectedStatuses] = useState<Set<OrderStatus>>(new Set(ACTIVE_STATUSES))
   const [selectedOrderForLogs, setSelectedOrderForLogs] = useState<OrderWithRelations | null>(null)
+  const [selectedOrderForDetail, setSelectedOrderForDetail] = useState<OrderWithRelations | null>(null)
   const [selectedLocationId, setSelectedLocationId] = useState<string>('all')
   const [layout, setLayout] = useState<'grid' | 'kanban'>('grid')
   const [soundEnabled, setSoundEnabled] = useState(true)
@@ -108,9 +110,9 @@ export default function OrdersPage() {
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!kanbanRef.current) return
-    // Don't start drag if clicking on interactive elements
+    // Don't start drag if clicking on interactive elements or cards
     const target = e.target as HTMLElement
-    if (target.closest('button, a, input, [role="button"], [data-no-drag]')) {
+    if (target.closest('button, a, input, [role="button"], [data-no-drag], [data-radix-collection-item], .cursor-pointer')) {
       return
     }
     setIsDragging(true)
@@ -240,7 +242,6 @@ export default function OrdersPage() {
     const [isExpanded, setIsExpanded] = useState(false)
     const StatusIcon = statusConfig[order.status]?.icon || Clock
     const TypeIcon = typeIcons[order.type] || Store
-    const nextStatus = getNextStatus(order.status)
     const timerColor = getTimerColor(order.placed_at)
 
     // Check if there's additional info to show
@@ -250,7 +251,10 @@ export default function OrdersPage() {
     const hasAdditionalInfo = hasNotes || hasAllergens || hasOptions
 
     return (
-      <Card className="relative overflow-hidden">
+      <Card 
+        className="relative overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+        onClick={() => setSelectedOrderForDetail(order)}
+      >
         {/* Status indicator bar */}
         <div className={cn(
           'absolute top-0 left-0 right-0 h-1',
@@ -267,20 +271,9 @@ export default function OrdersPage() {
                 {t(`type.${order.type}`)}
               </Badge>
             </div>
-            <div className="flex items-center gap-1 shrink-0">
-              <span className={cn("font-mono text-xs", timerColor)}>
-                {formatTimeElapsed(order.placed_at)}
-              </span>
-              <Button 
-                size="icon" 
-                variant="ghost" 
-                className="h-6 w-6"
-                title={t('viewLogs')}
-                onClick={() => setSelectedOrderForLogs(order)}
-              >
-                <History className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+            <span className={cn("font-mono text-xs shrink-0", timerColor)}>
+              {formatTimeElapsed(order.placed_at)}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
             {order.table_id && (
@@ -414,29 +407,6 @@ export default function OrdersPage() {
             </Badge>
           </div>
 
-          {/* Action buttons */}
-          {nextStatus && order.status !== 'completed' && order.status !== 'cancelled' && (
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                className="flex-1"
-                onClick={() => handleStatusChange(order.id, nextStatus)}
-                disabled={updateStatus.isPending}
-              >
-                {t('markAs', { status: t(`status.${nextStatus}`) })}
-              </Button>
-              {order.status === 'placed' && (
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => handleStatusChange(order.id, 'cancelled')}
-                  disabled={updateStatus.isPending}
-                >
-                  <XCircle className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          )}
         </CardContent>
       </Card>
     )
@@ -611,6 +581,13 @@ export default function OrdersPage() {
         order={selectedOrderForLogs}
         open={!!selectedOrderForLogs}
         onOpenChange={() => setSelectedOrderForLogs(null)}
+      />
+
+      {/* Order Detail Dialog */}
+      <OrderDetailDialog
+        order={selectedOrderForDetail}
+        open={!!selectedOrderForDetail}
+        onOpenChange={() => setSelectedOrderForDetail(null)}
       />
 
       {/* Create Order Dialog */}

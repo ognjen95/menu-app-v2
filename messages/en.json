@@ -362,6 +362,12 @@
   "menuPage": {
     "title": "Menu Management",
     "description": "Create and manage your menus, categories, and items",
+    "selectMenuToStart": "Select a menu to start managing your items",
+    "noMenusYet": "No menus yet",
+    "createFirstMenuDesc": "Create your first menu to start adding categories and items",
+    "createFirstMenu": "Create First Menu",
+    "selectCategoryDesc": "Choose a category from the tabs above to view and manage items",
+    "addFirstItemDesc": "Start adding items to this category",
     "menus": "Menus",
     "categories": "Categories",
     "items": "Items",
@@ -1036,6 +1042,30 @@
       "accepted": "Order Accepted",
       "preparing": "Preparing",
       "ready": "Ready for Pickup",
+      "served": "Served",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
+  },
+  "orderDetail": {
+    "tabs": {
+      "actions": "Actions",
+      "history": "History"
+    },
+    "changeStatus": "Change Status",
+    "selectStatus": "Select status",
+    "assignUser": "Assign to",
+    "selectUser": "Select team member",
+    "you": "You",
+    "updateOrder": "Update Order",
+    "updating": "Updating...",
+    "noHistory": "No history available",
+    "status": {
+      "draft": "Draft",
+      "placed": "Placed",
+      "accepted": "Accepted",
+      "preparing": "Preparing",
+      "ready": "Ready",
       "served": "Served",
       "completed": "Completed",
       "cancelled": "Cancelled"

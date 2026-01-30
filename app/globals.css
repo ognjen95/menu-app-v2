@@ -6,109 +6,111 @@
 @layer base {
   :root {
     /* Light Theme - Modern, Clean, High Contrast */
-    --background: 0 0% 100%;
+    --background: 140 25% 96%;
     --foreground: 240 10% 3.9%;
-    
+
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
-    
+
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    
-    /* Primary - Modern Blue/Indigo */
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    
+
+    /* Primary - Modern Green */
+    --primary: 142.1 70.6% 45.3%;
+    --primary-foreground: 144.9 80.4% 10%;
+
     /* Secondary - Subtle Gray */
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
-    
+
     /* Muted - Soft Background */
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
-    
+
     /* Accent - Vibrant Pop Color */
     --accent: 240 4.8% 95.9%;
     --accent-foreground: 240 5.9% 10%;
-    
+
     /* Destructive - Modern Red */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    
+
     /* Success - Modern Green */
     --success: 142.1 76.2% 36.3%;
     --success-foreground: 355.7 100% 97.3%;
-    
+
     /* Warning - Modern Amber */
     --warning: 38 92% 50%;
     --warning-foreground: 48 96% 89%;
-    
+
     /* Border & Input */
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 221.2 83.2% 53.3%;
-    
+    --border: 160 20% 90%;
+    --input: 160 20% 90%;
+    --ring: 142.1 70.6% 45.3%;
+
     /* Border Radius - Modern, Softer */
     --radius: 0.75rem;
-    
-    /* Chart Colors - Vibrant 2026 Palette */
-    --chart-1: 221.2 83.2% 53.3%;
-    --chart-2: 142.1 76.2% 36.3%;
+
+    /* Chart Colors - Green focused palette */
+    --chart-1: 142.1 70.6% 45.3%;
+    --chart-2: 175 60% 40%;
     --chart-3: 38 92% 50%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --chart-4: 160 50% 50%;
+    --chart-5: 120 45% 55%;
   }
 
   .dark {
-    /* Dark Theme - Deep, Rich, Modern */
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    
-    /* Primary - Bright Blue/Indigo */
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    
-    /* Secondary - Dark Gray */
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    
-    /* Muted - Subtle Background */
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    
-    /* Accent - Vibrant Pop Color */
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    
+    /* Dark Theme - Teal/Green Modern */
+    --background: 175 54.85% 5.01%;
+    --foreground: 160 20% 95%;
+
+    /* Card - Slightly lighter teal */
+    --card: 175 45% 10%;
+    --card-foreground: 160 20% 95%;
+
+    /* Popover - Same as card */
+    --popover: 175 45% 10%;
+    --popover-foreground: 160 20% 95%;
+
+    /* Primary - Bright Green */
+    --primary: 142.1 70.6% 45.3%;
+    --primary-foreground: 144.9 80.4% 10%;
+
+    /* Secondary - Teal tinted */
+    --secondary: 175 30% 15%;
+    --secondary-foreground: 160 20% 95%;
+
+    /* Muted - Subtle teal */
+    --muted: 175 30% 15%;
+    --muted-foreground: 170 15% 55%;
+
+    /* Accent - Teal */
+    --accent: 175 30% 18%;
+    --accent-foreground: 160 20% 95%;
+
     /* Destructive - Bright Red */
     --destructive: 0 72.2% 50.6%;
     --destructive-foreground: 0 0% 98%;
-    
+
     /* Success - Bright Green */
     --success: 142.1 70.6% 45.3%;
     --success-foreground: 144.9 80.4% 10%;
-    
+
     /* Warning - Bright Amber */
     --warning: 38 92% 50%;
     --warning-foreground: 48 96% 89%;
-    
-    /* Border & Input - Subtle Contrast */
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 217.2 91.2% 59.8%;
-    
-    /* Chart Colors - Bright 2026 Dark Palette */
-    --chart-1: 217.2 91.2% 59.8%;
-    --chart-2: 142.1 70.6% 45.3%;
+
+    /* Border & Input - Teal tinted */
+    --border: 175 25% 18%;
+    --input: 175 25% 18%;
+    --ring: 142.1 70.6% 45.3%;
+
+    /* Chart Colors - Green focused palette */
+    --chart-1: 142.1 70.6% 45.3%;
+    --chart-2: 175 60% 40%;
     --chart-3: 38 92% 50%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --chart-4: 160 50% 50%;
+    --chart-5: 120 45% 55%;
   }
 }
 
@@ -116,31 +118,34 @@
   * {
     @apply border-border;
   }
-  
+
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
   }
-  
+
   /* Smooth transitions for theme switching */
-  body, body * {
+  body,
+  body * {
     @apply transition-colors duration-300;
   }
-  
+
   /* Improve scrollbar styling */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
-  
+
   ::-webkit-scrollbar-track {
     @apply bg-muted;
   }
-  
+
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-lg;
+    @apply rounded-lg bg-muted-foreground/30;
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-muted-foreground/50;
   }
@@ -197,7 +202,8 @@
 
 /* Cart badge bounce animation */
 @keyframes cart-bounce {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {

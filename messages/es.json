@@ -362,6 +362,12 @@
   "menuPage": {
     "title": "Gestión del Menú",
     "description": "Crea y administra tus menús, categorías y artículos",
+    "selectMenuToStart": "Selecciona un menú para comenzar a gestionar tus artículos",
+    "noMenusYet": "Sin menús aún",
+    "createFirstMenuDesc": "Crea tu primer menú para empezar a añadir categorías y artículos",
+    "createFirstMenu": "Crear Primer Menú",
+    "selectCategoryDesc": "Elige una categoría de las pestañas para ver y gestionar artículos",
+    "addFirstItemDesc": "Comienza a añadir artículos a esta categoría",
     "menus": "Menús",
     "categories": "Categorías",
     "items": "Artículos",
@@ -1036,6 +1042,30 @@
       "accepted": "Pedido Aceptado",
       "preparing": "Preparando",
       "ready": "Listo para Recoger",
+      "served": "Servido",
+      "completed": "Completado",
+      "cancelled": "Cancelado"
+    }
+  },
+  "orderDetail": {
+    "tabs": {
+      "actions": "Acciones",
+      "history": "Historial"
+    },
+    "changeStatus": "Cambiar Estado",
+    "selectStatus": "Seleccionar estado",
+    "assignUser": "Asignar a",
+    "selectUser": "Seleccionar miembro del equipo",
+    "you": "Tú",
+    "updateOrder": "Actualizar Pedido",
+    "updating": "Actualizando...",
+    "noHistory": "No hay historial disponible",
+    "status": {
+      "draft": "Borrador",
+      "placed": "Realizado",
+      "accepted": "Aceptado",
+      "preparing": "Preparando",
+      "ready": "Listo",
       "served": "Servido",
       "completed": "Completado",
       "cancelled": "Cancelado"

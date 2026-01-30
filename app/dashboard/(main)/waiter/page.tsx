@@ -249,7 +249,7 @@ export default function WaiterPage() {
   // State for viewing order details
   const [selectedOrder, setSelectedOrder] = useState<OrderWithRelations | null>(null)
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!selectedLocationId) {
       toast.error(tCreate('selectLocation'))
       return
@@ -285,7 +285,7 @@ export default function WaiterPage() {
         description: error?.message || 'Unknown error',
       })
     }
-  }
+  }, [selectedLocationId, cart, orderType, selectedTable, customerName, createOrder, tCreate, clearCart, refetchOrders])
 
   // Select table and go to menu
   const handleTableSelect = (table: Table) => {
@@ -361,7 +361,7 @@ export default function WaiterPage() {
 
       {/* Tables grid */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden py-4 pb-5 scrollbar-hide">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {tables.map(table => {
             const tableOrders = getTableOrders(table.id)
             const hasOrders = tableOrders.length > 0
@@ -374,9 +374,10 @@ export default function WaiterPage() {
                 className={cn(
                   "relative flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all min-h-[100px]",
                   "active:scale-95",
-                  hasOrders 
-                    ? "border-primary bg-primary/5" 
-                    : "border-border bg-background hover:border-muted-foreground"
+                  "border-border bg-background hover:border-muted-foreground"
+                  // hasOrders 
+                  //   ? "border-primary bg-primary/5" 
+                  //   : "border-border bg-background hover:border-muted-foreground"
                 )}
               >
                 <UtensilsCrossed className={cn(
@@ -678,8 +679,8 @@ export default function WaiterPage() {
     </div>
   )
 
-  // Cart Sheet
-  const CartSheet = () => (
+  // Cart Sheet - memoized to prevent re-renders when typing or changing quantities
+  const cartSheet = useMemo(() => (
     <Sheet open={showCart} onOpenChange={setShowCart}>
       <SheetContent side="bottom" className="h-[70vh] rounded-t-3xl flex flex-col">
         <SheetHeader className="shrink-0 pb-4">
@@ -749,7 +750,7 @@ export default function WaiterPage() {
         </div>
       </SheetContent>
     </Sheet>
-  )
+  ), [showCart, cart, cartItemsCount, cartTotal, customerName, createOrder.isPending, tCreate, clearCart, updateQuantity, handleSubmit, setShowCart, setCustomerName])
 
   // Location Picker Sheet
   const LocationPickerSheet = () => (
@@ -958,7 +959,7 @@ export default function WaiterPage() {
       )}
 
       {/* Sheets */}
-      <CartSheet />
+      {cartSheet}
       <LocationPickerSheet />
       <OrderDetailsSheet />
     </div>

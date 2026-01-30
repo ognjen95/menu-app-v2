@@ -90,12 +90,13 @@ export default function DashboardLayout({
       )}
 
       {/* Sidebar */}
+
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex flex-col bg-card shadow-lg',
+          'fixed z-50 flex flex-col rounded-xl left-3 top-3 bottom-3 right-3 bg-background/95 backdrop-blur-xl border border-border/50 lg:right-auto lg:left-5 lg:top-5 lg:bottom-5 lg:bg-gradient-to-b lg:from-white lg:to-white lg:shadow-lg lg:shadow-black/5 dark:lg:from-white/[0.08] dark:lg:to-white/[0.03] dark:lg:shadow-none dark:lg:backdrop-blur-sm lg:border-border/30 dark:lg:border-white/[0.1]',
           mounted ? 'transition-all duration-300 ease-in-out' : '',
-          collapsed ? 'w-[72px]' : 'w-64',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          collapsed ? 'lg:w-[72px]' : 'lg:w-64',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-[calc(100%+24px)] lg:translate-x-0'
         )}
       >
         {/* Logo Header */}
@@ -108,10 +109,11 @@ export default function DashboardLayout({
             collapsed ? 'justify-center' : ''
           )}>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-              <Store className="h-5 w-5 text-primary" />
+              {/* <Store className="h-5 w-5 text-primary" /> */}
+              <h1 className='font-bold text-xl text-primary'>K</h1>
             </div>
             {!collapsed && (
-              <span className="font-bold text-lg tracking-tight">Klopay.app</span>
+              <span className="font-bold text-lg tracking-tight">Klopay<span className='text-primary'>.app</span></span>
             )}
           </Link>
           <Button
@@ -218,13 +220,14 @@ export default function DashboardLayout({
         </div>
       </aside>
 
+
       {/* Main content */}
       <div className={cn(
         mounted ? 'transition-all duration-300 ease-in-out' : '',
-        collapsed ? 'lg:pl-[72px]' : 'lg:pl-64'
+        collapsed ? 'lg:pl-[97px]' : 'lg:pl-[281px]'
       )}>
         {/* Top header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4  bg-background px-4 lg:px-6">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-4   backdrop-blur px-4 lg:px-6">
           <Button
             variant="ghost"
             size="icon"
@@ -241,7 +244,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Page content */}
-        <main className="p-4 lg:p-6">
+        <main className="p-4 pb-20 lg:p-6 lg:pb-6">
           {children}
         </main>
       </div>
