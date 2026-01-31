@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useMutation } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { apiPost } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -82,7 +83,21 @@ export default function OnboardingPage() {
       return response
     },
     onSuccess: () => {
-      router.push('/dashboard')
+      router.push('/dashboard/overview')
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.error || error?.message || 'Unknown error'
+      
+      // Check for unique constraint violation
+      if (errorMessage.includes('tenants_name_unique') || errorMessage.includes('duplicate key')) {
+        toast.error('Business name already exists', {
+          description: 'This business name is already taken. Please choose a different name.'
+        })
+      } else {
+        toast.error('Failed to create business', {
+          description: errorMessage
+        })
+      }
     },
   })
 
