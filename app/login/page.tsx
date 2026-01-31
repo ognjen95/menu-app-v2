@@ -2,13 +2,22 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useTranslations } from 'next-intl'
+import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 import ProviderSigninBlock from '@/components/ProviderSigninBlock'
 import LoginForm from "@/components/LoginForm"
 
-export default function Login() {
-    const t = useTranslations('auth.login')
+export default async function Login() {
+    const supabase = await createServerSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (user) {
+        redirect('/dashboard/overview')
+    }
+
+    const t = await getTranslations('auth.login')
 
     return (
         <div className="flex items-center justify-center bg-muted min-h-screen">
