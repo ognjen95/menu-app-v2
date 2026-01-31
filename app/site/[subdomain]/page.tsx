@@ -37,14 +37,22 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
   const { page: pageSlug, lang } = await searchParams
   const t = await getTranslations('blockRenderer')
 
-  // Fetch website by subdomain with tenant join
+  // First fetch tenant by slug (subdomain = tenant slug)
+  const { data: tenant, error: tenantError } = await supabase
+    .from('tenants')
+    .select('id, name, slug')
+    .eq('slug', subdomain)
+    .single()
+
+  if (tenantError || !tenant) {
+    notFound()
+  }
+
+  // Then fetch website by tenant_id
   const { data: website, error: websiteError } = await supabase
     .from('websites')
-    .select(`
-      *,
-      tenant:tenants(id, name, slug)
-    `)
-    .eq('subdomain', subdomain)
+    .select('*')
+    .eq('tenant_id', tenant.id)
     .eq('is_published', true)
     .single()
 
@@ -52,7 +60,7 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
     notFound()
   }
 
-  const tenantId = (website.tenant as { id: string; name?: string; slug?: string })?.id
+  const tenantId = tenant.id
 
   // Fetch tenant languages
   const { data: tenantLanguages } = await supabase
@@ -168,8 +176,8 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
 
   const navPages = pages?.filter(p => p.is_in_navigation) || []
 
-  const tenantName = (website.tenant as { id: string; name?: string; slug?: string })?.name
-  const tenantSlug = (website.tenant as { id: string; name?: string; slug?: string })?.slug
+  const tenantName = tenant.name
+  const tenantSlug = tenant.slug
   const menuLink = `/m/${tenantSlug}`
 
   return (

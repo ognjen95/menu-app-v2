@@ -65,8 +65,14 @@ export async function middleware(request: NextRequest) {
     const hostname = request.headers.get('host') || ''
     const pathname = url.pathname
     
+    // Debug logging (check Vercel Runtime Logs)
+    console.log('[Middleware] Host:', hostname, '| Path:', pathname, '| ROOT_DOMAIN:', ROOT_DOMAIN)
+    
     // Get subdomain from hostname
     const subdomain = getSubdomain(hostname, request)
+    
+    // Debug logging
+    console.log('[Middleware] Detected subdomain:', subdomain)
     
     // If we have a tenant subdomain, handle the routing
     if (subdomain) {
