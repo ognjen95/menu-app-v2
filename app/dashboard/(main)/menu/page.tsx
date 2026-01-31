@@ -56,6 +56,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
 import { motion, AnimatePresence, staggerContainer, staggerItem, staggerItemScale } from '@/components/ui/animated'
+import { MenuSelectionGridSkeleton, MenuItemsGridSkeleton, CategoriesSidebarSkeleton } from '@/components/ui/skeletons'
 import {
   Plus,
   Edit,
@@ -522,9 +523,7 @@ export default function MenuPage() {
         </div>
 
         {menusLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
+          <MenuSelectionGridSkeleton count={6} />
         ) : menus.length === 0 ? (
           <Card className="p-12">
             <div className="text-center">
@@ -714,15 +713,22 @@ export default function MenuPage() {
   return (
     <div className="space-y-4">
       {/* Page header */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <motion.div 
+        className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <BookOpen className="h-4 w-4" />
-                <span className="font-semibold">{currentMenu?.name}</span>
-                <ChevronDown className="h-4 w-4 opacity-50" />
-              </Button>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button variant="outline" className="gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  <span className="font-semibold">{currentMenu?.name}</span>
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
+              </motion.div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56">
               {menus.map((menu) => (
@@ -740,26 +746,35 @@ export default function MenuPage() {
             {/* <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input placeholder={t('searchItems')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 h-9" /> */}
           </div>
-          <Button onClick={() => setIsItemDialogOpen(true)} size="sm" disabled={!selectedCategoryId}>
-            <Plus className="h-4 w-4 md:mr-2" /><span className="hidden md:inline">{t('addItem')}</span>
-          </Button>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button onClick={() => setIsItemDialogOpen(true)} size="sm" disabled={!selectedCategoryId}>
+              <Plus className="h-4 w-4 md:mr-2" /><span className="hidden md:inline">{t('addItem')}</span>
+            </Button>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Main layout with sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Categories Sidebar */}
-        <div className="lg:col-span-3">
+        <motion.div 
+          className="lg:col-span-3"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+        >
           <Card>
             <CardHeader className="py-3 px-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">{t('categories')}</CardTitle>
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setIsCategoryDialogOpen(true)}><Plus className="h-4 w-4" /></Button>
+                <motion.div whileHover={{ scale: 1.1, rotate: 90 }} whileTap={{ scale: 0.9 }}>
+                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setIsCategoryDialogOpen(true)}><Plus className="h-4 w-4" /></Button>
+                </motion.div>
               </div>
             </CardHeader>
             <CardContent className="p-2">
               {categoriesLoading ? (
-                <div className="text-sm text-muted-foreground p-2">{t('loading')}</div>
+                <CategoriesSidebarSkeleton count={5} />
               ) : categories.length === 0 ? (
                 <div className="text-center py-8">
                   <UtensilsCrossed className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
@@ -786,10 +801,15 @@ export default function MenuPage() {
               )}
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
 
         {/* Items Grid */}
-        <div className="lg:col-span-9">
+        <motion.div 
+          className="lg:col-span-9"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+        >
           {!selectedCategoryId ? (
             <Card className="p-12">
               <div className="text-center">
@@ -799,7 +819,7 @@ export default function MenuPage() {
               </div>
             </Card>
           ) : itemsLoading ? (
-            <div className="flex items-center justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+            <MenuItemsGridSkeleton count={6} />
           ) : items.length === 0 ? (
             <Card className="p-12">
               <div className="text-center">
@@ -828,7 +848,7 @@ export default function MenuPage() {
               </SortableContext>
             </DndContext>
           )}
-        </div>
+        </motion.div>
       </div>
 
       {/* Create Menu Dialog */}

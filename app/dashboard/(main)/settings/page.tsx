@@ -20,6 +20,8 @@ import {
   Utensils,
   Truck,
 } from 'lucide-react'
+import { motion } from '@/components/ui/animated'
+import { Skeleton } from '@/components/ui/skeleton'
 
 type TenantSettings = {
   online_payments_enabled?: boolean
@@ -85,8 +87,14 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Skeleton className="h-9 w-48" />
+          <Skeleton className="h-5 w-96" />
+        </div>
+        <Skeleton className="h-64 w-full rounded-xl" />
+        <Skeleton className="h-96 w-full rounded-xl" />
+        <Skeleton className="h-80 w-full rounded-xl" />
       </div>
     )
   }
@@ -102,15 +110,24 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
         <p className="text-muted-foreground">
           {t('description')}
         </p>
-      </div>
+      </motion.div>
 
       {/* Business info */}
-      <Card>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
+        <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -123,9 +140,11 @@ export default function SettingsPage() {
               </div>
             </div>
             {!isEditing && (
-              <Button variant="outline" onClick={handleEdit}>
-                {t('edit')}
-              </Button>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button variant="outline" onClick={handleEdit}>
+                  {t('edit')}
+                </Button>
+              </motion.div>
             )}
           </div>
         </CardHeader>
@@ -243,9 +262,15 @@ export default function SettingsPage() {
           )}
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* Order Settings */}
-      <Card>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+      >
+        <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
@@ -338,9 +363,15 @@ export default function SettingsPage() {
           )}
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* Subscription */}
-      <Card>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.3 }}
+      >
+        <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -372,10 +403,12 @@ export default function SettingsPage() {
               </p>
             </div>
             {tenant.plan === 'basic' && (
-              <Button>
-                <Crown className="h-4 w-4 mr-2" />
-                {t('upgradeToPro')}
-              </Button>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button>
+                  <Crown className="h-4 w-4 mr-2" />
+                  {t('upgradeToPro')}
+                </Button>
+              </motion.div>
             )}
           </div>
 
@@ -427,6 +460,7 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+      </motion.div>
     </div>
   )
 }

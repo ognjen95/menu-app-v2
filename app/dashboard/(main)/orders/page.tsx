@@ -53,6 +53,8 @@ import { OrderLogsDialog } from '@/components/features/orders/OrderLogsDialog'
 import { OrderDetailDialog } from '@/components/features/orders/OrderDetailDialog'
 import { CreateOrderDialog } from '@/components/features/orders/create-order-dialog'
 import type { OrderStatus, OrderWithRelations, Location } from '@/lib/types'
+import { motion, staggerContainer, staggerItemScale } from '@/components/ui/animated'
+import { OrdersGridSkeleton, KanbanLayoutSkeleton } from '@/components/ui/skeletons'
 
 const statusConfig: Record<OrderStatus, { label: string; color: string; badgeColor: string; buttonColor: string; icon: React.ElementType }> = {
   draft: { label: 'Draft', color: 'bg-gray-500', badgeColor: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300', buttonColor: 'bg-gray-500 hover:bg-gray-600 text-white', icon: Clock },
@@ -415,7 +417,12 @@ export default function OrdersPage() {
   return (
     <div className="space-y-6 h-full">
       {/* Page header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <motion.div 
+        className="flex items-center justify-between flex-wrap gap-4"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
           <p className="text-muted-foreground">
@@ -479,16 +486,20 @@ export default function OrdersPage() {
 
 
           {/* Refresh */}
-          <Button onClick={() => refetch()} variant="outline" disabled={isLoading} size="icon" className="shrink-0">
-            <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
-          </Button>
+          <motion.div whileHover={{ scale: 1.05, rotate: 180 }} whileTap={{ scale: 0.95 }}>
+            <Button onClick={() => refetch()} variant="outline" disabled={isLoading} size="icon" className="shrink-0">
+              <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
+            </Button>
+          </motion.div>
           {/* Create Order */}
-          <Button onClick={() => setIsCreateOrderOpen(true)} className="px-3 md:px-4">
-            <Plus className="h-4 w-4 md:mr-2" />
-            <span className="hidden md:inline">{t('createOrder')}</span>
-          </Button>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button onClick={() => setIsCreateOrderOpen(true)} className="px-3 md:px-4">
+              <Plus className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">{t('createOrder')}</span>
+            </Button>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Status filter tabs (multi-select) */}
       <div className="flex flex-wrap gap-2 md:gap-3">
@@ -523,7 +534,13 @@ export default function OrdersPage() {
 
       {/* Content */}
       {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">{t('loading')}</div>
+        layout === 'grid' || isMobile ? (
+          <OrdersGridSkeleton count={8} />
+        ) : (
+          <div className="overflow-x-auto -mx-6 px-6">
+            <KanbanLayoutSkeleton columns={selectedStatuses.size || 4} />
+          </div>
+        )
       ) : filteredOrders.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
@@ -533,11 +550,18 @@ export default function OrdersPage() {
         </Card>
       ) : layout === 'grid' || isMobile ? (
         /* Grid Layout */
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {filteredOrders.map((order) => (
-            <OrderCard key={order.id} order={order} />
+        <motion.div 
+          className="grid gap-4 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+          initial="initial"
+          animate="animate"
+          variants={staggerContainer}
+        >
+          {filteredOrders.map((order, index) => (
+            <motion.div key={order.id} variants={staggerItemScale} custom={index}>
+              <OrderCard order={order} />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       ) : (
         /* Kanban Layout */
         <div
@@ -548,17 +572,34 @@ export default function OrdersPage() {
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
-          <div className="flex gap-4 min-h-[calc(100vh-280px)] pb-4">
-            {ACTIVE_STATUSES.filter(s => selectedStatuses.has(s)).map((status) => (
-              <div key={status} className="flex-shrink-0 w-[380px] space-y-4">
+          <motion.div 
+            className="flex gap-4 min-h-[calc(100vh-280px)] pb-4"
+            initial="initial"
+            animate="animate"
+            variants={staggerContainer}
+          >
+            {ACTIVE_STATUSES.filter(s => selectedStatuses.has(s)).map((status, colIndex) => (
+              <motion.div 
+                key={status} 
+                className="flex-shrink-0 w-[380px] space-y-4"
+                variants={staggerItemScale}
+                custom={colIndex}
+              >
                 <div className="flex items-center gap-2 sticky top-0 bg-background py-2 z-10">
                   <div className={cn("h-3 w-3 rounded-full", statusConfig[status].color)} />
                   <h2 className="font-semibold">{t(`status.${status}`)}</h2>
                   <Badge variant="secondary">{ordersByStatus[status]?.length || 0}</Badge>
                 </div>
-                <div className="space-y-4">
-                  {ordersByStatus[status]?.map((order) => (
-                    <OrderCard key={order.id} order={order} />
+                <motion.div 
+                  className="space-y-4"
+                  initial="initial"
+                  animate="animate"
+                  variants={staggerContainer}
+                >
+                  {ordersByStatus[status]?.map((order, orderIndex) => (
+                    <motion.div key={order.id} variants={staggerItemScale} custom={orderIndex}>
+                      <OrderCard order={order} />
+                    </motion.div>
                   ))}
                   {(!ordersByStatus[status] || ordersByStatus[status].length === 0) && (
                     <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
@@ -569,10 +610,10 @@ export default function OrdersPage() {
                       <p className="text-sm">{t('noOrders')}</p>
                     </div>
                   )}
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       )}
 

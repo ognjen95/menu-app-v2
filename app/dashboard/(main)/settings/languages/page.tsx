@@ -12,6 +12,8 @@ import { Loader2, Languages, Star, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { Language, TenantLanguage } from '@/lib/types'
+import { motion, staggerContainer, staggerItemScale } from '@/components/ui/animated'
+import { LanguagesGridSkeleton } from '@/components/ui/skeletons'
 
 type AllLanguagesResponse = { data: { languages: Language[] } }
 type TenantLanguagesResponse = { data: { languages: TenantLanguage[] } }
@@ -70,17 +72,27 @@ export default function LanguageSettingsPage() {
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Page header */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <motion.div 
+        className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
           <p className="text-sm md:text-base text-muted-foreground">
             {t('description')}
           </p>
         </div>
-      </div>
+      </motion.div>
 
       {/* Info card */}
-      <Card>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
+        <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Languages className="h-5 w-5" />
@@ -92,26 +104,30 @@ export default function LanguageSettingsPage() {
           <p>{t('howItWorksDesc2')}</p>
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* Languages grid */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+        <LanguagesGridSkeleton count={6} />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {allLanguages.map((lang) => {
+        <motion.div 
+          className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+          initial="initial"
+          animate="animate"
+          variants={staggerContainer}
+        >
+          {allLanguages.map((lang, index) => {
             const isEnabled = enabledMap.has(lang.code)
             const isDefault = defaultLang?.language_code === lang.code
 
             return (
-              <Card
-                key={lang.code}
-                className={cn(
-                  'transition-all',
-                  isEnabled && 'border-primary/50 bg-primary/5'
-                )}
-              >
+              <motion.div key={lang.code} variants={staggerItemScale} custom={index}>
+                <Card
+                  className={cn(
+                    'transition-all',
+                    isEnabled && 'border-primary/50 bg-primary/5'
+                  )}
+                >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
@@ -150,9 +166,10 @@ export default function LanguageSettingsPage() {
                   </div>
                 </CardContent>
               </Card>
+              </motion.div>
             )
           })}
-        </div>
+        </motion.div>
       )}
     </div>
   )

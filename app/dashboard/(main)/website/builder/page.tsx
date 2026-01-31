@@ -28,6 +28,8 @@ import { cn } from '@/lib/utils'
 import { BlockEditor } from '@/components/features/website-builder/BlockEditorComponents'
 import { THEME_PRESETS, FONT_OPTIONS, BLOCK_TYPES } from '@/lib/constants/website'
 import { getWebsiteUrl } from '@/utils/urls'
+import { motion, staggerContainer, staggerItemScale } from '@/components/ui/animated'
+import { LoadingPage } from '@/components/ui/loading-logo'
 
 // Types
 type Website = {
@@ -241,21 +243,21 @@ export default function WebsiteBuilderPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (pages.length > 0 && !selectedPageId) setSelectedPageId(pages[0].id) }, [pages.length, selectedPageId])
 
-  if (isLoading) return <div className="fixed inset-0 flex items-center justify-center bg-zinc-950"><Loader2 className="h-8 w-8 animate-spin text-zinc-500" /></div>
+  if (isLoading) return <LoadingPage message={t('loading') || 'Loading website builder...'} />
 
   // const websiteUrl = website?.subdomain ? (process.env.NODE_ENV === 'development' ? `http://localhost:3000/site/${website.subdomain}` : `https://${website.subdomain}.klopay.app`) : null
   const previewWidth = previewMode === 'desktop' ? '100%' : previewMode === 'tablet' ? '768px' : '375px'
   const websiteUrl = getWebsiteUrl(website)
 
   return (
-    <div className="fixed inset-0 flex overflow-hidden bg-zinc-950">
+    <div className="fixed inset-0 flex overflow-hidden bg-background">
       {/* Preview Area */}
-      <div className={cn("flex-1 transition-all duration-300 flex items-center justify-center p-4 pt-20", sidebarOpen ? "mr-[420px]" : "mr-0")}>
-        <div className="relative bg-white rounded-xl overflow-hidden shadow-2xl transition-all duration-300" style={{ width: previewWidth, height: previewMode === 'mobile' ? '812px' : '100%', maxHeight: 'calc(100vh - 120px)' }}>
+      <div className={cn("flex-1 transition-all duration-300 flex items-center justify-center pt-[76px] pb-3 pl-3", sidebarOpen ? "pr-[440px]" : "pr-3")}>
+        <div className="relative bg-white dark:bg-zinc-900 rounded-xl overflow-hidden shadow-2xl transition-all duration-300 w-full h-full" style={{ maxWidth: previewMode === 'desktop' ? '100%' : previewMode === 'tablet' ? '768px' : '375px' }}>
           {websiteUrl ? (
             <iframe ref={iframeRef} src={websiteUrl} className="w-full h-full border-0" title="Preview" />
           ) : (
-            <div className="flex items-center justify-center h-full text-zinc-400">
+            <div className="flex items-center justify-center h-full text-muted-foreground">
               <div className="text-center"><Globe className="h-16 w-16 mx-auto mb-4 opacity-50" /><p>{t('setupSubdomain')}</p></div>
             </div>
           )}
@@ -263,74 +265,108 @@ export default function WebsiteBuilderPage() {
       </div>
 
       {/* Top Bar */}
-      <div className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+      <motion.div 
+        className="fixed top-3 left-3 right-3 h-16 z-50 flex items-center justify-between px-4 bg-background/95 backdrop-blur-xl  rounded-xl"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" asChild className="text-zinc-400 hover:text-white hover:bg-white/10 gap-1"><a href="/dashboard"><ChevronLeft className="h-4 w-4" />{t('exit')}</a></Button>
-          <div><h1 className="text-white font-semibold">{t('title')}</h1><p className="text-xs text-zinc-400">{website?.subdomain || t('noSubdomain')}.klopay.app</p></div>
+          <Button variant="ghost" size="sm" asChild className="gap-1"><a href="/dashboard"><ChevronLeft className="h-4 w-4" />{t('exit')}</a></Button>
+          <div><h1 className="font-semibold">{t('title')}</h1><p className="text-xs text-muted-foreground">{website?.subdomain || t('noSubdomain')}.klopay.app</p></div>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.1)' }}>
+          <div className="flex items-center gap-1 p-1 rounded-lg bg-muted">
             {([['desktop', Monitor], ['tablet', Tablet], ['mobile', Smartphone]] as const).map(([mode, Icon]) => (
-              <Button key={mode} variant="ghost" size="icon" className={cn("h-8 w-8 text-zinc-400 hover:text-white hover:bg-white/10", previewMode === mode && "bg-white/20 text-white")} onClick={() => setPreviewMode(mode)}><Icon className="h-4 w-4" /></Button>
+              <motion.div key={mode} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button variant="ghost" size="icon" className={cn("h-8 w-8", previewMode === mode && "bg-primary text-primary-foreground")} onClick={() => setPreviewMode(mode)}><Icon className="h-4 w-4" /></Button>
+              </motion.div>
             ))}
           </div>
-          <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white hover:bg-white/10" onClick={() => refreshPreview(true)}><RefreshCw className="h-4 w-4" /></Button>
-          {websiteUrl && <Button variant="ghost" size="icon" asChild className="text-zinc-400 hover:text-white hover:bg-white/10"><a href={websiteUrl} target="_blank"><ExternalLink className="h-4 w-4" /></a></Button>}
-          <Badge className={cn("ml-2", website?.is_published ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400")}>{website?.is_published ? t('live') : t('draft')}</Badge>
-          <Button onClick={() => publishWebsite.mutate()} disabled={publishWebsite.isPending} size="sm" className={website?.is_published ? "bg-zinc-700 text-white" : "bg-green-600 text-white"}>
-            {publishWebsite.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : website?.is_published ? t('unpublish') : t('publish')}
-          </Button>
-          <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white hover:bg-white/10 ml-2" onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <motion.div whileHover={{ scale: 1.05, rotate: 180 }} whileTap={{ scale: 0.95 }}>
+            <Button variant="ghost" size="icon" onClick={() => refreshPreview(true)}><RefreshCw className="h-4 w-4" /></Button>
+          </motion.div>
+          {websiteUrl && <Button variant="ghost" size="icon" asChild><a href={websiteUrl} target="_blank"><ExternalLink className="h-4 w-4" /></a></Button>}
+          <Badge variant={website?.is_published ? "default" : "secondary"} className="ml-2">{website?.is_published ? t('live') : t('draft')}</Badge>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button onClick={() => publishWebsite.mutate()} disabled={publishWebsite.isPending} size="sm" variant={website?.is_published ? "outline" : "default"}>
+              {publishWebsite.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : website?.is_published ? t('unpublish') : t('publish')}
+            </Button>
+          </motion.div>
+          <Button variant="ghost" size="icon" className="ml-2" onClick={() => setSidebarOpen(!sidebarOpen)}>
             {sidebarOpen ? <PanelRightClose className="h-5 w-5" /> : <PanelRight className="h-5 w-5" />}
           </Button>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Glass Sidebar */}
-      <div className={cn("fixed top-16 right-0 bottom-0 w-[420px] transition-transform duration-300 z-40", sidebarOpen ? "translate-x-0" : "translate-x-full")} style={{ background: 'rgba(24,24,27,0.85)', backdropFilter: 'blur(24px)', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
-        <div className="flex border-b border-white/10">
-          {([['design', Paintbrush], ['pages', FileText], ['blocks', Layers], ['settings', Settings]] as const).map(([id, Icon]) => (
-            <button key={id} onClick={() => setActivePanel(id)} className={cn("flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors", activePanel === id ? "text-white bg-white/10" : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5")}>
+      {/* Sidebar */}
+      <motion.div 
+        className={cn(
+          "fixed top-[76px] right-3 bottom-3 w-[420px] transition-transform duration-300 z-40 rounded-xl border",
+          "bg-gradient-to-b from-white to-white shadow-lg shadow-black/5",
+          "dark:from-white/[0.08] dark:to-white/[0.03] dark:shadow-none dark:backdrop-blur-sm dark:border-white/[0.1]",
+          sidebarOpen ? "translate-x-0" : "translate-x-full"
+        )}
+        initial={{ x: 440 }}
+        animate={{ x: sidebarOpen ? 0 : 440 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="flex border-b rounded-t-xl overflow-hidden">
+          {([['design', Paintbrush], ['pages', FileText], ['blocks', Layers], ['settings', Settings]] as const).map(([id, Icon], index, arr) => (
+            <button 
+              key={id} 
+              onClick={() => setActivePanel(id)} 
+              className={cn(
+                "flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors",
+                activePanel === id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent"
+              )}
+            >
               <Icon className="h-4 w-4" />{t(`panels.${id}`)}
             </button>
           ))}
         </div>
 
-        <ScrollArea className="h-[calc(100vh-112px)]">
+        <ScrollArea className="h-[calc(100vh-164px)]">
           <div className="p-4 space-y-6">
             {/* Design Panel */}
             {activePanel === 'design' && (<>
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-white">{t('design.darkThemes')}</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {THEME_PRESETS.filter(p => p.isDark).slice(0, showAllThemes ? undefined : 4).map((preset) => {
+                <h3 className="text-sm font-medium">{t('design.darkThemes')}</h3>
+                <motion.div 
+                  className="grid grid-cols-2 gap-2"
+                  initial="initial"
+                  animate="animate"
+                  variants={staggerContainer}
+                >
+                  {THEME_PRESETS.filter(p => p.isDark).slice(0, showAllThemes ? undefined : 4).map((preset, index) => {
                     const isSelected = website?.primary_color === preset.primary &&
                       website?.background_color === preset.background &&
                       website?.accent_color === preset.accent
                     return (
-                      <button
-                        key={preset.name}
-                        onClick={() => updateWebsite.mutate({ primary_color: preset.primary, secondary_color: preset.secondary, background_color: preset.background, foreground_color: preset.foreground, accent_color: preset.accent })}
-                        className={cn(
-                          "p-2.5 rounded-lg border-2 text-left relative transition-all",
-                          isSelected ? "border-primary ring-1 ring-primary/30" : "border-transparent hover:border-white/20"
-                        )}
-                        style={{ backgroundColor: preset.background }}
-                      >
-                        {isSelected && (
-                          <div className="absolute top-1.5 right-1.5">
-                            <Check className="h-3 w-3 text-primary" />
+                      <motion.div key={preset.name} variants={staggerItemScale} custom={index}>
+                        <button
+                          onClick={() => updateWebsite.mutate({ primary_color: preset.primary, secondary_color: preset.secondary, background_color: preset.background, foreground_color: preset.foreground, accent_color: preset.accent })}
+                          className={cn(
+                            "p-2.5 rounded-lg border-2 text-left relative transition-all w-full",
+                            isSelected ? "border-primary ring-1 ring-primary/30" : "border-transparent hover:border-white/20"
+                          )}
+                          style={{ backgroundColor: preset.background }}
+                        >
+                          {isSelected && (
+                            <div className="absolute top-1.5 right-1.5">
+                              <Check className="h-3 w-3 text-primary" />
+                            </div>
+                          )}
+                          <div className="flex gap-1 mb-1.5">
+                            <div className="h-4 w-4 rounded-full" style={{ backgroundColor: preset.primary }} />
+                            <div className="h-4 w-4 rounded-full" style={{ backgroundColor: preset.accent }} />
                           </div>
-                        )}
-                        <div className="flex gap-1 mb-1.5">
-                          <div className="h-4 w-4 rounded-full" style={{ backgroundColor: preset.primary }} />
-                          <div className="h-4 w-4 rounded-full" style={{ backgroundColor: preset.accent }} />
-                        </div>
-                        <p className="text-[10px] truncate" style={{ color: preset.foreground }}>{preset.name}</p>
-                      </button>
+                          <p className="text-[10px] truncate" style={{ color: preset.foreground }}>{preset.name}</p>
+                        </button>
+                      </motion.div>
                     )
                   })}
-                </div>
+                </motion.div>
               </div>
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-white">{t('design.lightThemes')}</h3>
@@ -504,7 +540,7 @@ export default function WebsiteBuilderPage() {
             </>)}
           </div>
         </ScrollArea>
-      </div>
+      </motion.div>
 
       {/* Add Page Dialog */}
       <Dialog open={isAddPageOpen} onOpenChange={setIsAddPageOpen}>

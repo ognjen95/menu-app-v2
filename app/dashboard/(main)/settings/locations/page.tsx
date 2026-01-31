@@ -30,6 +30,8 @@ import {
   QrCode,
   Loader2,
 } from 'lucide-react'
+import { motion, staggerContainer, staggerItemScale } from '@/components/ui/animated'
+import { LocationsGridSkeleton } from '@/components/ui/skeletons'
 
 type Location = {
   id: string
@@ -228,7 +230,12 @@ export default function LocationsPage() {
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Page header */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <motion.div 
+        className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
           <p className="text-sm md:text-base text-muted-foreground">
@@ -237,10 +244,12 @@ export default function LocationsPage() {
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="md:size-default self-start md:self-auto">
-              <Plus className="h-4 w-4 md:mr-2" />
-              <span className="hidden sm:inline">{t('addLocation')}</span>
-            </Button>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button size="sm" className="md:size-default self-start md:self-auto">
+                <Plus className="h-4 w-4 md:mr-2" />
+                <span className="hidden sm:inline">{t('addLocation')}</span>
+              </Button>
+            </motion.div>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -252,13 +261,11 @@ export default function LocationsPage() {
             {formContent}
           </DialogContent>
         </Dialog>
-      </div>
+      </motion.div>
 
       {/* Locations grid */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+        <LocationsGridSkeleton count={6} />
       ) : locations.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -274,9 +281,15 @@ export default function LocationsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {locations.map((location) => (
-            <Card key={location.id}>
+        <motion.div 
+          className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+          initial="initial"
+          animate="animate"
+          variants={staggerContainer}
+        >
+          {locations.map((location, index) => (
+            <motion.div key={location.id} variants={staggerItemScale} custom={index}>
+              <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -333,8 +346,9 @@ export default function LocationsPage() {
                 </div>
               </CardContent>
             </Card>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       {/* Edit dialog */}

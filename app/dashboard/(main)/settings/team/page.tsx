@@ -44,6 +44,8 @@ import {
   Edit,
 } from 'lucide-react'
 import Image from 'next/image'
+import { motion, staggerContainer, staggerItemScale } from '@/components/ui/animated'
+import { TeamMembersGridSkeleton } from '@/components/ui/skeletons'
 
 type TeamMember = {
   id: string
@@ -299,7 +301,12 @@ export default function TeamPage() {
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Page header */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <motion.div 
+        className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
           <p className="text-sm md:text-base text-muted-foreground">
@@ -309,10 +316,12 @@ export default function TeamPage() {
         <div className="flex gap-2">
           <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="md:size-default">
-                <UserPlus className="h-4 w-4 md:mr-2" />
-                <span className="hidden sm:inline">{t('addMember')}</span>
-              </Button>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button variant="outline" size="sm" className="md:size-default">
+                  <UserPlus className="h-4 w-4 md:mr-2" />
+                  <span className="hidden sm:inline">{t('addMember')}</span>
+                </Button>
+              </motion.div>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -382,10 +391,12 @@ export default function TeamPage() {
 
           <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="md:size-default">
-                <Mail className="h-4 w-4 md:mr-2" />
-                <span className="hidden sm:inline">{t('inviteMember')}</span>
-              </Button>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button size="sm" className="md:size-default">
+                  <Mail className="h-4 w-4 md:mr-2" />
+                  <span className="hidden sm:inline">{t('inviteMember')}</span>
+                </Button>
+              </motion.div>
             </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -431,65 +442,66 @@ export default function TeamPage() {
                 >
                   {t('cancel')}
                 </Button>
-                <Button type="submit" disabled={inviteMutation.isPending}>
-                  {inviteMutation.isPending && (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  )}
-                  {t('sendInvitationButton')}
-                </Button>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button type="submit" disabled={inviteMutation.isPending}>
+                    {inviteMutation.isPending && (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    )}
+                    {t('sendInvitationButton')}
+                  </Button>
+                </motion.div>
               </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
         </div>
-      </div>
+      </motion.div>
 
       {/* Pending Invitations */}
       {invitations.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              {t('pendingInvitations')}
-            </CardTitle>
-            <CardDescription>{t('pendingInvitationCount', { count: invitations.length })}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {invitations.map((invitation) => (
-                <div
-                  key={invitation.id}
-                  className="flex items-center justify-between p-3 rounded-lg border bg-muted/50"
-                >
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">{invitation.email}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {t('invitedAs')} {t(`roles.${invitation.role}`)} • {t('expires')} {new Date(invitation.expires_at).toLocaleDateString()}
-                      </p>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                {t('pendingInvitations')}
+              </CardTitle>
+              <CardDescription>{t('pendingInvitationCount', { count: invitations.length })}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {invitations.map((invitation) => (
+                  <motion.div key={invitation.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
+                    <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="font-medium">{invitation.email}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {t('invitedAs')} {t(`roles.${invitation.role}`)} • {t('expires')} {new Date(invitation.expires_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => cancelInviteMutation.mutate(invitation.id)}
+                        disabled={cancelInviteMutation.isPending}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => cancelInviteMutation.mutate(invitation.id)}
-                    disabled={cancelInviteMutation.isPending}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                  </motion.div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
       {/* Team members */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+        <TeamMembersGridSkeleton count={4} />
       ) : members.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -505,21 +517,33 @@ export default function TeamPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
+          <Card>
           <CardHeader>
             <CardTitle>{t('teamMembers')}</CardTitle>
             <CardDescription>{t('memberCount', { count: members.length })}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {members.map((member) => {
+            <motion.div 
+              className="space-y-4"
+              initial="initial"
+              animate="animate"
+              variants={staggerContainer}
+            >
+              {members.map((member, index) => {
                 const config = roleConfig[member.role] || roleConfig.staff
                 const RoleIcon = config.icon
                 return (
-                  <div
+                  <motion.div
                     key={member.id}
-                    className="flex items-center justify-between p-4 rounded-lg border"
+                    variants={staggerItemScale}
+                    custom={index}
                   >
+                    <div className="flex items-center justify-between p-4 rounded-lg border">
                     <div className="flex items-center gap-4">
                       {member.profiles?.avatar_url ? (
                         <Image 
@@ -575,11 +599,13 @@ export default function TeamPage() {
                       )}
                     </div>
                   </div>
+                  </motion.div>
                 )
               })}
-            </div>
+            </motion.div>
           </CardContent>
         </Card>
+        </motion.div>
       )}
 
       {/* Edit Member Dialog */}

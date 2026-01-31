@@ -36,6 +36,8 @@ import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { QRCodeSVG } from 'qrcode.react'
 import type { Table, QrCode as QrCodeType, Location } from '@/lib/types'
+import { motion, staggerContainer, staggerItemScale } from '@/components/ui/animated'
+import { TablesGridSkeleton } from '@/components/ui/skeletons'
 
 export default function TablesPage() {
   const t = useTranslations('tablesPage')
@@ -179,7 +181,12 @@ export default function TablesPage() {
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Page header */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <motion.div 
+        className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
           <p className="text-sm md:text-base text-muted-foreground">
@@ -187,16 +194,20 @@ export default function TablesPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="md:size-default">
-            <Download className="h-4 w-4 md:mr-2" />
-            <span className="hidden md:inline">{t('exportAllQr')}</span>
-          </Button>
-          <Button disabled={!selectedLocationId} onClick={() => setIsCreateOpen(true)} size="sm" className="md:size-default">
-            <Plus className="h-4 w-4 md:mr-2" />
-            <span className="hidden sm:inline">{t('addTable')}</span>
-          </Button>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button variant="outline" size="sm" className="md:size-default">
+              <Download className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">{t('exportAllQr')}</span>
+            </Button>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button disabled={!selectedLocationId} onClick={() => setIsCreateOpen(true)} size="sm" className="md:size-default">
+              <Plus className="h-4 w-4 md:mr-2" />
+              <span className="hidden sm:inline">{t('addTable')}</span>
+            </Button>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Location selector */}
       <div className="flex flex-wrap gap-2">
@@ -231,7 +242,7 @@ export default function TablesPage() {
           </CardContent>
         </Card>
       ) : tablesLoading ? (
-        <div className="text-muted-foreground">{t('loadingTables')}</div>
+        <TablesGridSkeleton count={8} />
       ) : tables.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
@@ -245,24 +256,34 @@ export default function TablesPage() {
         </Card>
       ) : (
         <div className="space-y-6">
-          {Object.entries(tablesByZone).map(([zone, zoneTables]) => (
-            <div key={zone}>
+          {Object.entries(tablesByZone).map(([zone, zoneTables], zoneIndex) => (
+            <motion.div 
+              key={zone}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: zoneIndex * 0.1 }}
+            >
               <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
                 <span>{zone}</span>
                 <Badge variant="secondary">{zoneTables.length} {t('tables')}</Badge>
               </h2>
-              <div className="grid gap-3 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {zoneTables.map((table) => {
+              <motion.div 
+                className="grid gap-3 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                initial="initial"
+                animate="animate"
+                variants={staggerContainer}
+              >
+                {zoneTables.map((table, tableIndex) => {
                   const qrCode = getTableQrCode(table.id)
                   return (
-                    <Card 
-                      key={table.id}
-                      className={cn(
-                        'relative overflow-hidden transition-all',
-                        table.status === 'occupied' && 'border-yellow-500',
-                        table.status === 'reserved' && 'border-blue-500',
-                      )}
-                    >
+                    <motion.div key={table.id} variants={staggerItemScale} custom={tableIndex}>
+                      <Card 
+                        className={cn(
+                          'relative overflow-hidden transition-all hover:shadow-lg',
+                          table.status === 'occupied' && 'border-yellow-500',
+                          table.status === 'reserved' && 'border-blue-500',
+                        )}
+                      >
                       {/* Status indicator */}
                       <div className={cn(
                         'absolute top-0 left-0 right-0 h-1',
@@ -378,11 +399,13 @@ export default function TablesPage() {
                         </div>
                       </CardContent>
                     </Card>
+                    </motion.div>
                   )
                 })}
 
                 {/* Add table card */}
-                <Card 
+                <motion.div variants={staggerItemScale} custom={zoneTables.length}>
+                  <Card 
                   className="border-dashed cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
                   onClick={() => setIsCreateOpen(true)}
                 >
@@ -391,8 +414,9 @@ export default function TablesPage() {
                     <span className="text-sm text-muted-foreground">{t('addTable')}</span>
                   </CardContent>
                 </Card>
-              </div>
-            </div>
+                </motion.div>
+              </motion.div>
+            </motion.div>
           ))}
         </div>
       )}

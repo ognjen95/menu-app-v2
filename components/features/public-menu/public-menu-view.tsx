@@ -20,6 +20,7 @@ import type { Tenant, Menu, MenuItem, Allergen, Location, Website, Translation }
 import { CheckoutDialog } from './checkout-dialog'
 import { ItemDetailModal } from './item-detail-modal'
 import Image from 'next/image'
+import { motion, staggerContainer, staggerItemScale } from '@/components/ui/animated'
 
 // Language type for public menu
 type PublicLanguage = {
@@ -318,12 +319,15 @@ export function PublicMenuView({
       }}
     >
       {/* Header */}
-      <header
+      <motion.header
         className="sticky top-0 z-40"
         style={{
           backgroundColor: theme.background,
           borderBottom: `1px solid ${borderColor}`,
         }}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
       >
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -457,7 +461,13 @@ export function PublicMenuView({
         </div>
 
         {/* Category tabs */}
-        <div className="overflow-x-auto scrollbar-hide" style={{ borderTop: `1px solid ${borderColor}` }}>
+        <motion.div 
+          className="overflow-x-auto scrollbar-hide" 
+          style={{ borderTop: `1px solid ${borderColor}` }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
           <div className="container mx-auto px-4">
             <div className="flex gap-2 py-2">
               <button
@@ -485,13 +495,18 @@ export function PublicMenuView({
               ))}
             </div>
           </div>
-        </div>
-      </header>
+        </motion.div>
+      </motion.header>
 
       {/* Menu items */}
       <main className="container mx-auto px-4 py-6 pb-24">
         {/* Dietary filters */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        <motion.div 
+          className="flex flex-wrap gap-2 mb-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
           {(['vegetarian', 'vegan', 'gluten-free', 'halal'] as const).map((filter) => (
             <button
               key={filter}
@@ -513,7 +528,7 @@ export function PublicMenuView({
               {tDietary(filter)}
             </button>
           ))}
-        </div>
+        </motion.div>
 
         {/* Items grouped by category */}
         {totalFilteredItems === 0 ? (
@@ -522,8 +537,14 @@ export function PublicMenuView({
           </div>
         ) : (
           <div className="space-y-10">
-            {filteredCategories.map((category) => (
-              <section key={category.id} id={`category-${category.id}`}>
+            {filteredCategories.map((category, categoryIndex) => (
+              <motion.section 
+                key={category.id} 
+                id={`category-${category.id}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.3 + categoryIndex * 0.1 }}
+              >
                 {/* Category header */}
                 <div className="mb-4">
                   <h2 
@@ -540,17 +561,28 @@ export function PublicMenuView({
                 </div>
 
                 {/* Items grid */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {category.items.map((item) => {
+                <motion.div 
+                  className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                  initial="initial"
+                  animate="animate"
+                  variants={staggerContainer}
+                >
+                  {category.items.map((item, itemIndex) => {
                     const itemAllergens = item.item_allergens?.map((ia: { allergens: Allergen }) => ia.allergens) || []
 
                     return (
-                      <div
+                      <motion.div
                         key={item.id}
-                        className="rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer flex flex-col"
-                        style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}
-                        onClick={() => setSelectedItem(item)}
+                        variants={staggerItemScale}
+                        custom={itemIndex}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                       >
+                        <div
+                          className="rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full"
+                          style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}
+                          onClick={() => setSelectedItem(item)}
+                        >
                         {/* Image - fixed height */}
                         {item.image_urls && item.image_urls.length > 0 ? (
                           <div className="h-40 flex-shrink-0" style={{ backgroundColor: theme.secondary }}>
@@ -640,10 +672,11 @@ export function PublicMenuView({
                           </div>
                         </div>
                       </div>
+                      </motion.div>
                     )
                   })}
-                </div>
-              </section>
+                </motion.div>
+              </motion.section>
             ))}
           </div>
         )}
