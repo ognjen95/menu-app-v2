@@ -27,95 +27,108 @@ async function getTenantData(slug: string) {
     return null
   }
 
-  // Fetch website separately (RLS requires is_published = true for public access)
-  const { data: website } = await supabase
-    .from('websites')
-    .select('*')
-    .eq('tenant_id', tenant.id)
-    .eq('is_published', true)
-    .single()
-
-  // Get active menus with categories and items
-  const { data: menus, error: menusError } = await supabase
-    .from('menus')
-    .select(`
-      *,
-      categories (
+  // Fetch all data in parallel since they all depend only on tenant.id
+  // Using Promise.allSettled to handle partial failures gracefully
+  const results = await Promise.allSettled([
+    // Fetch website separately (RLS requires is_published = true for public access)
+    supabase
+      .from('websites')
+      .select('*')
+      .eq('tenant_id', tenant.id)
+      .eq('is_published', true)
+      .single(),
+    
+    // Get active menus with categories and items
+    supabase
+      .from('menus')
+      .select(`
         *,
-        items:menu_items (
+        categories (
           *,
-          variants:item_variants (*),
-          option_groups (
+          items:menu_items (
             *,
-            options:item_options (*)
-          ),
-          item_allergens (
-            allergen_id,
-            allergens (*)
+            variants:item_variants (*),
+            option_groups (
+              *,
+              options:item_options (*)
+            ),
+            item_allergens (
+              allergen_id,
+              allergens (*)
+            )
           )
         )
-      )
-    `)
-    .eq('tenant_id', tenant.id)
-    .eq('is_active', true)
-    .order('sort_order', { ascending: true })
+      `)
+      .eq('tenant_id', tenant.id)
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true }),
+    
+    // Get locations
+    supabase
+      .from('locations')
+      .select('*')
+      .eq('tenant_id', tenant.id)
+      .eq('is_active', true),
+    
+    // Get allergens
+    supabase
+      .from('allergens')
+      .select('*'),
+    
+    // Get tenant languages (enabled languages for this tenant)
+    supabase
+      .from('tenant_languages')
+      .select(`
+        language_code,
+        is_default,
+        is_enabled,
+        languages (
+          code,
+          name,
+          native_name,
+          flag_emoji
+        )
+      `)
+      .eq('tenant_id', tenant.id)
+      .eq('is_enabled', true)
+      .order('is_default', { ascending: false }),
+    
+    // Get translations for this tenant's menu content (items and categories)
+    supabase
+      .from('translations')
+      .select('*')
+      .eq('tenant_id', tenant.id)
+      .or('key.like.menu_item.%,key.like.category.%')
+  ])
 
-  if (menusError) {
-    console.error('Error fetching menus:', menusError)
+  // Extract results with proper error handling
+  const websiteResult = results[0].status === 'fulfilled' ? results[0].value : { data: null, error: null }
+  const menusResult = results[1].status === 'fulfilled' ? results[1].value : { data: null, error: null }
+  const locationsResult = results[2].status === 'fulfilled' ? results[2].value : { data: null, error: null }
+  const allergensResult = results[3].status === 'fulfilled' ? results[3].value : { data: null, error: null }
+  const languagesResult = results[4].status === 'fulfilled' ? results[4].value : { data: null, error: null }
+  const translationsResult = results[5].status === 'fulfilled' ? results[5].value : { data: null, error: null }
+
+  // Menus are critical - if they fail, return null (will show 404)
+  if (menusResult.error || !menusResult.data) {
+    console.error('Error fetching menus:', menusResult.error)
     return null
   }
 
-  // Get locations
-  const { data: locations } = await supabase
-    .from('locations')
-    .select('*')
-    .eq('tenant_id', tenant.id)
-    .eq('is_active', true)
-
-  // Get allergens
-  const { data: allergens } = await supabase
-    .from('allergens')
-    .select('*')
-
-  // Get tenant languages (enabled languages for this tenant)
-  const { data: tenantLanguages } = await supabase
-    .from('tenant_languages')
-    .select(`
-      language_code,
-      is_default,
-      is_enabled,
-      languages (
-        code,
-        name,
-        native_name,
-        flag_emoji
-      )
-    `)
-    .eq('tenant_id', tenant.id)
-    .eq('is_enabled', true)
-    .order('is_default', { ascending: false })
-
-  // Get translations for this tenant's menu content (items and categories)
-  const { data: translations } = await supabase
-    .from('translations')
-    .select('*')
-    .eq('tenant_id', tenant.id)
-    .or('key.like.menu_item.%,key.like.category.%')
-
   return {
     tenant,
-    menus: menus || [],
-    locations: locations || [],
-    allergens: allergens || [],
-    website: website || null,
-    languages: tenantLanguages?.map(tl => ({
+    menus: menusResult.data || [],
+    locations: locationsResult.data || [],
+    allergens: allergensResult.data || [],
+    website: websiteResult.data || null,
+    languages: languagesResult.data?.map((tl: any) => ({
       code: tl.language_code,
       isDefault: tl.is_default,
       name: (tl.languages as any)?.name || tl.language_code,
       nativeName: (tl.languages as any)?.native_name || tl.language_code,
       flagEmoji: (tl.languages as any)?.flag_emoji || '',
     })) || [],
-    translations: translations || [],
+    translations: translationsResult.data || [],
   }
 }
 

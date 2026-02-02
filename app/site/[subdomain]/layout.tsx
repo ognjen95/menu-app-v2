@@ -1,12 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
-import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import { unstable_noStore as noStore } from 'next/cache'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { getWebsiteBySubdomain, DEFAULT_METADATA } from './utils'
 
 type LayoutProps = {
   children: React.ReactNode
@@ -15,40 +9,28 @@ type LayoutProps = {
 
 export async function generateMetadata({ params }: { params: Promise<{ subdomain: string }> }): Promise<Metadata> {
   const { subdomain } = await params
-  
-  const { data: website } = await supabase
-    .from('websites')
-    .select('seo_title, seo_description, seo_image_url, favicon_url, tenant:tenants(name)')
-    .eq('subdomain', subdomain)
-    .single()
+  const { tenant, website } = await getWebsiteBySubdomain(subdomain, true) // true = allow unpublished for metadata
 
-  const tenantName = (website?.tenant as { name?: string })?.name
   return {
-    title: website?.seo_title || tenantName || 'Restaurant',
-    description: website?.seo_description || '',
-    openGraph: website?.seo_image_url ? {
-      images: [website.seo_image_url],
-    } : undefined,
-    icons: website?.favicon_url ? {
-      icon: website.favicon_url,
-    } : undefined,
+    title: website?.seo_title || tenant.name || DEFAULT_METADATA.title,
+    description: website?.seo_description || DEFAULT_METADATA.description,
+    openGraph: website?.seo_image_url
+      ? { images: [website.seo_image_url] }
+      : DEFAULT_METADATA.openGraph,
+    twitter: website?.seo_image_url
+      ? { card: 'summary_large_image', images: [website.seo_image_url] }
+      : DEFAULT_METADATA.twitter,
+    icons: website?.favicon_url
+      ? { icon: website.favicon_url }
+      : DEFAULT_METADATA.icons,
   }
 }
 
 export default async function SiteLayout({ children, params }: LayoutProps) {
   noStore()
-  
+
   const { subdomain } = await params
-
-  const { data: website } = await supabase
-    .from('websites')
-    .select('font_heading, font_body, background_color, foreground_color')
-    .eq('subdomain', subdomain)
-    .single()
-
-  if (!website) {
-    notFound()
-  }
+  const { website } = await getWebsiteBySubdomain(subdomain, true) // Reuses cached result from metadata
 
   const fontHeading = website.font_heading || 'Inter'
   const fontBody = website.font_body || 'Inter'
@@ -56,12 +38,12 @@ export default async function SiteLayout({ children, params }: LayoutProps) {
   return (
     <>
       {/* Load custom fonts */}
-      <link 
+      <link
         href={`https://fonts.googleapis.com/css2?family=${fontHeading.replace(' ', '+')}:wght@400;600;700&family=${fontBody.replace(' ', '+')}:wght@400;500&display=swap`}
-        rel="stylesheet" 
+        rel="stylesheet"
       />
-      <div style={{ 
-        backgroundColor: website.background_color || '#FFFFFF', 
+      <div style={{
+        backgroundColor: website.background_color || '#FFFFFF',
         color: website.foreground_color || '#18181B',
         fontFamily: fontBody,
         minHeight: '100vh',

@@ -247,7 +247,7 @@ export default function WebsiteBuilderPage() {
 
   // const websiteUrl = website?.subdomain ? (process.env.NODE_ENV === 'development' ? `http://localhost:3000/site/${website.subdomain}` : `https://${website.subdomain}.klopay.app`) : null
   const previewWidth = previewMode === 'desktop' ? '100%' : previewMode === 'tablet' ? '768px' : '375px'
-  const websiteUrl = getWebsiteUrl(website)
+  const websiteUrl = getWebsiteUrl(website) + '?preview=true'
 
   return (
     <div className="fixed inset-0 flex overflow-hidden bg-background">

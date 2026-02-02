@@ -1,5 +1,3 @@
-import { createClient } from '@supabase/supabase-js'
-import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { FaFacebookF, FaInstagram, FaXTwitter } from 'react-icons/fa6'
@@ -8,12 +6,7 @@ import { getTranslations } from 'next-intl/server'
 import { BlockRenderer } from '@/components/features/public-menu/block-renderer'
 import { WebsiteLanguageSelector } from '@/components/features/public-menu/website-language-selector'
 import type { Translation } from '@/lib/types'
-
-// Public Supabase client (no auth required for public website)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { getWebsiteBySubdomain, supabase } from './utils'
 
 // Language type for public website
 type PublicLanguage = {
@@ -26,7 +19,7 @@ type PublicLanguage = {
 
 type PageProps = {
   params: Promise<{ subdomain: string }>
-  searchParams: Promise<{ page?: string; lang?: string }>
+  searchParams: Promise<{ page?: string; lang?: string; preview?: string }>
 }
 
 export default async function PublicWebsitePage({ params, searchParams }: PageProps) {
@@ -34,54 +27,74 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
   noStore()
 
   const { subdomain } = await params
-  const { page: pageSlug, lang } = await searchParams
+  const { page: pageSlug, lang, preview } = await searchParams
   const t = await getTranslations('blockRenderer')
+  const isPreview = preview === 'true'
 
-  // First fetch tenant by slug (subdomain = tenant slug)
-  const { data: tenant, error: tenantError } = await supabase
-    .from('tenants')
-    .select('id, name, slug')
-    .eq('slug', subdomain)
-    .single()
-
-  if (tenantError || !tenant) {
-    notFound()
-  }
-
-  // Then fetch website by tenant_id
-  const { data: website, error: websiteError } = await supabase
-    .from('websites')
-    .select('*')
-    .eq('tenant_id', tenant.id)
-    .eq('is_published', true)
-    .single()
-
-  if (websiteError || !website) {
-    notFound()
-  }
-
+  const { tenant, website } = await getWebsiteBySubdomain(subdomain, isPreview)
   const tenantId = tenant.id
 
-  // Fetch tenant languages
-  const { data: tenantLanguages } = await supabase
-    .from('tenant_languages')
-    .select(`
-      language_code,
-      is_default,
-      is_enabled,
-      languages (
-        code,
-        name,
-        native_name,
-        flag_emoji
-      )
-    `)
-    .eq('tenant_id', tenantId)
-    .eq('is_enabled', true)
-    .order('is_default', { ascending: false })
+  // Fetch independent data in parallel (all depend only on tenantId or website.id)
+  // Using Promise.allSettled for resilience - partial failures won't break the page
+  const [
+    tenantLanguagesResult,
+    pagesResult,
+    translationsResult,
+    locationsResult
+  ] = await Promise.allSettled([
+    // Fetch tenant languages
+    supabase
+      .from('tenant_languages')
+      .select(`
+        language_code,
+        is_default,
+        is_enabled,
+        languages (
+          code,
+          name,
+          native_name,
+          flag_emoji
+        )
+      `)
+      .eq('tenant_id', tenantId)
+      .eq('is_enabled', true)
+      .order('is_default', { ascending: false }),
+
+    // Fetch pages for navigation
+    supabase
+      .from('website_pages')
+      .select('id, title, slug, is_in_navigation')
+      .eq('website_id', website.id)
+      .eq('is_published', true)
+      .order('sort_order'),
+
+    // Fetch translations for blocks and menu items
+    supabase
+      .from('translations')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .or('key.like.website_block.%,key.like.menu_item.%'),
+
+    // Fetch locations for the tenant (needed for contact, hours, location blocks)
+    supabase
+      .from('locations')
+      .select('id, name, slug, address, city, postal_code, country, latitude, longitude, phone, email, opening_hours, is_active')
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+      .order('name')
+  ])
+
+  // Get cookies separately (critical for language detection)
+  const cookieStore = await cookies()
+
+  // Extract results with graceful fallbacks
+  const tenantLanguages = tenantLanguagesResult.status === 'fulfilled' ? tenantLanguagesResult.value.data : null
+  const pages = pagesResult.status === 'fulfilled' ? pagesResult.value.data : null
+  const translations: Translation[] = translationsResult.status === 'fulfilled' ? (translationsResult.value.data || []) : []
+  const locations = locationsResult.status === 'fulfilled' ? locationsResult.value.data : null
 
   // Transform languages
-  const languages: PublicLanguage[] = tenantLanguages?.map(tl => ({
+  const languages: PublicLanguage[] = tenantLanguages?.map((tl: any) => ({
     code: tl.language_code,
     isDefault: tl.is_default,
     name: (tl.languages as any)?.name || tl.language_code,
@@ -90,30 +103,21 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
   })) || []
 
   // Determine current language
-  const cookieStore = await cookies()
   const cookieLocale = cookieStore.get('WEBSITE_LOCALE')?.value
-  const defaultLang = languages.find(l => l.isDefault)?.code || languages[0]?.code || 'en'
-  
+  const defaultLang = languages.find((l: PublicLanguage) => l.isDefault)?.code || languages[0]?.code || 'en'
+
   const getValidLanguage = (langCode: string | undefined) => {
     if (!langCode) return null
-    return languages.some(l => l.code === langCode) ? langCode : null
+    return languages.some((l: PublicLanguage) => l.code === langCode) ? langCode : null
   }
-  
-  const currentLanguage = getValidLanguage(lang) || getValidLanguage(cookieLocale) || defaultLang
 
-  // Fetch pages for navigation
-  const { data: pages } = await supabase
-    .from('website_pages')
-    .select('id, title, slug, is_in_navigation')
-    .eq('website_id', website.id)
-    .eq('is_published', true)
-    .order('sort_order')
+  const currentLanguage = getValidLanguage(lang) || getValidLanguage(cookieLocale) || defaultLang
 
   // Get the current page (default to first page or 'home')
   const currentSlug = pageSlug || pages?.[0]?.slug || 'home'
-  const currentPage = pages?.find(p => p.slug === currentSlug)
+  const currentPage = pages?.find((p: any) => p.slug === currentSlug)
 
-  // Fetch blocks for current page
+  // Fetch blocks for current page (depends on pages result)
   const { data: blocks } = currentPage ? await supabase
     .from('website_blocks')
     .select('*')
@@ -121,25 +125,15 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
     .eq('is_visible', true)
     .order('sort_order') : { data: [] }
 
-  // Fetch translations for blocks and menu items
-  let translations: Translation[] = []
-  const { data: allTranslations } = await supabase
-    .from('translations')
-    .select('*')
-    .eq('tenant_id', tenantId)
-    .or('key.like.website_block.%,key.like.menu_item.%')
-  
-  translations = allTranslations || []
-
   // Extract menu item IDs from menu_preview blocks
   const menuItemIds: string[] = []
-  blocks?.forEach(block => {
+  blocks?.forEach((block: any) => {
     if (block.type === 'menu_preview' && block.content?.item_ids) {
       menuItemIds.push(...(block.content.item_ids as string[]))
     }
   })
 
-  // Fetch menu items if needed
+  // Fetch menu items if needed (depends on blocks result)
   let menuItemsMap: Record<string, { id: string; name: string; description: string | null; base_price: number; image_urls: string[] | null }> = {}
   if (menuItemIds.length > 0) {
     const { data: menuItems } = await supabase
@@ -154,14 +148,6 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
       }, {} as typeof menuItemsMap)
     }
   }
-
-  // Fetch locations for the tenant (needed for contact, hours, location blocks)
-  const { data: locations } = await supabase
-    .from('locations')
-    .select('id, name, slug, address, city, postal_code, country, latitude, longitude, phone, email, opening_hours, is_active')
-    .eq('tenant_id', tenantId)
-    .eq('is_active', true)
-    .order('name')
 
   // Theme styles
   const theme = {
@@ -265,13 +251,13 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
       {/* Page Content - Render Blocks */}
       <main>
         {blocks?.map((block) => (
-          <BlockRenderer 
-            key={block.id} 
-            block={block} 
-            theme={theme} 
-            menuItems={menuItemsMap} 
-            menuLink={menuLink} 
-            locations={locations || []} 
+          <BlockRenderer
+            key={block.id}
+            block={block}
+            theme={theme}
+            menuItems={menuItemsMap}
+            menuLink={menuLink}
+            locations={locations || []}
             t={t}
             translations={translations}
             currentLanguage={currentLanguage}
