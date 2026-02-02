@@ -952,6 +952,7 @@
   },
   "websiteBuilder": {
     "title": "Website Builder",
+    "loading": "Loading...",
     "exit": "Exit",
     "noSubdomain": "No subdomain",
     "live": "Live",
@@ -1027,7 +1028,29 @@
       "savedSuccess": "Translations saved successfully",
       "saveFailed": "Failed to save translations",
       "noTranslationsToSave": "No translations to save"
-    }
+    },
+    "templates": {
+      "title": "Choose Your Starting Point",
+      "description": "Select a professionally designed template or start with a blank canvas",
+      "startBlank": "Start from scratch",
+      "useTemplate": "Use this template",
+      "applying": "Applying...",
+      "blocks": "blocks",
+      "buildingWebsite": "Building your website...",
+      "applyingTheme": "Applying theme...",
+      "creatingPage": "Creating page...",
+      "addingBlock": "Adding",
+      "finishing": "Finishing up...",
+      "stepsCompleted": "steps completed",
+      "applyFailed": "Failed to apply template"
+    },
+    "emptyState": {
+      "title": "Let's build your website!",
+      "description": "Start with a professional template or add blocks one by one to create your perfect website.",
+      "chooseTemplate": "Choose a Template",
+      "addBlockManually": "Add blocks manually"
+    },
+    "updatingDomain": "Updating domain..."
   },
   "orderLogs": {
     "title": "Order Status History",

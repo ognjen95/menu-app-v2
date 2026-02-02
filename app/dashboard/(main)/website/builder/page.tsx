@@ -22,14 +22,15 @@ import {
   Globe, ExternalLink, Palette, Layout, Image as ImageIcon, FileText, Settings, Loader2,
   Plus, Trash2, GripVertical, Clock, Phone, Instagram, Facebook, Twitter, Star,
   ChevronUp, ChevronDown, ChevronLeft, Monitor, Smartphone, Tablet, Edit,
-  RefreshCw, PanelRightClose, PanelRight, UtensilsCrossed, Layers, Paintbrush, Check,
+  RefreshCw, PanelRightClose, PanelRight, UtensilsCrossed, Layers, Paintbrush, Check, Sparkles, File,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BlockEditor } from '@/components/features/website-builder/BlockEditorComponents'
-import { THEME_PRESETS, FONT_OPTIONS, BLOCK_TYPES } from '@/lib/constants/website'
+import { THEME_PRESETS, FONT_OPTIONS, BLOCK_TYPES, WEBSITE_TEMPLATES, type WebsiteTemplate } from '@/lib/constants/website'
 import { getWebsiteUrl } from '@/utils/urls'
 import { motion, staggerContainer, staggerItemScale } from '@/components/ui/animated'
 import { LoadingPage } from '@/components/ui/loading-logo'
+import { toast } from 'sonner'
 
 // Types
 type Website = {
@@ -68,10 +69,25 @@ export default function WebsiteBuilderPage() {
   const [newPageForm, setNewPageForm] = useState({ title: '', slug: '' })
   const [editingBlock, setEditingBlock] = useState<WebsiteBlock | null>(null)
   const [showAllThemes, setShowAllThemes] = useState(false)
+  const [showTemplateModal, setShowTemplateModal] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState<WebsiteTemplate | null>(null)
+  const [isApplyingTemplate, setIsApplyingTemplate] = useState(false)
+  const [templateProgress, setTemplateProgress] = useState({ current: 0, total: 0, step: '' })
+  
+  // Local state for settings inputs (to prevent re-render on every keystroke)
+  const [settingsForm, setSettingsForm] = useState({
+    subdomain: '',
+    seo_title: '',
+    seo_description: '',
+    facebook: '',
+    instagram: '',
+    twitter: '',
+  })
+  const [isSubdomainUpdating, setIsSubdomainUpdating] = useState(false)
 
   const { data: websiteData, isLoading } = useQuery({ queryKey: ['website'], queryFn: () => apiGet<{ data: { website: Website | null } }>('/website') })
-  const { data: pagesData } = useQuery({ queryKey: ['website-pages'], queryFn: () => apiGet<{ data: { pages: WebsitePage[] } }>('/website/pages') })
-  const { data: blocksData } = useQuery({ queryKey: ['website-blocks', selectedPageId], queryFn: () => apiGet<{ data: { blocks: WebsiteBlock[] } }>(`/website/pages/${selectedPageId}/blocks`), enabled: !!selectedPageId })
+  const { data: pagesData, isFetched: isPagesFetched } = useQuery({ queryKey: ['website-pages'], queryFn: () => apiGet<{ data: { pages: WebsitePage[] } }>('/website/pages') })
+  const { data: blocksData, isFetched: isBlocksFetched } = useQuery({ queryKey: ['website-blocks', selectedPageId], queryFn: () => apiGet<{ data: { blocks: WebsiteBlock[] } }>(`/website/pages/${selectedPageId}/blocks`), enabled: !!selectedPageId })
 
   const website = websiteData?.data?.website
   const pages = pagesData?.data?.pages || []
@@ -112,7 +128,17 @@ export default function WebsiteBuilderPage() {
       queryClient.setQueryData<WebsiteCache>(['website'], (old) => old?.data?.website ? { data: { website: { ...old.data.website, ...data } } } : old)
       return { prev }
     },
-    onError: (_, __, ctx) => { if (ctx?.prev) queryClient.setQueryData(['website'], ctx.prev) },
+    onError: (error: Error, data, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(['website'], ctx.prev)
+      // Reset form field if subdomain update failed
+      if (data.subdomain && ctx?.prev?.data?.website?.subdomain) {
+        setSettingsForm(f => ({ ...f, subdomain: ctx.prev?.data?.website?.subdomain || '' }))
+      }
+      toast.error(error.message || 'Failed to update website settings')
+    },
+    onSuccess: () => {
+      toast.success('Settings saved')
+    },
     onSettled: () => { queryClient.invalidateQueries({ queryKey: ['website'] }); refreshPreview() },
   })
 
@@ -242,6 +268,106 @@ export default function WebsiteBuilderPage() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (pages.length > 0 && !selectedPageId) setSelectedPageId(pages[0].id) }, [pages.length, selectedPageId])
+  
+  // Sync settings form with website data (only on initial load)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (website) {
+      setSettingsForm({
+        subdomain: website.subdomain || '',
+        seo_title: website.seo_title || '',
+        seo_description: website.seo_description || '',
+        facebook: website.social_links?.facebook || '',
+        instagram: website.social_links?.instagram || '',
+        twitter: website.social_links?.twitter || '',
+      })
+    }
+  }, [website?.id])
+  
+  // Show template modal only for new users (no website exists yet)
+  useEffect(() => {
+    if (!isLoading && !website) {
+      setShowTemplateModal(true)
+    }
+  }, [isLoading, website])
+
+  // Apply a template (theme + create page + blocks)
+  const applyTemplate = async (template: WebsiteTemplate) => {
+    setIsApplyingTemplate(true)
+    const totalSteps = template.blocks.length + 2 // theme + page + blocks
+    setTemplateProgress({ current: 0, total: totalSteps, step: t('templates.applyingTheme') || 'Applying theme...' })
+    
+    try {
+      // 1. Apply theme
+      await apiPatch('/website', template.theme)
+      setTemplateProgress({ current: 1, total: totalSteps, step: t('templates.creatingPage') || 'Creating page...' })
+      
+      // 2. Find existing home page or create new one
+      let pageId: string | undefined
+      const existingHomePage = pages.find(p => p.slug === 'home')
+      
+      if (existingHomePage) {
+        pageId = existingHomePage.id
+        // Delete existing blocks on this page
+        const existingBlocks = await apiGet<{ data: { blocks: { id: string }[] } }>(`/website/pages/${pageId}/blocks`)
+        if (existingBlocks?.data?.blocks) {
+          for (const block of existingBlocks.data.blocks) {
+            await apiDelete(`/website/blocks/${block.id}`)
+          }
+        }
+      } else {
+        // Create new home page
+        const pageResponse = await apiPost<{ data: { page: { id: string } } }>('/website/pages', { title: 'Home', slug: 'home' })
+        pageId = pageResponse?.data?.page?.id
+      }
+      
+      if (pageId) {
+        // 3. Create blocks sequentially with progress
+        for (let i = 0; i < template.blocks.length; i++) {
+          const block = template.blocks[i]
+          const blockLabel = BLOCK_TYPES.find(b => b.type === block.type)?.label || block.type
+          setTemplateProgress({ 
+            current: i + 2, 
+            total: totalSteps, 
+            step: `${t('templates.addingBlock') || 'Adding'} ${blockLabel}...` 
+          })
+          
+          await apiPost(`/website/pages/${pageId}/blocks`, {
+            type: block.type,
+            content: block.content,
+            settings: block.settings,
+          })
+        }
+      }
+      
+      setTemplateProgress({ current: totalSteps, total: totalSteps, step: t('templates.finishing') || 'Finishing up...' })
+      
+      // 4. Invalidate queries and refresh
+      await queryClient.invalidateQueries({ queryKey: ['website'] })
+      await queryClient.invalidateQueries({ queryKey: ['website-pages'] })
+      if (pageId) {
+        await queryClient.invalidateQueries({ queryKey: ['website-blocks', pageId] })
+        setSelectedPageId(pageId)
+      }
+      
+      setShowTemplateModal(false)
+      setSelectedTemplate(null)
+      refreshPreview(true)
+    } catch (error) {
+      console.error('Failed to apply template:', error)
+      toast.error(t('templates.applyFailed') || 'Failed to apply template')
+    } finally {
+      setIsApplyingTemplate(false)
+      setTemplateProgress({ current: 0, total: 0, step: '' })
+    }
+  }
+
+  // Start from scratch - just close modal
+  const startFromScratch = () => {
+    setShowTemplateModal(false)
+    setSelectedTemplate(null)
+    setActivePanel('pages')
+  }
 
   if (isLoading) return <LoadingPage message={t('loading') || 'Loading website builder...'} />
 
@@ -255,7 +381,40 @@ export default function WebsiteBuilderPage() {
       <div className={cn("flex-1 transition-all duration-300 flex items-center justify-center pt-[76px] pb-3 pl-3", sidebarOpen ? "pr-[440px]" : "pr-3")}>
         <div className="relative bg-white dark:bg-zinc-900 rounded-xl overflow-hidden shadow-2xl transition-all duration-300 w-full h-full" style={{ maxWidth: previewMode === 'desktop' ? '100%' : previewMode === 'tablet' ? '768px' : '375px' }}>
           {websiteUrl ? (
-            <iframe ref={iframeRef} src={websiteUrl} className="w-full h-full border-0" title="Preview" />
+            <>
+              <iframe ref={iframeRef} src={websiteUrl} className="w-full h-full border-0" title="Preview" />
+              {/* Loading overlay when subdomain is being updated */}
+              {isSubdomainUpdating && (
+                <div className="absolute inset-0 bg-zinc-900/90 backdrop-blur-sm flex items-center justify-center z-10">
+                  <div className="text-center">
+                    <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto mb-4" />
+                    <p className="text-white font-medium">{t('updatingDomain') || 'Updating domain...'}</p>
+                  </div>
+                </div>
+              )}
+              {/* Empty state overlay when no pages OR no blocks - only show after queries finished */}
+              {!isSubdomainUpdating && ((isPagesFetched && pages.length === 0) || (isBlocksFetched && blocks.length === 0 && selectedPageId)) && (
+                <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/95 to-zinc-800/95 backdrop-blur-sm flex items-center justify-center">
+                  <div className="text-center max-w-md px-6">
+                    <div className="h-20 w-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-xl shadow-blue-500/20">
+                      <Sparkles className="h-10 w-10 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white mb-3">{t('emptyState.title')}</h2>
+                    <p className="text-zinc-400 mb-8">{t('emptyState.description')}</p>
+                    <div className="space-y-3">
+                      <Button size="lg" onClick={() => setShowTemplateModal(true)} className="w-full text-base">
+                        <Sparkles className="h-5 w-5 mr-2" />
+                        {t('emptyState.chooseTemplate')}
+                      </Button>
+                      <Button variant="outline" size="lg" onClick={() => { setActivePanel('blocks'); setIsAddBlockOpen(true) }} className="w-full text-base border-zinc-600 text-zinc-300 hover:bg-zinc-700 hover:text-white">
+                        <Plus className="h-5 w-5 mr-2" />
+                        {t('emptyState.addBlockManually')}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">
               <div className="text-center"><Globe className="h-16 w-16 mx-auto mb-4 opacity-50" /><p>{t('setupSubdomain')}</p></div>
@@ -506,8 +665,24 @@ export default function WebsiteBuilderPage() {
                     </div>
                   )
                 })}
-                {blocks.length === 0 && selectedPageId && (
-                  <div className="text-center py-8 text-zinc-500"><Layers className="h-10 w-10 mx-auto mb-3 opacity-50" /><p className="text-sm">{t('blocks.noBlocks')}</p><Button size="sm" onClick={() => setIsAddBlockOpen(true)} className="mt-3 bg-white/10 text-white border-0"><Plus className="h-4 w-4 mr-1" />{t('blocks.addBlock')}</Button></div>
+                {((isPagesFetched && pages.length === 0) || (isBlocksFetched && blocks.length === 0 && selectedPageId)) && (
+                  <div className="text-center py-8 px-4">
+                    <div className="h-14 w-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-600/20 flex items-center justify-center">
+                      <Sparkles className="h-7 w-7 text-blue-400" />
+                    </div>
+                    <h3 className="text-white font-semibold mb-2">{t('emptyState.title')}</h3>
+                    <p className="text-sm text-zinc-400 mb-4">{t('emptyState.description')}</p>
+                    <div className="space-y-2">
+                      <Button onClick={() => setShowTemplateModal(true)} className="w-full">
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        {t('emptyState.chooseTemplate')}
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setIsAddBlockOpen(true)} className="w-full border-zinc-700 text-zinc-300 hover:bg-zinc-800">
+                        <Plus className="h-4 w-4 mr-1" />
+                        {t('emptyState.addBlockManually')}
+                      </Button>
+                    </div>
+                  </div>
                 )}
               </div>
             </>)}
@@ -517,25 +692,103 @@ export default function WebsiteBuilderPage() {
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-white">{t('settings.domain')}</h3>
                 <div className="flex gap-2">
-                  <Input value={website?.subdomain || ''} onChange={(e) => updateWebsite.mutate({ subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })} className="bg-white/5 border-white/10 text-white" />
+                  <Input 
+                    value={settingsForm.subdomain} 
+                    onChange={(e) => setSettingsForm(f => ({ ...f, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
+                    onBlur={() => {
+                      if (settingsForm.subdomain && settingsForm.subdomain !== (website?.subdomain || '')) {
+                        setIsSubdomainUpdating(true)
+                        updateWebsite.mutate({ subdomain: settingsForm.subdomain }, {
+                          onSettled: () => {
+                            // Add delay to let iframe reload with new URL
+                            setTimeout(() => setIsSubdomainUpdating(false), 1500)
+                          }
+                        })
+                      }
+                    }}
+                    className="bg-white/5 border-white/10 text-white" 
+                  />
                   <span className="flex items-center text-xs text-zinc-500">.klopay.app</span>
                 </div>
               </div>
               <Separator className="bg-white/10" />
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-white">{t('settings.seo')}</h3>
-                <div className="space-y-1"><label className="text-xs text-zinc-400">{t('settings.seoTitle')}</label><Input value={website?.seo_title || ''} onChange={(e) => updateWebsite.mutate({ seo_title: e.target.value })} className="bg-white/5 border-white/10 text-white text-sm" maxLength={60} /></div>
-                <div className="space-y-1"><label className="text-xs text-zinc-400">{t('settings.seoDescription')}</label><Textarea value={website?.seo_description || ''} onChange={(e) => updateWebsite.mutate({ seo_description: e.target.value })} className="bg-white/5 border-white/10 text-white text-sm resize-none" rows={3} maxLength={160} /></div>
+                <div className="space-y-1">
+                  <label className="text-xs text-zinc-400">{t('settings.seoTitle')}</label>
+                  <Input 
+                    value={settingsForm.seo_title} 
+                    onChange={(e) => setSettingsForm(f => ({ ...f, seo_title: e.target.value }))}
+                    onBlur={() => {
+                      if (settingsForm.seo_title !== (website?.seo_title || '')) {
+                        updateWebsite.mutate({ seo_title: settingsForm.seo_title })
+                      }
+                    }}
+                    className="bg-white/5 border-white/10 text-white text-sm" 
+                    maxLength={60} 
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-zinc-400">{t('settings.seoDescription')}</label>
+                  <Textarea 
+                    value={settingsForm.seo_description} 
+                    onChange={(e) => setSettingsForm(f => ({ ...f, seo_description: e.target.value }))}
+                    onBlur={() => {
+                      if (settingsForm.seo_description !== (website?.seo_description || '')) {
+                        updateWebsite.mutate({ seo_description: settingsForm.seo_description })
+                      }
+                    }}
+                    className="bg-white/5 border-white/10 text-white text-sm resize-none" 
+                    rows={3} 
+                    maxLength={160} 
+                  />
+                </div>
               </div>
               <Separator className="bg-white/10" />
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-white">{t('settings.socialLinks')}</h3>
-                {[['facebook', Facebook, 'facebook.com/...'], ['instagram', Instagram, 'instagram.com/...'], ['twitter', Twitter, 'twitter.com/...']].map(([key, Icon, ph]) => (
-                  <div key={key as string} className="flex items-center gap-2">
-                    <Icon className="h-4 w-4 text-zinc-500" />
-                    <Input value={website?.social_links?.[key as keyof typeof website.social_links] || ''} onChange={(e) => updateWebsite.mutate({ social_links: { ...website?.social_links, [key as string]: e.target.value } })} placeholder={ph as string} className="bg-white/5 border-white/10 text-white text-sm" />
-                  </div>
-                ))}
+                <div className="flex items-center gap-2">
+                  <Facebook className="h-4 w-4 text-zinc-500" />
+                  <Input 
+                    value={settingsForm.facebook} 
+                    onChange={(e) => setSettingsForm(f => ({ ...f, facebook: e.target.value }))}
+                    onBlur={() => {
+                      if (settingsForm.facebook !== (website?.social_links?.facebook || '')) {
+                        updateWebsite.mutate({ social_links: { ...website?.social_links, facebook: settingsForm.facebook } })
+                      }
+                    }}
+                    placeholder="facebook.com/..." 
+                    className="bg-white/5 border-white/10 text-white text-sm" 
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Instagram className="h-4 w-4 text-zinc-500" />
+                  <Input 
+                    value={settingsForm.instagram} 
+                    onChange={(e) => setSettingsForm(f => ({ ...f, instagram: e.target.value }))}
+                    onBlur={() => {
+                      if (settingsForm.instagram !== (website?.social_links?.instagram || '')) {
+                        updateWebsite.mutate({ social_links: { ...website?.social_links, instagram: settingsForm.instagram } })
+                      }
+                    }}
+                    placeholder="instagram.com/..." 
+                    className="bg-white/5 border-white/10 text-white text-sm" 
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Twitter className="h-4 w-4 text-zinc-500" />
+                  <Input 
+                    value={settingsForm.twitter} 
+                    onChange={(e) => setSettingsForm(f => ({ ...f, twitter: e.target.value }))}
+                    onBlur={() => {
+                      if (settingsForm.twitter !== (website?.social_links?.twitter || '')) {
+                        updateWebsite.mutate({ social_links: { ...website?.social_links, twitter: settingsForm.twitter } })
+                      }
+                    }}
+                    placeholder="twitter.com/..." 
+                    className="bg-white/5 border-white/10 text-white text-sm" 
+                  />
+                </div>
               </div>
             </>)}
           </div>
@@ -585,6 +838,147 @@ export default function WebsiteBuilderPage() {
           <div className="min-h-0 flex-1 overflow-y-auto">
             {editingBlock && <BlockEditor block={editingBlock} onSave={(content) => updateBlock.mutate({ blockId: editingBlock.id, content })} isPending={updateBlock.isPending} />}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Template Selection Modal */}
+      <Dialog open={showTemplateModal} onOpenChange={(open) => { if (!isApplyingTemplate) setShowTemplateModal(open) }}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          {/* Loading overlay when applying template */}
+          {isApplyingTemplate && (
+            <div className="absolute inset-0 bg-zinc-900/98 backdrop-blur-sm z-50 flex items-center justify-center">
+              <div className="text-center max-w-sm px-6">
+                <div className="h-20 w-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-xl shadow-blue-500/20">
+                  <Loader2 className="h-10 w-10 text-white animate-spin" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">
+                  {t('templates.buildingWebsite') || 'Building your website...'}
+                </h3>
+                <p className="text-zinc-400 mb-6 text-sm">{templateProgress.step}</p>
+                
+                {/* Progress bar */}
+                <div className="w-full bg-zinc-800 rounded-full h-2 mb-3 overflow-hidden">
+                  <motion.div 
+                    className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${templateProgress.total > 0 ? (templateProgress.current / templateProgress.total) * 100 : 0}%` }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
+                  />
+                </div>
+                <p className="text-xs text-zinc-500">
+                  {templateProgress.current} / {templateProgress.total} {t('templates.stepsCompleted') || 'steps completed'}
+                </p>
+              </div>
+            </div>
+          )}
+          
+          <DialogHeader className="text-center pb-2">
+            <div className="flex justify-center mb-3">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <Sparkles className="h-7 w-7 text-white" />
+              </div>
+            </div>
+            <DialogTitle className="text-2xl">{t('templates.title')}</DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              {t('templates.description')}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ScrollArea className="flex-1 min-h-0 py-4">
+            <div className="grid grid-cols-2 gap-4 px-1">
+              {WEBSITE_TEMPLATES.map((template) => (
+                <motion.button
+                  key={template.id}
+                  onClick={() => setSelectedTemplate(selectedTemplate?.id === template.id ? null : template)}
+                  className={cn(
+                    "group relative rounded-xl border-2 p-4 text-left transition-all overflow-hidden",
+                    selectedTemplate?.id === template.id
+                      ? "border-blue-500 ring-2 ring-blue-500/30"
+                      : "border-zinc-700 hover:border-zinc-600"
+                  )}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                >
+                  {/* Theme Preview */}
+                  <div 
+                    className="h-32 rounded-lg mb-3 relative overflow-hidden"
+                    style={{ backgroundColor: template.theme.background_color }}
+                  >
+                    {/* Simulated blocks preview */}
+                    <div className="absolute inset-0 p-3 flex flex-col gap-2">
+                      {/* Hero preview */}
+                      <div 
+                        className="h-12 rounded flex items-center justify-center"
+                        style={{ backgroundColor: template.theme.secondary_color }}
+                      >
+                        <span 
+                          className="text-xs font-semibold"
+                          style={{ color: template.theme.foreground_color }}
+                        >
+                          {template.name}
+                        </span>
+                      </div>
+                      {/* Color pills */}
+                      <div className="flex gap-1.5 mt-auto">
+                        <div className="h-5 w-5 rounded-full border border-white/20" style={{ backgroundColor: template.theme.primary_color }} />
+                        <div className="h-5 w-5 rounded-full border border-white/20" style={{ backgroundColor: template.theme.secondary_color }} />
+                        <div className="h-5 w-5 rounded-full border border-white/20" style={{ backgroundColor: template.theme.accent_color }} />
+                      </div>
+                    </div>
+                    {/* Selected indicator */}
+                    {selectedTemplate?.id === template.id && (
+                      <div className="absolute top-2 right-2 h-6 w-6 rounded-full bg-blue-500 flex items-center justify-center">
+                        <Check className="h-4 w-4 text-white" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Template info */}
+                  <h3 className="font-semibold text-white mb-1">{template.name}</h3>
+                  <p className="text-xs text-zinc-400 line-clamp-2">{template.description}</p>
+                  <div className="flex items-center gap-2 mt-2 text-xs text-zinc-500">
+                    <span className="flex items-center gap-1">
+                      <Layers className="h-3 w-3" />
+                      {template.blocks.length} {t('templates.blocks')}
+                    </span>
+                    <span>•</span>
+                    <span>{template.theme.font_heading}</span>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </ScrollArea>
+
+          <DialogFooter className="flex-shrink-0 pt-4 border-t border-zinc-800">
+            <div className="flex items-center justify-between w-full">
+              <Button
+                variant="ghost"
+                onClick={startFromScratch}
+                disabled={isApplyingTemplate}
+                className="text-zinc-400 hover:text-white"
+              >
+                <File className="h-4 w-4 mr-2" />
+                {t('templates.startBlank')}
+              </Button>
+              <Button
+                onClick={() => selectedTemplate && applyTemplate(selectedTemplate)}
+                disabled={!selectedTemplate || isApplyingTemplate}
+                className="min-w-[140px]"
+              >
+                {isApplyingTemplate ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {t('templates.applying')}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    {t('templates.useTemplate')}
+                  </>
+                )}
+              </Button>
+            </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

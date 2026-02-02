@@ -47,6 +47,41 @@ export async function PATCH(request: NextRequest) {
       settings?: Record<string, unknown>
     }
 
+    // If subdomain is being updated, check availability first
+    if (updateData.subdomain) {
+      // Check if slug is already taken by another tenant
+      const { data: existingTenant } = await supabase
+        .from('tenants')
+        .select('id')
+        .eq('slug', updateData.subdomain)
+        .neq('id', tenantId)
+        .single()
+
+      if (existingTenant) {
+        throw new Error('This subdomain is already taken. Please choose another one.')
+      }
+
+      // Check if subdomain is already taken by another website
+      const { data: existingWebsite } = await supabase
+        .from('websites')
+        .select('id')
+        .eq('subdomain', updateData.subdomain)
+        .neq('tenant_id', tenantId)
+        .single()
+
+      if (existingWebsite) {
+        throw new Error('This subdomain is already taken. Please choose another one.')
+      }
+
+      // Update tenant slug first (to keep them in sync)
+      const { error: tenantError } = await supabase
+        .from('tenants')
+        .update({ slug: updateData.subdomain })
+        .eq('id', tenantId)
+
+      if (tenantError) throw new Error(`Failed to update tenant slug: ${tenantError.message}`)
+    }
+
     // Check if website exists
     const { data: existing } = await supabase
       .from('websites')

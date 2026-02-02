@@ -952,6 +952,7 @@
   },
   "websiteBuilder": {
     "title": "Kreator veb sajta",
+    "loading": "Učitavanje...",
     "exit": "Izlaz",
     "noSubdomain": "Bez poddomena",
     "live": "Uživo",
@@ -1027,7 +1028,29 @@
       "savedSuccess": "Prevodi su uspešno sačuvani",
       "saveFailed": "Čuvanje prevoda nije uspelo",
       "noTranslationsToSave": "Nema prevoda za čuvanje"
-    }
+    },
+    "templates": {
+      "title": "Izaberite početnu tačku",
+      "description": "Izaberite profesionalno dizajniran šablon ili krenite od nule",
+      "startBlank": "Kreni od nule",
+      "useTemplate": "Koristi ovaj šablon",
+      "applying": "Primenjujem...",
+      "blocks": "blokova",
+      "buildingWebsite": "Pravim tvoj sajt...",
+      "applyingTheme": "Primenjujem temu...",
+      "creatingPage": "Kreiram stranicu...",
+      "addingBlock": "Dodajem",
+      "finishing": "Završavam...",
+      "stepsCompleted": "koraka završeno",
+      "applyFailed": "Greška pri primeni šablona"
+    },
+    "emptyState": {
+      "title": "Hajde da napravimo tvoj sajt!",
+      "description": "Počni sa profesionalnim šablonom ili dodaj blokove jedan po jedan da kreiraš savršen sajt.",
+      "chooseTemplate": "Izaberi šablon",
+      "addBlockManually": "Dodaj blokove ručno"
+    },
+    "updatingDomain": "Ažuriranje domena..."
   },
   "orderLogs": {
     "title": "Istorija statusa porudžbine",

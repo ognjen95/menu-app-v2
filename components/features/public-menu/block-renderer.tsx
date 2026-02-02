@@ -65,10 +65,10 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
   // Helper to get locations based on block content settings
   const getBlockLocations = (): Location[] => {
     if (!content.use_locations) return []
-    
+
     const mode = content.location_mode as string || 'all'
     const selectedIds = (content.location_ids as string[]) || []
-    
+
     if (mode === 'selected' && selectedIds.length > 0) {
       return locations.filter(loc => selectedIds.includes(loc.id) && loc.is_active !== false)
     }
@@ -240,7 +240,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
             <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
               {getTranslated('title', String(content.title || t('contactUs')))}
             </h2>
-            
+
             {useLocationsForContact ? (
               // Location-based contact info
               <div style={{
@@ -350,7 +350,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
             <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '1.5rem', textAlign: 'center' }}>
               {String(content.title || t('openingHours'))}
             </h2>
-            
+
             {useLocationsForHours ? (
               // Location-based hours
               <div style={{
@@ -454,63 +454,63 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
       return (
         <section style={{ padding: sectionPadding }}>
           <div style={contentStyle}>
-          <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
-            {getTranslated('title', String(content.title || t('featuredMenuItems')))}
-          </h2>
-          {selectedItems.length > 0 ? (
-            <div style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '1.5rem',
-              justifyContent: 'center',
-            }}>
-              {selectedItems.map((item) => {
-                // Get translated menu item text
-                const getMenuItemTranslated = (field: 'name' | 'description', fallback: string | null): string => {
-                  if (!translations.length || !fallback) return fallback || ''
-                  const key = `menu_item.${item.id}.${field}`
-                  const translation = translations.find(tr => tr.key === key && tr.language_code === currentLanguage)
-                  return translation?.value || fallback
-                }
-                
-                return (
-                  <div key={item.id} style={{
-                    backgroundColor: theme.secondary,
-                    borderRadius: '1rem',
-                    overflow: 'hidden',
-                    width: '300px',
-                    flexShrink: 0,
-                  }}>
-                    {item.image_urls?.[0] && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={item.image_urls[0]}
-                        alt={item.name}
-                        style={{ width: '100%', height: '180px', objectFit: 'cover' }}
-                      />
-                    )}
-                    <div style={{ padding: '1rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                        <h3 style={{ fontFamily: theme.fontHeading, fontWeight: 600, margin: 0 }}>
-                          {getMenuItemTranslated('name', item.name)}
-                        </h3>
-                        <span style={{ color: theme.primary, fontWeight: 600 }}>
-                          ${item.base_price.toFixed(2)}
-                        </span>
-                      </div>
-                      {item.description && (
-                        <p style={{ fontSize: '0.875rem', opacity: 0.7, margin: 0 }}>
-                          {getMenuItemTranslated('description', item.description)}
-                        </p>
+            <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
+              {getTranslated('title', String(content.title || t('featuredMenuItems')))}
+            </h2>
+            {selectedItems.length > 0 ? (
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '1.5rem',
+                justifyContent: 'center',
+              }}>
+                {selectedItems.map((item) => {
+                  // Get translated menu item text
+                  const getMenuItemTranslated = (field: 'name' | 'description', fallback: string | null): string => {
+                    if (!translations.length || !fallback) return fallback || ''
+                    const key = `menu_item.${item.id}.${field}`
+                    const translation = translations.find(tr => tr.key === key && tr.language_code === currentLanguage)
+                    return translation?.value || fallback
+                  }
+
+                  return (
+                    <div key={item.id} style={{
+                      backgroundColor: theme.secondary,
+                      borderRadius: '1rem',
+                      overflow: 'hidden',
+                      width: '300px',
+                      flexShrink: 0,
+                    }}>
+                      {item.image_urls?.[0] && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.image_urls[0]}
+                          alt={item.name}
+                          style={{ width: '100%', height: '180px', objectFit: 'cover' }}
+                        />
                       )}
+                      <div style={{ padding: '1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                          <h3 style={{ fontFamily: theme.fontHeading, fontWeight: 600, margin: 0 }}>
+                            {getMenuItemTranslated('name', item.name)}
+                          </h3>
+                          <span style={{ color: theme.primary, fontWeight: 600 }}>
+                            ${item.base_price.toFixed(2)}
+                          </span>
+                        </div>
+                        {item.description && (
+                          <p style={{ fontSize: '0.875rem', opacity: 0.7, margin: 0 }}>
+                            {getMenuItemTranslated('description', item.description)}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <p style={{ textAlign: 'center', opacity: 0.6 }}>{t('noMenuItems')}</p>
-          )}
+                  )
+                })}
+              </div>
+            ) : (
+              <p style={{ textAlign: 'center', opacity: 0.6 }}>{t('noMenuItems')}</p>
+            )}
           </div>
         </section>
       )
@@ -585,42 +585,6 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
         </section>
       )
 
-    case 'specials':
-      const specials = (content.items as { name: string; description?: string; price?: string; day?: string; image_url?: string }[]) || []
-      return (
-        <section style={{ padding: sectionPadding, backgroundColor: theme.secondary }}>
-          <div style={contentStyle}>
-            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-              <Sparkles size={32} color={theme.primary} style={{ margin: '0 auto 0.5rem' }} />
-              <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem' }}>
-                {getTranslated('title', String(content.title || t('todaysSpecials')))}
-              </h2>
-              {Boolean(content.subtitle) && (
-                <p style={{ opacity: 0.7, marginTop: '0.5rem' }}>{getTranslated('subtitle', String(content.subtitle))}</p>
-              )}
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'center' }}>
-              {specials.map((item, idx) => (
-                <div key={idx} style={{ backgroundColor: theme.background, borderRadius: '1rem', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', width: '320px', flexShrink: 0 }}>
-                  {item.image_url && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '160px', objectFit: 'cover' }} />
-                  )}
-                  <div style={{ padding: '1.25rem' }}>
-                    {item.day && <span style={{ fontSize: '0.75rem', color: theme.primary, fontWeight: 600, textTransform: 'uppercase' }}>{getTranslated(`special_${idx}_day`, item.day)}</span>}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '0.25rem' }}>
-                      <h3 style={{ fontFamily: theme.fontHeading, fontWeight: 600, margin: 0 }}>{getTranslated(`special_${idx}_name`, item.name)}</h3>
-                      {item.price && <span style={{ color: theme.primary, fontWeight: 700 }}>{item.price}</span>}
-                    </div>
-                    {item.description && <p style={{ fontSize: '0.875rem', opacity: 0.7, marginTop: '0.5rem', margin: 0 }}>{getTranslated(`special_${idx}_description`, item.description)}</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
-            {specials.length === 0 && <p style={{ textAlign: 'center', opacity: 0.6 }}>{t('noSpecials')}</p>}
-          </div>
-        </section>
-      )
 
     case 'events':
       const events = (content.events as { title: string; date: string; time?: string; description?: string; image_url?: string }[]) || []
@@ -867,7 +831,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
       const LocationMapCard = ({ loc, showName = false, isOnlyOne = false }: { loc: Location; showName?: boolean; isOnlyOne?: boolean }) => {
         const mapUrl = content.map_embed ? String(content.map_embed) : getMapEmbedUrl(loc)
         const address = formatAddress(loc)
-        
+
         return (
           <div style={{
             backgroundColor: theme.background,
@@ -995,38 +959,78 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
         </section>
       )
 
-    case 'drinks':
-      const drinks = (content.drinks as { name: string; description?: string; price: string; category?: string }[]) || []
-      const drinkCategories = Array.from(new Set(drinks.map(d => d.category || t('drinks'))))
-      return (
-        <section style={{ padding: sectionPadding }}>
-          <div style={contentStyle}>
-            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-              <Wine size={32} color={theme.primary} style={{ margin: '0 auto 0.5rem' }} />
-              <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem' }}>
-                {getTranslated('title', String(content.title || t('drinksMenu')))}
-              </h2>
-            </div>
-            {drinkCategories.map((category, catIdx) => (
-              <div key={category} style={{ marginBottom: '2rem' }}>
-                <h3 style={{ fontFamily: theme.fontHeading, fontSize: '1.25rem', color: theme.primary, marginBottom: '1rem', borderBottom: `2px solid ${theme.primary}`, paddingBottom: '0.5rem' }}>{category}</h3>
-                <div style={{ display: 'grid', gap: '1rem' }}>
-                  {drinks.filter(d => (d.category || t('drinks')) === category).map((drink, idx) => (
-                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '0.75rem', backgroundColor: theme.secondary, borderRadius: '0.5rem' }}>
-                      <div>
-                        <h4 style={{ fontWeight: 600, margin: 0 }}>{getTranslated(`drink_${idx}_name`, drink.name)}</h4>
-                        {drink.description && <p style={{ fontSize: '0.875rem', opacity: 0.7, margin: '0.25rem 0 0' }}>{getTranslated(`drink_${idx}_description`, drink.description)}</p>}
-                      </div>
-                      <span style={{ fontWeight: 600, color: theme.primary, whiteSpace: 'nowrap', marginLeft: '1rem' }}>{drink.price}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-            {drinks.length === 0 && <p style={{ textAlign: 'center', opacity: 0.6 }}>{t('noDrinks')}</p>}
-          </div>
-        </section>
-      )
+    // DUPLICATS OF MENU BLOCKS
+
+    // case 'drinks':
+    //   const drinks = (content.drinks as { name: string; description?: string; price: string; category?: string }[]) || []
+    //   const drinkCategories = Array.from(new Set(drinks.map(d => d.category || t('drinks'))))
+    //   return (
+    //     <section style={{ padding: sectionPadding }}>
+    //       <div style={contentStyle}>
+    //         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+    //           <Wine size={32} color={theme.primary} style={{ margin: '0 auto 0.5rem' }} />
+    //           <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem' }}>
+    //             {getTranslated('title', String(content.title || t('drinksMenu')))}
+    //           </h2>
+    //         </div>
+    //         {drinkCategories.map((category, catIdx) => (
+    //           <div key={category} style={{ marginBottom: '2rem' }}>
+    //             <h3 style={{ fontFamily: theme.fontHeading, fontSize: '1.25rem', color: theme.primary, marginBottom: '1rem', borderBottom: `2px solid ${theme.primary}`, paddingBottom: '0.5rem' }}>{category}</h3>
+    //             <div style={{ display: 'grid', gap: '1rem' }}>
+    //               {drinks.filter(d => (d.category || t('drinks')) === category).map((drink, idx) => (
+    //                 <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '0.75rem', backgroundColor: theme.secondary, borderRadius: '0.5rem' }}>
+    //                   <div>
+    //                     <h4 style={{ fontWeight: 600, margin: 0 }}>{getTranslated(`drink_${idx}_name`, drink.name)}</h4>
+    //                     {drink.description && <p style={{ fontSize: '0.875rem', opacity: 0.7, margin: '0.25rem 0 0' }}>{getTranslated(`drink_${idx}_description`, drink.description)}</p>}
+    //                   </div>
+    //                   <span style={{ fontWeight: 600, color: theme.primary, whiteSpace: 'nowrap', marginLeft: '1rem' }}>{drink.price}</span>
+    //                 </div>
+    //               ))}
+    //             </div>
+    //           </div>
+    //         ))}
+    //         {drinks.length === 0 && <p style={{ textAlign: 'center', opacity: 0.6 }}>{t('noDrinks')}</p>}
+    //       </div>
+    //     </section>
+    //   )
+
+    // case 'specials':
+    //   const specials = (content.items as { name: string; description?: string; price?: string; day?: string; image_url?: string }[]) || []
+    //   return (
+    //     <section style={{ padding: sectionPadding, backgroundColor: theme.secondary }}>
+    //       <div style={contentStyle}>
+    //         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+    //           <Sparkles size={32} color={theme.primary} style={{ margin: '0 auto 0.5rem' }} />
+    //           <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem' }}>
+    //             {getTranslated('title', String(content.title || t('todaysSpecials')))}
+    //           </h2>
+    //           {Boolean(content.subtitle) && (
+    //             <p style={{ opacity: 0.7, marginTop: '0.5rem' }}>{getTranslated('subtitle', String(content.subtitle))}</p>
+    //           )}
+    //         </div>
+    //         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'center' }}>
+    //           {specials.map((item, idx) => (
+    //             <div key={idx} style={{ backgroundColor: theme.background, borderRadius: '1rem', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', width: '320px', flexShrink: 0 }}>
+    //               {item.image_url && (
+    //                 // eslint-disable-next-line @next/next/no-img-element
+    //                 <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '160px', objectFit: 'cover' }} />
+    //               )}
+    //               <div style={{ padding: '1.25rem' }}>
+    //                 {item.day && <span style={{ fontSize: '0.75rem', color: theme.primary, fontWeight: 600, textTransform: 'uppercase' }}>{getTranslated(`special_${idx}_day`, item.day)}</span>}
+    //                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '0.25rem' }}>
+    //                   <h3 style={{ fontFamily: theme.fontHeading, fontWeight: 600, margin: 0 }}>{getTranslated(`special_${idx}_name`, item.name)}</h3>
+    //                   {item.price && <span style={{ color: theme.primary, fontWeight: 700 }}>{item.price}</span>}
+    //                 </div>
+    //                 {item.description && <p style={{ fontSize: '0.875rem', opacity: 0.7, marginTop: '0.5rem', margin: 0 }}>{getTranslated(`special_${idx}_description`, item.description)}</p>}
+    //               </div>
+    //             </div>
+    //           ))}
+    //         </div>
+    //         {specials.length === 0 && <p style={{ textAlign: 'center', opacity: 0.6 }}>{t('noSpecials')}</p>}
+    //       </div>
+    //     </section>
+    //   )
+
 
     default:
       return (
