@@ -53,7 +53,7 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
     .from('websites')
     .select('*')
     .eq('tenant_id', tenant.id)
-    .eq('is_published', false)
+    .eq('is_published', true)
     .single()
 
   if (websiteError || !website) {
