@@ -659,7 +659,7 @@ export function BlockEditor({ block, onSave, isPending }: { block: WebsiteBlock;
       
       {/* Content Tab */}
       <TabsContent value="content" className="mt-4">
-        <ScrollArea className="max-h-[50vh]">
+        <ScrollArea className="h-[50vh]">
           <div className="space-y-4 pr-4">
             {renderFields()}
           </div>

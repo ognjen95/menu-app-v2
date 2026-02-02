@@ -11,6 +11,7 @@ import {
   convertTranslationsFromApiFormat 
 } from '@/lib/utils/website-block-translations'
 import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Loader2, Save, Languages, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -125,22 +126,24 @@ export function BlockTranslationEditor({
   }
   
   return (
-    <div className="flex flex-col">
-      {/* Translation Editor */}
-      <div className="flex-1 min-h-0">
-        <TranslationEditor
-          languages={tenantLanguages}
-          translations={translations}
-          onTranslationsChange={handleTranslationsChange}
-          fields={fields}
-          defaultValues={defaultValues}
-          emptyStateTitle={t('translations.noLanguages')}
-          emptyStateDescription={t('translations.enableLanguagesHint')}
-        />
-      </div>
+    <div className="flex flex-col h-full">
+      {/* Translation Editor with scroll */}
+      <ScrollArea className="flex-1 h-[42vh]">
+        <div className="pr-4">
+          <TranslationEditor
+            languages={tenantLanguages}
+            translations={translations}
+            onTranslationsChange={handleTranslationsChange}
+            fields={fields}
+            defaultValues={defaultValues}
+            emptyStateTitle={t('translations.noLanguages')}
+            emptyStateDescription={t('translations.enableLanguagesHint')}
+          />
+        </div>
+      </ScrollArea>
       
-      {/* Save Button - sticky at bottom */}
-      <div className="sticky bottom-0 flex justify-end pt-4 mt-4 border-t border-zinc-800 bg-zinc-900">
+      {/* Save Button */}
+      <div className="flex justify-end pt-4 mt-4 border-t border-zinc-800">
         <Button
           onClick={handleSave}
           disabled={saveTranslations.isPending || !hasChanges}
