@@ -22,10 +22,11 @@ import {
   Globe, ExternalLink, Palette, Layout, Image as ImageIcon, FileText, Settings, Loader2,
   Plus, Trash2, GripVertical, Clock, Phone, Instagram, Facebook, Twitter, Star,
   ChevronUp, ChevronDown, ChevronLeft, Monitor, Smartphone, Tablet, Edit,
-  RefreshCw, PanelRightClose, PanelRight, UtensilsCrossed, Layers, Paintbrush, Check, Sparkles, File,
+  RefreshCw, PanelRightClose, PanelRight, UtensilsCrossed, Layers, Paintbrush, Check, Sparkles, File, Languages,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BlockEditor } from '@/components/features/website-builder/BlockEditorComponents'
+import { PageTranslationEditor } from '@/components/features/website-builder/PageTranslationEditor'
 import { THEME_PRESETS, FONT_OPTIONS, BLOCK_TYPES, WEBSITE_TEMPLATES, type WebsiteTemplate } from '@/lib/constants/website'
 import { getWebsiteUrl } from '@/utils/urls'
 import { motion, staggerContainer, staggerItemScale } from '@/components/ui/animated'
@@ -68,6 +69,7 @@ export default function WebsiteBuilderPage() {
   const [isAddBlockOpen, setIsAddBlockOpen] = useState(false)
   const [newPageForm, setNewPageForm] = useState({ title: '', slug: '' })
   const [editingBlock, setEditingBlock] = useState<WebsiteBlock | null>(null)
+  const [editingPageTranslation, setEditingPageTranslation] = useState<WebsitePage | null>(null)
   const [showAllThemes, setShowAllThemes] = useState(false)
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<WebsiteTemplate | null>(null)
@@ -627,6 +629,7 @@ export default function WebsiteBuilderPage() {
                         >
                           {page.is_published ? t('pages.liveStatus') : t('pages.draftStatus')}
                         </button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-500 hover:text-blue-400" onClick={(e) => { e.stopPropagation(); setEditingPageTranslation(page) }} title={t('pages.translateTitle')}><Languages className="h-3 w-3" /></Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-500 hover:text-red-400" onClick={(e) => { e.stopPropagation(); deletePage.mutate(page.id) }}><Trash2 className="h-3 w-3" /></Button>
                       </div>
                     </div>
@@ -838,6 +841,28 @@ export default function WebsiteBuilderPage() {
           <div className="min-h-0 flex-1 overflow-y-auto">
             {editingBlock && <BlockEditor block={editingBlock} onSave={(content) => updateBlock.mutate({ blockId: editingBlock.id, content })} isPending={updateBlock.isPending} />}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Page Translation Dialog */}
+      <Dialog open={!!editingPageTranslation} onOpenChange={(o) => !o && setEditingPageTranslation(null)}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Languages className="h-5 w-5" />
+              {t('pages.translatePageTitle')}
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              {t('pages.translatePageDescription', { title: editingPageTranslation?.title || '' })}
+            </DialogDescription>
+          </DialogHeader>
+          {editingPageTranslation && (
+            <PageTranslationEditor
+              pageId={editingPageTranslation.id}
+              pageTitle={editingPageTranslation.title}
+              onSaved={() => { setEditingPageTranslation(null); refreshPreview() }}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

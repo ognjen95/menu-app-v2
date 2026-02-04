@@ -996,7 +996,10 @@
       "liveStatus": "● En Vivo",
       "draftStatus": "○ Borrador",
       "clickToUnpublish": "Haz clic para despublicar",
-      "clickToPublishPage": "Haz clic para publicar"
+      "clickToPublishPage": "Haz clic para publicar",
+      "translateTitle": "Traducir título de página",
+      "translatePageTitle": "Traducir Título de Página",
+      "translatePageDescription": "Añadir traducciones para el título de página \"{title}\""
     },
     "blocks": {
       "selectPage": "Seleccionar página",

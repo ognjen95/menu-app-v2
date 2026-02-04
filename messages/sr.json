@@ -996,7 +996,10 @@
       "liveStatus": "● Uživo",
       "draftStatus": "○ Nacrt",
       "clickToUnpublish": "Kliknite da uklonite objavu",
-      "clickToPublishPage": "Kliknite da objavite"
+      "clickToPublishPage": "Kliknite da objavite",
+      "translateTitle": "Prevedi naslov stranice",
+      "translatePageTitle": "Prevedi Naslov Stranice",
+      "translatePageDescription": "Dodajte prevode za naslov stranice \"{title}\""
     },
     "blocks": {
       "selectPage": "Izaberi stranicu",

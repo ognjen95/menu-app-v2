@@ -123,3 +123,13 @@ export function generateBlockTranslationKey(blockId: string, field: string): str
 export function getBlockTranslationPrefix(blockId: string): string {
   return `website_block.${blockId}.`
 }
+
+// Helper to generate translation key for website pages
+export function generatePageTranslationKey(pageId: string, field: 'title'): string {
+  return `website_page.${pageId}.${field}`
+}
+
+// Helper to generate translation key prefix for website pages
+export function getPageTranslationPrefix(pageId: string): string {
+  return `website_page.${pageId}.`
+}

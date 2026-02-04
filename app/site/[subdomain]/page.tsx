@@ -68,12 +68,12 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
       .eq('is_published', true)
       .order('sort_order'),
 
-    // Fetch translations for blocks and menu items
+    // Fetch translations for blocks, menu items, and pages
     supabase
       .from('translations')
       .select('*')
       .eq('tenant_id', tenantId)
-      .or('key.like.website_block.%,key.like.menu_item.%'),
+      .or('key.like.website_block.%,key.like.menu_item.%,key.like.website_page.%'),
 
     // Fetch locations for the tenant (needed for contact, hours, location blocks)
     supabase
@@ -160,7 +160,19 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
     fontBody: website.font_body || 'Inter',
   }
 
-  const navPages = pages?.filter(p => p.is_in_navigation) || []
+  // Apply translations to page titles
+  const getPageTitle = (page: { id: string; title: string }) => {
+    const translationKey = `website_page.${page.id}.title`
+    const translation = translations.find(
+      t => t.key === translationKey && t.language_code === currentLanguage
+    )
+    return translation?.value || page.title
+  }
+
+  const navPages = pages?.filter(p => p.is_in_navigation).map(p => ({
+    ...p,
+    title: getPageTitle(p)
+  })) || []
 
   const tenantName = tenant.name
   const tenantSlug = tenant.slug
