@@ -19,14 +19,24 @@ import {
   Truck,
 } from 'lucide-react'
 
+type SelectedVariantInfo = {
+  id: string
+  name: string
+  price_adjustment: number
+}
+
 type CartItem = {
   id: string
   item: {
     id: string
     name: string
     base_price: number
+    menu_item_variants?: { id: string; name: string; price_adjustment: number; category?: { name: string } }[]
   }
   variant?: { id: string; name: string; price_modifier: number }
+  selectedVariants?: Record<string, string[]> // categoryId -> variantIds
+  selectedVariantInfos?: SelectedVariantInfo[] // Flattened variant details for order submission
+  calculatedPrice?: number // Price with all variant adjustments
   selectedOptions: { id: string; name: string; price: number }[]
   quantity: number
   notes?: string
@@ -130,17 +140,22 @@ export function CheckoutDialog({
     setError(null)
 
     try {
-      const orderItems = cart.map(cartItem => ({
-        menu_item_id: cartItem.item.id,
-        variant_id: cartItem.variant?.id,
-        quantity: cartItem.quantity,
-        selected_options: cartItem.selectedOptions.map(opt => ({
-          option_id: opt.id,
-          name: opt.name,
-          price: opt.price,
-        })),
-        notes: cartItem.notes,
-      }))
+      const orderItems = cart.map(cartItem => {
+        // Use pre-computed selectedVariantInfos from the cart item
+        return {
+          menu_item_id: cartItem.item.id,
+          variant_id: cartItem.variant?.id,
+          selected_variants: cartItem.selectedVariantInfos || [],
+          unit_price: cartItem.calculatedPrice || cartItem.item.base_price,
+          quantity: cartItem.quantity,
+          selected_options: cartItem.selectedOptions.map(opt => ({
+            option_id: opt.id,
+            name: opt.name,
+            price: opt.price,
+          })),
+          notes: cartItem.notes,
+        }
+      })
 
       const response = await fetch('/api/public/orders', {
         method: 'POST',
@@ -467,16 +482,23 @@ export function CheckoutDialog({
                   <h3 className="font-semibold" style={{ color: colors.foreground }}>{t('orderSummary')}</h3>
                   <div className="space-y-2 text-sm">
                     {cart.map((item) => {
-                      const itemPrice = item.item.base_price + (item.variant?.price_modifier || 0)
+                      // Use calculatedPrice if available (new variant system)
+                      const itemPrice = item.calculatedPrice ?? (item.item.base_price + (item.variant?.price_modifier || 0))
                       const optionsPrice = item.selectedOptions.reduce((sum, opt) => sum + opt.price, 0)
                       const totalPrice = (itemPrice + optionsPrice) * item.quantity
+                      
+                      // Get selected variant names from pre-computed infos
+                      const variantNames = item.selectedVariantInfos?.map(v => v.name) || []
 
                       return (
                         <div key={item.id} className="flex justify-between" style={{ color: colors.foreground }}>
-                          <span>
-                            {item.quantity}x {item.item.name}
-                            {item.variant && ` (${item.variant.name})`}
-                          </span>
+                          <div>
+                            <span>{item.quantity}x {item.item.name}</span>
+                            {item.variant && <span className="text-xs opacity-70"> ({item.variant.name})</span>}
+                            {variantNames.length > 0 && (
+                              <div className="text-xs opacity-70">{variantNames.join(', ')}</div>
+                            )}
+                          </div>
                           <span>{currencySymbol}{totalPrice.toFixed(2)}</span>
                         </div>
                       )

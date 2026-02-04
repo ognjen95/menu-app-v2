@@ -17,6 +17,7 @@ interface WebsiteLanguageSelectorProps {
   currentLanguage: string
   subdomain: string
   currentPage: string
+  hideChevron?: boolean
   theme: {
     primary: string
     secondary: string
@@ -31,6 +32,7 @@ export function WebsiteLanguageSelector({
   currentLanguage,
   subdomain,
   currentPage,
+  hideChevron = false,
   theme,
 }: WebsiteLanguageSelectorProps) {
   const router = useRouter()
@@ -92,13 +94,13 @@ export function WebsiteLanguageSelector({
         <span style={{ display: 'none', '@media (min-width: 640px)': { display: 'inline' } } as any}>
           {currentLang?.nativeName}
         </span>
-        <ChevronDown 
+        {!hideChevron && <ChevronDown 
           size={14} 
           style={{ 
             transition: 'transform 0.2s',
             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' 
           }} 
-        />
+        />}
       </button>
 
       {/* Dropdown */}

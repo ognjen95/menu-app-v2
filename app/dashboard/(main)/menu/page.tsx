@@ -82,9 +82,25 @@ import {
   Tag,
   Languages,
   BookOpen,
+  Vegan,
+  WheatOff,
+  MilkOff,
+  type LucideIcon,
 } from 'lucide-react'
+
+// Dietary tag icons mapping
+const dietaryTagIcons: Record<string, LucideIcon> = {
+  'vegetarian': Leaf,
+  'vegan': Vegan,
+  'gluten-free': WheatOff,
+  'halal': Star,
+  'kosher': Star,
+  'dairy-free': MilkOff,
+  'nut-free': AlertTriangle,
+}
 import { useTenantLanguages, useSaveTranslations, generateItemTranslationKey, generateCategoryTranslationKey, useTranslationsByPrefix } from '@/lib/hooks/use-translations'
 import { TranslationEditor } from '@/components/features/translations/translation-editor'
+import { VariantManager } from '@/components/features/menu/VariantManager'
 import type { Category } from '@/lib/types'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
@@ -966,7 +982,7 @@ export default function MenuPage() {
 
       {/* Create/Edit Item Dialog */}
       <Dialog open={isItemDialogOpen} onOpenChange={(open) => { setIsItemDialogOpen(open); if (!open) resetItemForm() }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-5xl h-[95vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>{editingItem ? t('editMenuItem') : t('createMenuItem')}</DialogTitle>
             <DialogDescription>
@@ -975,10 +991,16 @@ export default function MenuPage() {
           </DialogHeader>
           <form onSubmit={handleSubmitItem} className="flex-1 overflow-hidden flex flex-col">
             <Tabs defaultValue="basic" className="flex-1 flex flex-col overflow-hidden">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className={cn("grid w-full", editingItem ? "grid-cols-5" : "grid-cols-4")}>
                 <TabsTrigger value="basic">{t('basicInfo')}</TabsTrigger>
                 <TabsTrigger value="details">{t('details')}</TabsTrigger>
                 <TabsTrigger value="dietary">{t('dietaryAllergens')}</TabsTrigger>
+                {editingItem && (
+                  <TabsTrigger value="variants" className="gap-1">
+                    <Tag className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">{t('variants')}</span>
+                  </TabsTrigger>
+                )}
                 <TabsTrigger value="translations" className="gap-1">
                   <Languages className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">{t('translations')}</span>
@@ -1198,28 +1220,32 @@ export default function MenuPage() {
                       <Leaf className="h-4 w-4 text-green-600" />
                       {t('dietaryTags')}
                     </h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      {dietaryTagOptions.map((tag) => (
-                        <div key={tag} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`dietary-${tag}`}
-                            checked={itemForm.dietary_tags.includes(tag)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setItemForm(prev => ({ ...prev, dietary_tags: [...prev.dietary_tags, tag] }))
-                              } else {
-                                setItemForm(prev => ({ ...prev, dietary_tags: prev.dietary_tags.filter(t => t !== tag) }))
-                              }
-                            }}
-                          />
-                          <label
-                            htmlFor={`dietary-${tag}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 capitalize"
-                          >
-                            {tag}
-                          </label>
-                        </div>
-                      ))}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                      {dietaryTagOptions.map((tag) => {
+                        const TagIcon = dietaryTagIcons[tag] || Leaf
+                        return (
+                          <div key={tag} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`dietary-${tag}`}
+                              checked={itemForm.dietary_tags.includes(tag)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setItemForm(prev => ({ ...prev, dietary_tags: [...prev.dietary_tags, tag] }))
+                                } else {
+                                  setItemForm(prev => ({ ...prev, dietary_tags: prev.dietary_tags.filter(t => t !== tag) }))
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor={`dietary-${tag}`}
+                              className="flex items-center gap-1.5 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 capitalize cursor-pointer"
+                            >
+                              <TagIcon className="h-4 w-4 text-green-600 flex-shrink-0" />
+                              <span className="hidden sm:inline">{tag}</span>
+                            </label>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
 
@@ -1257,6 +1283,17 @@ export default function MenuPage() {
                     </div>
                   </div>
                 </TabsContent>
+
+                {/* Variants Tab - Only when editing */}
+                {editingItem && (
+                  <TabsContent value="variants" className="mt-4">
+                    <VariantManager
+                      menuItemId={editingItem.id}
+                      menuItemName={editingItem.name}
+                      basePrice={editingItem.base_price}
+                    />
+                  </TabsContent>
+                )}
 
                 {/* Translations Tab */}
                 <TabsContent value="translations" className="mt-4">

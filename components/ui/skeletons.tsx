@@ -372,3 +372,139 @@ export function TeamMembersGridSkeleton({ count = 4 }: { count?: number }) {
     </motion.div>
   )
 }
+
+// Dashboard Stat Card Skeleton
+export function StatCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-4 w-4" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-8 w-32 mb-2" />
+        <Skeleton className="h-3 w-28" />
+      </CardContent>
+    </Card>
+  )
+}
+
+// Dashboard Stats Grid Skeleton
+export function StatsGridSkeleton() {
+  return (
+    <motion.div
+      className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+      initial="initial"
+      animate="animate"
+      variants={staggerContainer}
+    >
+      {Array.from({ length: 4 }).map((_, i) => (
+        <motion.div key={i} variants={staggerItemScale} custom={i}>
+          <StatCardSkeleton />
+        </motion.div>
+      ))}
+    </motion.div>
+  )
+}
+
+// Chart Card Skeleton
+export function ChartCardSkeleton({ height = 300 }: { height?: number }) {
+  return (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-6 w-40 mb-1" />
+        <Skeleton className="h-4 w-56" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className={`w-full`} style={{ height: `${height}px` }} />
+      </CardContent>
+    </Card>
+  )
+}
+
+// Top Waiter Item Skeleton
+export function TopWaiterItemSkeleton() {
+  return (
+    <div className="flex items-center gap-4">
+      <Skeleton className="w-8 h-8 rounded-full" />
+      <Skeleton className="h-10 w-10 rounded-full" />
+      <div className="flex-1 min-w-0 space-y-2">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-3 w-24" />
+      </div>
+      <div className="text-right space-y-1">
+        <Skeleton className="h-5 w-16 ml-auto" />
+        <Skeleton className="h-3 w-20" />
+      </div>
+    </div>
+  )
+}
+
+// Top Waiters List Skeleton
+export function TopWaitersListSkeleton({ count = 5 }: { count?: number }) {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-5 w-5" />
+          <Skeleton className="h-6 w-36" />
+        </div>
+        <Skeleton className="h-4 w-56" />
+      </CardHeader>
+      <CardContent>
+        <motion.div
+          className="space-y-4"
+          initial="initial"
+          animate="animate"
+          variants={staggerContainer}
+        >
+          {Array.from({ length: count }).map((_, i) => (
+            <motion.div key={i} variants={staggerItemScale} custom={i}>
+              <TopWaiterItemSkeleton />
+            </motion.div>
+          ))}
+        </motion.div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Dashboard Overview Skeleton - Only cards and charts, no header/date selector
+export function DashboardOverviewSkeleton() {
+  return (
+    <motion.div
+      className="space-y-6"
+      initial="initial"
+      animate="animate"
+      variants={staggerContainer}
+    >
+      {/* Stats Grid */}
+      <motion.div variants={staggerItemScale}>
+        <StatsGridSkeleton />
+      </motion.div>
+
+      {/* Charts Row */}
+      <motion.div 
+        className="grid gap-4 lg:grid-cols-2"
+        variants={staggerItemScale}
+      >
+        <ChartCardSkeleton height={300} />
+        <ChartCardSkeleton height={300} />
+      </motion.div>
+
+      {/* Products and Waiters Row */}
+      <motion.div 
+        className="grid gap-4 lg:grid-cols-2"
+        variants={staggerItemScale}
+      >
+        <ChartCardSkeleton height={300} />
+        <TopWaitersListSkeleton count={5} />
+      </motion.div>
+
+      {/* Peak Hours */}
+      <motion.div variants={staggerItemScale}>
+        <ChartCardSkeleton height={200} />
+      </motion.div>
+    </motion.div>
+  )
+}

@@ -16,7 +16,23 @@ export async function GET(request: NextRequest) {
         image_urls,
         is_active,
         is_featured,
-        category:categories(id, name)
+        is_sold_out,
+        category:categories(id, name),
+        menu_item_variants(
+          id,
+          name,
+          price_adjustment,
+          is_default,
+          is_available,
+          category_id,
+          category:variant_categories(
+            id,
+            name,
+            description,
+            is_required,
+            allow_multiple
+          )
+        )
       `)
       .eq('tenant_id', tenantId)
       .eq('is_active', true)

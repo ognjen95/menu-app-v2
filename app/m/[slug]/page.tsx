@@ -48,6 +48,10 @@ async function getTenantData(slug: string) {
           items:menu_items (
             *,
             variants:item_variants (*),
+            menu_item_variants (
+              *,
+              category:variant_categories (*)
+            ),
             option_groups (
               *,
               options:item_options (*)
@@ -98,7 +102,7 @@ async function getTenantData(slug: string) {
       .from('translations')
       .select('*')
       .eq('tenant_id', tenant.id)
-      .or('key.like.menu_item.%,key.like.category.%')
+      .or('key.like.menu_item.%,key.like.category.%,key.like.variant_category.%,key.like.menu_item_variant.%')
   ])
 
   // Extract results with proper error handling

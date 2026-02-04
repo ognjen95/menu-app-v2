@@ -1,274 +1,659 @@
 'use client'
 
+import { useState, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { 
-  ShoppingCart, 
-  TrendingUp, 
-  Users, 
   DollarSign,
+  ShoppingCart,
+  TrendingUp,
+  TrendingDown,
+  Users,
+  Calendar,
+  Award,
   Clock,
-  UtensilsCrossed,
-  ArrowUpRight,
-  ArrowDownRight,
-  Plus,
-  Eye,
-  Settings,
-  Bell,
-  ChefHat,
-  Table,
-  Menu,
-  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '@/lib/api'
-import Link from 'next/link'
-import type { OrderWithRelations, Table as TableType, MenuItem } from '@/lib/types'
+import { cn } from '@/lib/utils'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Area,
+  AreaChart,
+} from 'recharts'
+import { AnimatedDiv, AnimatedList, AnimatedListItem } from '@/components/ui/animated'
+import { DashboardOverviewSkeleton } from '@/components/ui/skeletons'
 
-// Helper to format time ago
-const formatTimeAgo = (date: string) => {
-  const now = new Date()
-  const past = new Date(date)
-  const diffMs = now.getTime() - past.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  
-  if (diffMins < 1) return 'Just now'
-  if (diffMins < 60) return `${diffMins} min ago`
-  const diffHours = Math.floor(diffMins / 60)
-  if (diffHours < 24) return `${diffHours}h ago`
-  const diffDays = Math.floor(diffHours / 24)
-  return `${diffDays}d ago`
+type Timeframe = 'day' | 'month' | 'year'
+
+interface AnalyticsData {
+  summary: {
+    totalEarnings: number
+    totalOrders: number
+    completedOrders: number
+    avgOrderValue: number
+    earningsChange: number
+    ordersChange: number
+  }
+  earningsChart: { date: string; earnings: number; orders: number }[]
+  topProducts: { name: string; quantity: number; revenue: number }[]
+  topWaiters: { id: string; name: string; avatar?: string; orders: number; revenue: number }[]
+  orderTypesChart: { name: string; value: number; color: string }[]
+  peakHoursChart: { hour: string; orders: number }[]
+  statusStats: Record<string, number>
+  timeframe: string
+}
+
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+]
+
+interface Location {
+  id: string
+  name: string
 }
 
 export default function DashboardPage() {
   const t = useTranslations('dashboard')
   const tc = useTranslations('common')
+  
+  // Use stable date reference for "today"
+  const today = useMemo(() => new Date(), [])
+  
+  const [timeframe, setTimeframe] = useState<Timeframe>('day')
+  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear())
+  const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth())
+  const [selectedDay, setSelectedDay] = useState(() => new Date().getDate())
+  const [selectedLocation, setSelectedLocation] = useState<string>('all')
 
-  // Fetch today's orders
-  const { data: ordersData, isLoading: ordersLoading } = useQuery({
-    queryKey: ['orders', 'today'],
-    queryFn: () => apiGet<{ data: { orders: OrderWithRelations[] } }>('/orders'),
-    refetchInterval: 30000, // Refresh every 30s
+  // Fetch locations
+  const { data: locationsData, isLoading: locationsLoading } = useQuery({
+    queryKey: ['locations'],
+    queryFn: () => apiGet<{ data: { locations: Location[] } }>('/locations'),
   })
 
-  // Fetch tables
-  const { data: tablesData } = useQuery({
-    queryKey: ['tables'],
-    queryFn: () => apiGet<{ data: { tables: TableType[] } }>('/tables'),
+  const locations = locationsData?.data?.locations || []
+
+  // Generate available years (last 5 years)
+  const years = useMemo(() => {
+    const currentYear = today.getFullYear()
+    return Array.from({ length: 5 }, (_, i) => currentYear - i)
+  }, [today])
+
+  // Generate days in selected month
+  const daysInMonth = useMemo(() => {
+    const days = new Date(selectedYear, selectedMonth + 1, 0).getDate()
+    return Array.from({ length: days }, (_, i) => i + 1)
+  }, [selectedYear, selectedMonth])
+
+  // Build query params based on timeframe and location
+  const queryParams = useMemo(() => {
+    const params = new URLSearchParams()
+    params.set('timeframe', timeframe)
+    params.set('year', selectedYear.toString())
+    if (timeframe === 'day' || timeframe === 'month') {
+      params.set('month', (selectedMonth + 1).toString())
+    }
+    if (timeframe === 'day') {
+      params.set('day', selectedDay.toString())
+    }
+    if (selectedLocation !== 'all') {
+      params.set('location_id', selectedLocation)
+    }
+    return params.toString()
+  }, [timeframe, selectedYear, selectedMonth, selectedDay, selectedLocation])
+
+  // Fetch analytics data
+  const { data: analyticsData, isLoading } = useQuery({
+    queryKey: ['analytics-overview', queryParams],
+    queryFn: () => apiGet<{ data: AnalyticsData }>(`/analytics/overview?${queryParams}`),
+    refetchInterval: 60000, // Refresh every minute
   })
 
-  // Fetch analytics
-  const { data: analyticsData } = useQuery({
-    queryKey: ['analytics', 'today'],
-    queryFn: () => apiGet<{ data: any }>('/analytics/today'),
-  })
+  const data = analyticsData?.data
 
-  const orders = ordersData?.data?.orders || []
-  const tables = tablesData?.data?.tables || []
-  const analytics = analyticsData?.data || {}
-
-  // Calculate stats
-  const todayOrders = orders.filter(o => {
-    const orderDate = new Date(o.created_at)
-    const today = new Date()
-    return orderDate.toDateString() === today.toDateString()
-  })
-
-  const activeOrders = orders.filter(o => 
-    ['placed', 'accepted', 'preparing', 'ready', 'served'].includes(o.status)
-  )
-
-  const todayRevenue = todayOrders.reduce((sum, o) => sum + (o.total || 0), 0)
-  const activeTables = tables.filter(t => t.status === 'occupied').length
-  const totalTables = tables.length
-
-  // Calculate average order time (mock for now)
-  const avgOrderTime = analytics.avgOrderTime || 18
-
-  // Get recent orders (last 10)
-  const recentOrders = [...orders]
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 10)
-
-  // Calculate top items
-  const itemStats = new Map<string, { name: string; orders: number; revenue: number }>()
-  orders.forEach(order => {
-    order.items?.forEach(item => {
-      const existing = itemStats.get(item.item_name) || { name: item.item_name, orders: 0, revenue: 0 }
-      existing.orders += item.quantity
-      existing.revenue += item.total_price || 0
-      itemStats.set(item.item_name, existing)
-    })
-  })
-  const topItems = Array.from(itemStats.values())
-    .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 5)
-
-  const stats = [
-    {
-      title: t('stats.ordersToday'),
-      value: todayOrders.length.toString(),
-      change: analytics.ordersTrend || '+0%',
-      changeType: 'positive' as const,
-      icon: ShoppingCart,
-    },
-    {
-      title: t('stats.revenueToday'),
-      value: `€${todayRevenue.toFixed(2)}`,
-      change: analytics.revenueTrend || '+0%',
-      changeType: 'positive' as const,
-      icon: DollarSign,
-    },
-    {
-      title: t('stats.activeTables'),
-      value: `${activeTables}/${totalTables}`,
-      change: totalTables > 0 ? `${Math.round((activeTables / totalTables) * 100)}%` : '0%',
-      changeType: 'neutral' as const,
-      icon: Users,
-    },
-    {
-      title: t('stats.avgOrderTime'),
-      value: `${avgOrderTime} min`,
-      change: analytics.orderTimeTrend || '-',
-      changeType: 'positive' as const,
-      icon: Clock,
-    },
+  const timeframeOptions: { value: Timeframe; label: string }[] = [
+    { value: 'day', label: t('timeframe.day') },
+    { value: 'month', label: t('timeframe.month') },
+    { value: 'year', label: t('timeframe.year') },
   ]
 
-  const quickActions = [
-    { label: t('quickActions.viewOrders'), icon: Bell, href: '/dashboard/orders', variant: 'default' as const },
-    { label: t('quickActions.manageMenu'), icon: Menu, href: '/dashboard/menu', variant: 'outline' as const },
-    { label: t('quickActions.manageTables'), icon: Table, href: '/dashboard/tables', variant: 'outline' as const },
-    { label: t('quickActions.settings'), icon: Settings, href: '/dashboard/settings', variant: 'outline' as const },
-  ]
+  // Handle timeframe change - reset to current date
+  const handleTimeframeChange = (newTimeframe: Timeframe) => {
+    setTimeframe(newTimeframe)
+    setSelectedYear(today.getFullYear())
+    setSelectedMonth(today.getMonth())
+    setSelectedDay(today.getDate())
+  }
 
-  return (
-    <div className="space-y-4 md:space-y-6">
-      {/* Page header */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
-          <p className="text-sm md:text-base text-muted-foreground">
-            {t('welcome')}
-          </p>
-        </div>
-        {/* Quick Actions */}
-        <div className="flex flex-wrap gap-2">
-          {quickActions.map((action) => (
-            <Link key={action.href} href={action.href}>
-              <Button variant={action.variant} size="sm" className="gap-1.5">
-                <action.icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{action.label}</span>
-              </Button>
-            </Link>
+  // Navigate day
+  const navigateDay = (delta: number) => {
+    const date = new Date(selectedYear, selectedMonth, selectedDay + delta)
+    if (date <= today) {
+      setSelectedYear(date.getFullYear())
+      setSelectedMonth(date.getMonth())
+      setSelectedDay(date.getDate())
+    }
+  }
+
+  // Navigate month
+  const navigateMonth = (delta: number) => {
+    const date = new Date(selectedYear, selectedMonth + delta, 1)
+    if (date <= today) {
+      setSelectedYear(date.getFullYear())
+      setSelectedMonth(date.getMonth())
+    }
+  }
+
+  // Format selected date for display
+  const formattedDate = useMemo(() => {
+    if (timeframe === 'day') {
+      return new Date(selectedYear, selectedMonth, selectedDay).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    }
+    if (timeframe === 'month') {
+      return `${MONTHS[selectedMonth]} ${selectedYear}`
+    }
+    return selectedYear.toString()
+  }, [timeframe, selectedYear, selectedMonth, selectedDay])
+
+  // Check if we can go forward
+  const canGoForward = useMemo(() => {
+    if (timeframe === 'day') {
+      const selectedDate = new Date(selectedYear, selectedMonth, selectedDay)
+      return selectedDate < today
+    }
+    if (timeframe === 'month') {
+      return selectedYear < today.getFullYear() || 
+        (selectedYear === today.getFullYear() && selectedMonth < today.getMonth())
+    }
+    return selectedYear < today.getFullYear()
+  }, [timeframe, selectedYear, selectedMonth, selectedDay, today])
+
+  // Custom tooltip for charts
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-popover border rounded-lg p-3 shadow-lg">
+          <p className="font-medium">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} className="text-sm text-muted-foreground">
+              {entry.name}: {entry.name === 'earnings' ? `€${entry.value.toFixed(2)}` : entry.value}
+            </p>
           ))}
         </div>
-      </div>
+      )
+    }
+    return null
+  }
 
-      {/* Stats grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                {stat.changeType === 'positive' && (
-                  <ArrowUpRight className="h-3 w-3 text-green-500" />
-                )}
-                <span className={
-                  stat.changeType === 'positive' ? 'text-green-500' : ''
-                }>
-                  {stat.change}
-                </span>
-                {' '}{tc('fromYesterday')}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+  return (
+    <div className="space-y-6">
+      {/* Header with timeframe selector - Always visible */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
+            <p className="text-muted-foreground">{t('overview.subtitle')}</p>
+          </div>
+          <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
+            {timeframeOptions.map((option) => (
+              <Button
+                key={option.value}
+                variant={timeframe === option.value ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => handleTimeframeChange(option.value)}
+                className="px-4"
+              >
+                {option.label}
+              </Button>
+            ))}
+          </div>
+        </div>
 
-      {/* Main content grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        {/* Recent orders */}
-        <Card className="col-span-4 flex flex-col">
-          <CardHeader className="shrink-0">
-            <CardTitle>{t('recentOrders.title')}</CardTitle>
-            <CardDescription>{t('recentOrders.description')}</CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1 min-h-0">
-            {ordersLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : recentOrders.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                {t('recentOrders.noOrders')}
-              </div>
-            ) : (
-              <div className="space-y-3 overflow-y-auto h-[400px] pr-2">
-                {recentOrders.map((order) => (
-                  <Link key={order.id} href={`/dashboard/orders`}>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors gap-2">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="font-medium shrink-0">{order.order_number}</div>
-                        <div className="text-sm text-muted-foreground truncate">
-                          {order.table?.name || order.customer_name || tc('takeaway')}
-                        </div>
-                        <div className="text-sm shrink-0">{order.items?.length || 0} {tc('items')}</div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Badge variant="outline" className="shrink-0">
-                          {tc(`orderStatus.${order.status}`)}
-                        </Badge>
-                        <div className="font-medium shrink-0">€{order.total?.toFixed(2) || '0.00'}</div>
-                        <div className="text-xs text-muted-foreground shrink-0 hidden sm:block">
-                          {formatTimeAgo(order.created_at)}
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
+        {/* Date Selection */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          
+          {/* Year Selector - Always visible */}
+          <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+            <SelectTrigger className="w-[100px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {years.map((year) => (
+                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Month Selector - For day and month timeframe */}
+          {(timeframe === 'day' || timeframe === 'month') && (
+            <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MONTHS.map((month, index) => (
+                  <SelectItem 
+                    key={month} 
+                    value={index.toString()}
+                    disabled={selectedYear === today.getFullYear() && index > today.getMonth()}
+                  >
+                    {month}
+                  </SelectItem>
                 ))}
-              </div>
-            )}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* Day Selector - For day timeframe */}
+          {timeframe === 'day' && (
+            <Select value={selectedDay.toString()} onValueChange={(v) => setSelectedDay(parseInt(v))}>
+              <SelectTrigger className="w-[80px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {daysInMonth.map((day) => (
+                  <SelectItem 
+                    key={day} 
+                    value={day.toString()}
+                    disabled={
+                      selectedYear === today.getFullYear() && 
+                      selectedMonth === today.getMonth() && 
+                      day > today.getDate()
+                    }
+                  >
+                    {day}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* Quick Navigation */}
+          <div className="flex items-center gap-1 ml-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => {
+                if (timeframe === 'day') navigateDay(-1)
+                else if (timeframe === 'month') navigateMonth(-1)
+                else setSelectedYear(y => y - 1)
+              }}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => {
+                if (timeframe === 'day') navigateDay(1)
+                else if (timeframe === 'month') navigateMonth(1)
+                else setSelectedYear(y => Math.min(y + 1, today.getFullYear()))
+              }}
+              disabled={!canGoForward}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Formatted Date Display */}
+          <span className="text-sm font-medium text-muted-foreground ml-2">
+            {formattedDate}
+          </span>
+
+          {/* Separator */}
+          <div className="w-px h-6 bg-border ml-2" />
+
+          {/* Location Selector */}
+          <MapPin className="h-4 w-4 text-muted-foreground ml-2" />
+          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder={t('overview.allLocations')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('overview.allLocations')}</SelectItem>
+              {locations.map((location) => (
+                <SelectItem key={location.id} value={location.id}>
+                  {location.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Show skeleton or data based on loading state */}
+      {isLoading ? (
+        <DashboardOverviewSkeleton />
+      ) : (
+        <AnimatedList className="space-y-6">
+          {/* Summary Stats */}
+          <AnimatedListItem className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* Total Earnings */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">{t('overview.totalEarnings')}</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">€{(data?.summary.totalEarnings || 0).toFixed(2)}</div>
+            <div className="flex items-center text-xs text-muted-foreground mt-1">
+              {(data?.summary.earningsChange || 0) >= 0 ? (
+                <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
+              ) : (
+                <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+              )}
+              <span className={cn(
+                (data?.summary.earningsChange || 0) >= 0 ? 'text-green-500' : 'text-red-500'
+              )}>
+                {(data?.summary.earningsChange || 0) >= 0 ? '+' : ''}{data?.summary.earningsChange || 0}%
+              </span>
+              <span className="ml-1">{t('overview.vsPreviousPeriod')}</span>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Top items */}
-        <Card className="col-span-3 flex flex-col">
-          <CardHeader className="shrink-0">
-            <CardTitle>{t('topItems.title')}</CardTitle>
-            <CardDescription>{t('topItems.description')}</CardDescription>
+        {/* Total Orders */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">{t('overview.totalOrders')}</CardTitle>
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="flex-1 min-h-0">
-            {topItems.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                {t('topItems.noItems')}
-              </div>
-            ) : (
-              <div className="space-y-4 overflow-y-auto h-[400px] pr-2">
-                {topItems.map((item, index) => (
-                  <div key={item.name} className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium shrink-0">
+          <CardContent>
+            <div className="text-2xl font-bold">{data?.summary.totalOrders || 0}</div>
+            <div className="flex items-center text-xs text-muted-foreground mt-1">
+              {(data?.summary.ordersChange || 0) >= 0 ? (
+                <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
+              ) : (
+                <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+              )}
+              <span className={cn(
+                (data?.summary.ordersChange || 0) >= 0 ? 'text-green-500' : 'text-red-500'
+              )}>
+                {(data?.summary.ordersChange || 0) >= 0 ? '+' : ''}{data?.summary.ordersChange || 0}%
+              </span>
+              <span className="ml-1">{t('overview.vsPreviousPeriod')}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Average Order Value */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">{t('overview.avgOrderValue')}</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">€{(data?.summary.avgOrderValue || 0).toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {t('overview.perOrder')}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Completed Orders */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">{t('overview.completedOrders')}</CardTitle>
+            <Award className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data?.summary.completedOrders || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {data?.summary.totalOrders ? 
+                `${((data.summary.completedOrders / data.summary.totalOrders) * 100).toFixed(0)}% ${t('overview.completionRate')}` 
+                : t('overview.noOrders')
+              }
+            </p>
+          </CardContent>
+        </Card>
+      </AnimatedListItem>
+
+      {/* Charts Row */}
+      <AnimatedListItem className="grid gap-4 lg:grid-cols-2">
+        {/* Earnings Chart */}
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle>{t('overview.earningsOverTime')}</CardTitle>
+            <CardDescription>
+              {timeframe === 'day' ? t('overview.hourlyBreakdown') : t('overview.dailyBreakdown')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              {data?.earningsChart && data.earningsChart.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={data.earningsChart}>
+                    <defs>
+                      <linearGradient id="colorEarnings" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(value) => timeframe === 'day' ? value : (timeframe === 'year' ? value : value.slice(5))}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(value) => `€${value}`}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area 
+                      type="monotone" 
+                      dataKey="earnings" 
+                      stroke="hsl(var(--primary))" 
+                      fillOpacity={1} 
+                      fill="url(#colorEarnings)" 
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ fill: 'hsl(var(--primary))', r: 6, strokeWidth: 2 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  {t('overview.noData')}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Order Types Pie Chart */}
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle>{t('overview.orderTypes')}</CardTitle>
+            <CardDescription>{t('overview.orderTypesDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              {data?.orderTypesChart && data.orderTypesChart.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={data.orderTypesChart}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                    >
+                      {data.orderTypesChart.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  {t('overview.noData')}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </AnimatedListItem>
+
+      {/* Products and Waiters Row */}
+      <AnimatedListItem className="grid gap-4 lg:grid-cols-2">
+        {/* Best Selling Products */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-amber-500" />
+              {t('overview.bestSellingProducts')}
+            </CardTitle>
+            <CardDescription>{t('overview.bestSellingProductsDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              {data?.topProducts && data.topProducts.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.topProducts} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis type="number" tick={{ fontSize: 12 }} />
+                    <YAxis 
+                      type="category" 
+                      dataKey="name" 
+                      width={100}
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(value) => value.length > 15 ? value.slice(0, 15) + '...' : value}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="quantity" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  {t('overview.noData')}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Top Waiters */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-blue-500" />
+              {t('overview.topWaiters')}
+            </CardTitle>
+            <CardDescription>{t('overview.topWaitersDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {data?.topWaiters && data.topWaiters.length > 0 ? (
+              <AnimatedList stagger="fast" className="space-y-4">
+                {data.topWaiters.map((waiter, index) => (
+                  <AnimatedListItem key={waiter.id} className="flex items-center gap-4">
+                    <div className={cn(
+                      "flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold",
+                      index === 0 ? "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300" :
+                      index === 1 ? "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300" :
+                      index === 2 ? "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300" :
+                      "bg-muted text-muted-foreground"
+                    )}>
                       {index + 1}
                     </div>
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={waiter.avatar} />
+                      <AvatarFallback>{waiter.name.charAt(0).toUpperCase()}</AvatarFallback>
+                    </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{item.name}</p>
-                      <p className="text-sm text-muted-foreground">{item.orders} {t('topItems.orders')}</p>
+                      <p className="font-medium truncate">{waiter.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {waiter.orders} {t('overview.ordersServed')}
+                      </p>
                     </div>
-                    <div className="font-medium shrink-0">€{item.revenue.toFixed(2)}</div>
-                  </div>
+                    <div className="text-right">
+                      <p className="font-bold text-green-600">€{waiter.revenue.toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground">{t('overview.totalRevenue')}</p>
+                    </div>
+                  </AnimatedListItem>
                 ))}
+              </AnimatedList>
+            ) : (
+              <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+                {t('overview.noData')}
               </div>
             )}
           </CardContent>
         </Card>
-      </div>
+      </AnimatedListItem>
+
+      {/* Peak Hours */}
+      <AnimatedListItem>
+        <Card>
+          <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-purple-500" />
+            {t('overview.peakHours')}
+          </CardTitle>
+          <CardDescription>{t('overview.peakHoursDesc')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[200px]">
+            {data?.peakHoursChart ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.peakHoursChart}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="hour" 
+                    tick={{ fontSize: 10 }}
+                    interval={1}
+                  />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="orders" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                {t('overview.noData')}
+              </div>
+            )}
+          </div>
+        </CardContent>
+        </Card>
+      </AnimatedListItem>
+        </AnimatedList>
+      )}
     </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useMediaQuery } from '@/hooks/use-media-query'
+import { useVariantSelection } from '@/lib/hooks/use-variant-selection'
 import {
   Dialog,
   DialogContent,
@@ -67,6 +68,19 @@ export function ItemDetailModal({
   const tDietary = useTranslations('dietaryTags')
   const tAllergens = useTranslations('allergens')
   const isDesktop = useMediaQuery('(min-width: 768px)')
+
+  // Use the variant selection hook for all variant logic
+  const {
+    selectedVariants,
+    variantsByCategory,
+    handleVariantClick,
+    totalPrice,
+    getSelectedVariantInfos,
+  } = useVariantSelection({
+    variants: item?.menu_item_variants,
+    basePrice: item?.base_price || 0,
+    itemId: item?.id,
+  })
 
   if (!item) return null
 
@@ -189,7 +203,7 @@ export function ItemDetailModal({
           </div>
         )}
 
-        {/* Variants */}
+        {/* Variants (old system) */}
         {item.variants && item.variants.length > 0 && (
           <div className="mb-6">
             <h3 className="font-semibold mb-2" style={{ color: theme.foreground }}>{t('size')}</h3>
@@ -207,6 +221,51 @@ export function ItemDetailModal({
             </div>
           </div>
         )}
+
+        {/* Menu Item Variants (grouped by category) */}
+        {Object.keys(variantsByCategory).length > 0 && Object.entries(variantsByCategory).map(([categoryId, variants]: [string, any]) => {
+          const category = variants[0]?.category
+          if (!category) return null
+          const selected = selectedVariants[categoryId] || []
+          
+          return (
+            <div key={categoryId} className="mb-6">
+              <h3 className="font-semibold mb-2 flex items-center gap-2" style={{ color: theme.foreground }}>
+                {category.name}
+                {category.is_required && <span style={{ color: '#EF4444' }}>*</span>}
+                {category.allow_multiple && <span className="text-xs font-normal" style={{ color: mutedForeground }}>({t('selectMultiple')})</span>}
+              </h3>
+              {category.description && (
+                <p className="text-sm mb-2" style={{ color: mutedForeground }}>{category.description}</p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                {variants.filter((v: any) => v.is_available).map((variant: any) => {
+                  const isSelected = selected.includes(variant.id)
+                  return (
+                    <button
+                      key={variant.id}
+                      type="button"
+                      className="cursor-pointer px-4 py-2 rounded-md transition-all hover:scale-105"
+                      style={{ 
+                        border: isSelected ? `2px solid ${theme.primary}` : `1px solid ${borderColor}`, 
+                        color: theme.foreground,
+                        backgroundColor: isSelected ? `${theme.primary}15` : 'transparent'
+                      }}
+                      onClick={() => handleVariantClick(categoryId, variant.id, category.allow_multiple)}
+                    >
+                      {variant.name}
+                      {variant.price_adjustment !== 0 && (
+                        <span style={{ color: mutedForeground, marginLeft: '4px' }}>
+                          {variant.price_adjustment > 0 ? '+' : ''}€{variant.price_adjustment.toFixed(2)}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
 
         {/* Option groups */}
         {item.option_groups?.map((group: { id: string; name: string; is_required: boolean; options: { id: string; name: string; price: number }[] }) => (
@@ -239,11 +298,17 @@ export function ItemDetailModal({
           className="w-full h-12 rounded-xl font-semibold transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
           style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: `0 6px 20px 0 ${theme.primary}50` }}
           onClick={() => {
-            onAddToCart(item)
+            // Pass item with selected variants info
+            onAddToCart({ 
+              ...item, 
+              selectedVariants, 
+              selectedVariantInfos: getSelectedVariantInfos(),
+              calculatedPrice: totalPrice 
+            })
             onClose()
           }}
         >
-          {t('addToOrder')} - €{item.base_price.toFixed(2)}
+          {t('addToOrder')} - €{totalPrice.toFixed(2)}
         </button>
       </div>
     </div>

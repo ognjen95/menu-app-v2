@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -34,6 +35,13 @@ import {
   Settings,
   History,
   User,
+  ClipboardList,
+  Store,
+  Truck,
+  Phone,
+  Mail,
+  MapPin,
+  MessageSquare,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { OrderStatus, OrderWithRelations } from '@/lib/types'
@@ -190,7 +198,7 @@ export function OrderDetailDialog({ order, open, onOpenChange }: OrderDetailDial
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-2xl max-h-[85vh] min-h-[60vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span>#{order?.order_number}</span>
@@ -207,8 +215,12 @@ export function OrderDetailDialog({ order, open, onOpenChange }: OrderDetailDial
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="actions" className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="grid w-full grid-cols-2">
+        <Tabs defaultValue="details" className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="details" className="gap-2">
+              <ClipboardList className="h-4 w-4" />
+              {t('tabs.details')}
+            </TabsTrigger>
             <TabsTrigger value="actions" className="gap-2">
               <Settings className="h-4 w-4" />
               {t('tabs.actions')}
@@ -218,6 +230,138 @@ export function OrderDetailDialog({ order, open, onOpenChange }: OrderDetailDial
               {t('tabs.history')}
             </TabsTrigger>
           </TabsList>
+
+          {/* Details Tab */}
+          <TabsContent value="details" className="flex-1 overflow-y-auto space-y-4 mt-4">
+            {order && (
+              <>
+                    {/* Customer Info - Collapsible */}
+                {(order.customer_name || order.customer_phone || order.customer_email) && (
+                  <Accordion type="single" collapsible className="rounded-lg bg-muted/50">
+                    <AccordionItem value="customer-info" className="border-none">
+                      <AccordionTrigger className="px-3 py-2 hover:no-underline">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium text-sm">{t('customerInfo')}</span>
+                          {order.customer_name && (
+                            <span className="text-sm text-muted-foreground">- {order.customer_name}</span>
+                          )}
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-3 pb-3 space-y-2">
+                        {order.customer_name && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <span>{order.customer_name}</span>
+                          </div>
+                        )}
+                        {order.customer_phone && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <span>{order.customer_phone}</span>
+                          </div>
+                        )}
+                        {order.customer_email && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <span>{order.customer_email}</span>
+                          </div>
+                        )}
+                        {(order as any).delivery_address?.address && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            <span>{(order as any).delivery_address.address}</span>
+                          </div>
+                        )}
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                )}
+
+                {/* Order Type & Table */}
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  {order.type === 'dine_in' && <Store className="h-5 w-5 text-primary" />}
+                  {order.type === 'takeaway' && <User className="h-5 w-5 text-primary" />}
+                  {order.type === 'delivery' && <Truck className="h-5 w-5 text-primary" />}
+                  <div>
+                    <p className="font-medium">{t(`type.${order.type}`)}</p>
+                    {order.table && (
+                      <p className="text-sm text-muted-foreground">
+                        {order.table.zone && `${order.table.zone} - `}{order.table.name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Customer Notes */}
+                {order.customer_notes && (
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <div className="flex items-start gap-2">
+                      <MessageSquare className="h-4 w-4 text-amber-500 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-sm text-amber-500">{t('customerNotes')}</p>
+                        <p className="text-sm">{order.customer_notes}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Order Items */}
+                <div className="space-y-2">
+                  <p className="font-medium text-sm">{t('orderItems')}</p>
+                  {order.items?.map(item => {
+                    const variantNames = (item as any).selected_variants?.map((v: any) => v.name) || []
+                    return (
+                      <div key={item.id} className="p-3 rounded-lg bg-muted/50">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className="font-medium">{item.quantity}x {item.item_name}</p>
+                            {/* Old variant system */}
+                            {item.variant_name && (
+                              <p className="text-xs text-muted-foreground">{item.variant_name}</p>
+                            )}
+                            {/* New variant system */}
+                            {variantNames.length > 0 && (
+                              <p className="text-xs text-muted-foreground">{variantNames.join(', ')}</p>
+                            )}
+                            {/* Options */}
+                            {(item as any).selected_options?.length > 0 && (
+                              <p className="text-xs text-muted-foreground">
+                                + {(item as any).selected_options.map((o: any) => o.name).join(', ')}
+                              </p>
+                            )}
+                            {/* Item notes */}
+                            {item.notes && (
+                              <p className="text-xs text-amber-500 mt-1">{item.notes}</p>
+                            )}
+                          </div>
+                          <span className="font-medium">€{item.total_price?.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Totals */}
+                <div className="p-3 rounded-lg border space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{t('subtotal')}</span>
+                    <span>€{order.subtotal?.toFixed(2)}</span>
+                  </div>
+                  {order.tax_amount > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{t('tax')}</span>
+                      <span>€{order.tax_amount?.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-bold pt-2 border-t">
+                    <span>{t('total')}</span>
+                    <span>€{order.total?.toFixed(2)}</span>
+                  </div>
+                </div>
+              </>
+            )}
+          </TabsContent>
 
           <TabsContent value="actions" className="flex-1 overflow-y-auto space-y-6 mt-4">
             {/* Change Status */}

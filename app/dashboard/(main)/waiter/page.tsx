@@ -850,6 +850,12 @@ export default function WaiterPage() {
                         {item.variant_name && (
                           <div className="text-xs text-muted-foreground">{item.variant_name}</div>
                         )}
+                        {/* Selected variants (new system) */}
+                        {(item as any).selected_variants?.length > 0 && (
+                          <div className="text-xs text-muted-foreground">
+                            {(item as any).selected_variants.map((v: any) => v.name).join(', ')}
+                          </div>
+                        )}
                         {item.notes && (
                           <div className="text-xs text-amber-500 mt-1">{item.notes}</div>
                         )}

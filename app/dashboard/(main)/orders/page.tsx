@@ -302,10 +302,23 @@ export default function OrdersPage() {
         <CardContent className="space-y-3 pt-0">
           {/* Order items */}
           <div className="space-y-1.5 text-sm">
-            {(isExpanded ? order.items : order.items?.slice(0, 3))?.map((item) => (
+            {(isExpanded ? order.items : order.items?.slice(0, 3))?.map((item) => {
+              // Get variant names for display
+              const variantNames = (item as any).selected_variants?.map((v: any) => v.name) || []
+              const hasVariants = item.variant_name || variantNames.length > 0
+              
+              return (
               <div key={item.id} className="space-y-0.5">
                 <div className="flex justify-between">
-                  <span className="truncate font-medium">{item.quantity}x {item.item_name}</span>
+                  <div className="truncate">
+                    <span className="font-medium">{item.quantity}x {item.item_name}</span>
+                    {/* Show variants inline when collapsed */}
+                    {!isExpanded && hasVariants && (
+                      <span className="text-xs text-muted-foreground ml-1">
+                        ({item.variant_name || variantNames.join(', ')})
+                      </span>
+                    )}
+                  </div>
                   <span className="text-muted-foreground shrink-0 ml-2">
                     €{item.total_price?.toFixed(2) || '0.00'}
                   </span>
@@ -314,11 +327,23 @@ export default function OrdersPage() {
                 {/* Expanded item details */}
                 {isExpanded && (
                   <div className="pl-4 space-y-0.5">
-                    {/* Variant */}
+                    {/* Variant (old system) */}
                     {item.variant_name && (
                       <p className="text-xs text-muted-foreground">
                         {item.variant_name}
                       </p>
+                    )}
+
+                    {/* Selected variants (new system) */}
+                    {(item as any).selected_variants?.length > 0 && (
+                      <div className="text-xs text-muted-foreground">
+                        {(item as any).selected_variants.map((v: any, i: number) => (
+                          <span key={i}>
+                            {v.name}{v.price_adjustment !== 0 && ` (${v.price_adjustment > 0 ? '+' : ''}€${v.price_adjustment.toFixed(2)})`}
+                            {i < (item as any).selected_variants.length - 1 && ', '}
+                          </span>
+                        ))}
+                      </div>
                     )}
 
                     {/* Options */}
@@ -351,7 +376,8 @@ export default function OrdersPage() {
                   </div>
                 )}
               </div>
-            ))}
+              )
+            })}
 
             {/* Show more items indicator (collapsed) */}
             {!isExpanded && (order.items?.length || 0) > 3 && (
@@ -379,7 +405,10 @@ export default function OrdersPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded)
+              }}
               className="w-full h-6 text-xs text-muted-foreground hover:text-foreground"
             >
               {isExpanded ? (
@@ -432,7 +461,7 @@ export default function OrdersPage() {
         <div className="flex items-center gap-2">
           {/* Location selector */}
           <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
-            <SelectTrigger className="w-[120px] md:w-[180px]">
+            <SelectTrigger className="w-[180px] md:w-[180px]">
               <SelectValue placeholder={t('allLocations')} />
             </SelectTrigger>
             <SelectContent>
@@ -476,13 +505,12 @@ export default function OrdersPage() {
           </div>
 
           {/* Waiter Mode */}
-          <Button variant="outline" asChild className="px-3 md:px-4">
+          {/* <Button variant="outline" asChild className="px-3 md:px-4">
             <Link href="/dashboard/waiter">
               <Smartphone className="h-4 w-4 md:mr-2" />
               <span className="hidden md:inline">{t('waiterMode')}</span>
             </Link>
-          </Button>
-
+          </Button> */}
 
 
           {/* Refresh */}
@@ -520,13 +548,13 @@ export default function OrdersPage() {
               variant="outline"
               onClick={() => toggleStatus(status)}
               className={cn(
-                "h-9 px-3 text-sm gap-1.5 md:h-14 md:px-6 md:text-lg md:gap-3",
+                "h-9 px-3 text-sm gap-1.5 md:h-14 md:px-6 md:text-lg md:gap-3 relative",
                 isSelected && config.buttonColor
               )}
             >
-              <config.icon className="h-4 w-4 md:h-6 md:w-6" />
+              <config.icon className="h-4 w-4 md:h-6 md:w-6 " />
               <span className="hidden sm:inline">{t(`status.${status}`)}</span>
-              {!!count && <Badge variant="destructive" className="text-xs px-1.5 md:text-base md:px-2.5 md:py-0.5">{count}</Badge>}
+              {!!count && <Badge variant="destructive" className="text-xs px-1.5 md:text-base md:px-2.5 md:py-0.5 absolute -top-2 -right-2">{count}</Badge>}
             </Button>
           )
         })}
@@ -618,11 +646,11 @@ export default function OrdersPage() {
       )}
 
       {/* Logs Dialog */}
-      <OrderLogsDialog
+      {/* <OrderLogsDialog
         order={selectedOrderForLogs}
         open={!!selectedOrderForLogs}
         onOpenChange={() => setSelectedOrderForLogs(null)}
-      />
+      /> */}
 
       {/* Order Detail Dialog */}
       <OrderDetailDialog

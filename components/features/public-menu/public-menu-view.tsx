@@ -45,8 +45,25 @@ type CategoryWithItems = {
   items: MenuItemWithRelations[]
 }
 
+type MenuItemVariantWithCategory = {
+  id: string
+  name: string
+  price_adjustment: number
+  is_default: boolean
+  is_available: boolean
+  category_id: string
+  category?: {
+    id: string
+    name: string
+    description?: string
+    is_required: boolean
+    allow_multiple: boolean
+  }
+}
+
 type MenuItemWithRelations = MenuItem & {
   variants?: { id: string; name: string; price_modifier: number; is_default: boolean }[]
+  menu_item_variants?: MenuItemVariantWithCategory[]
   option_groups?: {
     id: string
     name: string
@@ -58,10 +75,19 @@ type MenuItemWithRelations = MenuItem & {
   item_allergens?: { allergen_id: string; allergens: Allergen }[]
 }
 
+type SelectedVariantInfo = {
+  id: string
+  name: string
+  price_adjustment: number
+}
+
 type CartItem = {
   id: string
   item: MenuItemWithRelations
   variant?: { id: string; name: string; price_modifier: number }
+  selectedVariants?: Record<string, string[]> // categoryId -> variantIds
+  selectedVariantInfos?: SelectedVariantInfo[] // Flattened variant details for order submission
+  calculatedPrice?: number // Price with all variant adjustments
   selectedOptions: { id: string; name: string; price: number }[]
   quantity: number
   notes?: string
@@ -259,12 +285,28 @@ export function PublicMenuView({
   const totalFilteredItems = filteredCategories.reduce((sum, cat) => sum + cat.items.length, 0)
 
   // Cart functions
-  const addToCart = (item: MenuItemWithRelations, variant?: CartItem['variant'], options: CartItem['selectedOptions'] = []) => {
+  const addToCart = (itemData: any) => {
+    // Handle both old format (item, variant, options) and new format (item with selectedVariants)
+    const item = itemData as MenuItemWithRelations & { 
+      selectedVariants?: Record<string, string[]>
+      selectedVariantInfos?: SelectedVariantInfo[]
+      calculatedPrice?: number 
+    }
+    const selectedVariants = item.selectedVariants || {}
+    const selectedVariantInfos = item.selectedVariantInfos || []
+    const calculatedPrice = item.calculatedPrice || item.base_price
+    
+    // Create unique ID based on item and selected variants
+    const variantIds = Object.values(selectedVariants).flat().sort().join('-')
+    const cartItemId = `${item.id}-${variantIds || 'default'}`
+    
     const cartItem: CartItem = {
-      id: `${item.id}-${variant?.id || 'default'}-${options.map(o => o.id).join('-')}`,
+      id: cartItemId,
       item,
-      variant,
-      selectedOptions: options,
+      selectedVariants,
+      selectedVariantInfos,
+      calculatedPrice,
+      selectedOptions: [],
       quantity: 1,
     }
 
@@ -300,7 +342,8 @@ export function PublicMenuView({
 
   const cartTotal = useMemo(() => {
     return cart.reduce((total, item) => {
-      const itemPrice = item.item.base_price + (item.variant?.price_modifier || 0)
+      // Use calculatedPrice if available (new variant system), otherwise fall back to base_price + variant
+      const itemPrice = item.calculatedPrice ?? (item.item.base_price + (item.variant?.price_modifier || 0))
       const optionsPrice = item.selectedOptions.reduce((sum, opt) => sum + opt.price, 0)
       return total + (itemPrice + optionsPrice) * item.quantity
     }, 0)
@@ -757,9 +800,13 @@ export function PublicMenuView({
                 ) : (
                   <div className="space-y-4">
                     {cart.map((cartItem) => {
-                      const itemPrice = cartItem.item.base_price + (cartItem.variant?.price_modifier || 0)
+                      // Use calculatedPrice if available (new variant system)
+                      const itemPrice = cartItem.calculatedPrice ?? (cartItem.item.base_price + (cartItem.variant?.price_modifier || 0))
                       const optionsPrice = cartItem.selectedOptions.reduce((sum, opt) => sum + opt.price, 0)
                       const totalPrice = (itemPrice + optionsPrice) * cartItem.quantity
+                      
+                      // Get selected variant names from pre-computed infos
+                      const variantNames = cartItem.selectedVariantInfos?.map(v => v.name) || []
 
                       return (
                         <div key={cartItem.id} className="flex gap-3 p-3 rounded-lg" style={{ backgroundColor: cardBg }}>
@@ -767,6 +814,9 @@ export function PublicMenuView({
                             <h4 className="font-medium" style={{ color: theme.foreground }}>{cartItem.item.name}</h4>
                             {cartItem.variant && (
                               <p className="text-sm" style={{ color: mutedForeground }}>{cartItem.variant.name}</p>
+                            )}
+                            {variantNames.length > 0 && (
+                              <p className="text-sm" style={{ color: mutedForeground }}>{variantNames.join(', ')}</p>
                             )}
                             {cartItem.selectedOptions.length > 0 && (
                               <p className="text-sm" style={{ color: mutedForeground }}>

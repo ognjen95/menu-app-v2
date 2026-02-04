@@ -133,3 +133,23 @@ export function generatePageTranslationKey(pageId: string, field: 'title'): stri
 export function getPageTranslationPrefix(pageId: string): string {
   return `website_page.${pageId}.`
 }
+
+// Helper to generate translation key for variant categories
+export function generateVariantCategoryTranslationKey(categoryId: string, field: 'name' | 'description'): string {
+  return `variant_category.${categoryId}.${field}`
+}
+
+// Helper to generate translation key prefix for variant categories
+export function getVariantCategoryTranslationPrefix(categoryId: string): string {
+  return `variant_category.${categoryId}.`
+}
+
+// Helper to generate translation key for menu item variants
+export function generateMenuItemVariantTranslationKey(variantId: string, field: 'name'): string {
+  return `menu_item_variant.${variantId}.${field}`
+}
+
+// Helper to generate translation key prefix for menu item variants
+export function getMenuItemVariantTranslationPrefix(variantId: string): string {
+  return `menu_item_variant.${variantId}.`
+}

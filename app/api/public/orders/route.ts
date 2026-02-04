@@ -26,6 +26,8 @@ export async function POST(request: NextRequest) {
       items: {
         menu_item_id: string
         variant_id?: string
+        selected_variants?: { id: string; name: string; price_adjustment: number }[]
+        unit_price?: number // Price calculated by client including variant adjustments
         quantity: number
         selected_options?: { option_id: string; name: string; price: number }[]
         notes?: string
@@ -91,6 +93,7 @@ export async function POST(request: NextRequest) {
     const orderItems: {
       menu_item_id: string
       variant_id?: string
+      selected_variants: { id: string; name: string; price_adjustment: number }[] | null
       item_name: string
       variant_name: string | null
       quantity: number
@@ -134,7 +137,10 @@ export async function POST(request: NextRequest) {
 
       // Calculate options price
       const optionsPrice = (item.selected_options || []).reduce((sum, opt) => sum + (opt.price || 0), 0)
-      const unitPrice = menuItem.base_price + variantPrice
+      
+      // Use client-provided unit_price if available (includes new variant adjustments)
+      // Otherwise fall back to calculated price from base_price + old variant system
+      const unitPrice = item.unit_price ?? (menuItem.base_price + variantPrice)
       const totalPrice = (unitPrice + optionsPrice) * item.quantity
       
       subtotal += totalPrice
@@ -142,6 +148,7 @@ export async function POST(request: NextRequest) {
       orderItems.push({
         menu_item_id: item.menu_item_id,
         variant_id: item.variant_id,
+        selected_variants: item.selected_variants || null,
         item_name: menuItem.name,
         variant_name: variantName,
         quantity: item.quantity,

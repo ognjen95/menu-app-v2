@@ -207,6 +207,35 @@ export interface ItemVariant {
   created_at: string
 }
 
+export interface VariantCategory {
+  id: string
+  tenant_id: string
+  name: string
+  description: string | null
+  is_required: boolean
+  allow_multiple: boolean
+  sort_order: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface MenuItemVariant {
+  id: string
+  tenant_id: string
+  menu_item_id: string
+  category_id: string
+  name: string
+  price_adjustment: number
+  is_default: boolean
+  is_available: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+  // Relations
+  category?: VariantCategory
+}
+
 export interface OptionGroup {
   id: string
   item_id: string
@@ -287,6 +316,12 @@ export interface Order {
   updated_at: string
 }
 
+export interface SelectedVariant {
+  id: string
+  name: string
+  price_adjustment: number
+}
+
 export interface OrderItem {
   id: string
   order_id: string
@@ -294,6 +329,7 @@ export interface OrderItem {
   variant_id: string | null
   item_name: string
   variant_name: string | null
+  selected_variants: SelectedVariant[] | null // New variant system
   quantity: number
   unit_price: number
   options_price: number
@@ -537,6 +573,7 @@ export interface PlanFeature {
 export interface MenuItemWithRelations extends MenuItem {
   category?: Category
   variants?: ItemVariant[]
+  menu_item_variants?: MenuItemVariant[]
   option_groups?: OptionGroupWithOptions[]
   allergens?: Allergen[]
 }
