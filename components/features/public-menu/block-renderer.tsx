@@ -2,7 +2,7 @@ import { MapPin, Phone, Mail, Clock, Calendar, Sparkles, Wifi, ParkingCircle, Mu
 import { FaFacebookF, FaInstagram, FaXTwitter, FaTiktok, FaYoutube, FaLinkedinIn, FaYelp } from "react-icons/fa6";
 import { SiTripadvisor } from "react-icons/si";
 import { GalleryBlock } from "../GalleryBlock";
-
+import Image from "next/image";
 // Location type from database
 export interface Location {
   id: string
@@ -808,17 +808,64 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
       )
 
     case 'text':
+      const textImageUrl = content.image_url as string | undefined
+      const textImagePosition = (content.image_position as string) || 'top'
+      const textAlignment = (content.alignment as 'left' | 'center' | 'right') || 'left'
+      
+      const TextContent = () => (
+        <div style={{ textAlign: textAlignment, flex: 1, minWidth: '280px' }}>
+          {Boolean(content.title) && (
+            <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '1rem' }}>
+              {getTranslated('title', String(content.title))}
+            </h2>
+          )}
+          <div style={{ lineHeight: 1.8, opacity: 0.85, whiteSpace: 'pre-wrap' }}>
+            {getTranslated('text', String(content.text || ''))}
+          </div>
+        </div>
+      )
+      
+      const TextImage = () => (
+        textImageUrl ? (
+          <img 
+            src={textImageUrl} 
+            alt="" 
+            style={{ 
+              width: '100%', 
+              height: 'auto', 
+              borderRadius: '0.5rem',
+              objectFit: 'cover',
+            }} 
+          />
+        ) : null
+      )
+      
       return (
         <section style={{ padding: sectionPadding, backgroundColor: content.use_secondary_bg ? theme.secondary : 'transparent' }}>
-          <div style={{ ...contentStyle, textAlign: (content.alignment as 'left' | 'center' | 'right') || 'left' }}>
-            {Boolean(content.title) && (
-              <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '1rem' }}>
-                {getTranslated('title', String(content.title))}
-              </h2>
+          <div style={{ ...contentStyle }}>
+            {textImagePosition === 'top' && textImageUrl && (
+              <div style={{ marginBottom: '2rem', textAlign: textAlignment }}>
+                <TextImage />
+              </div>
             )}
-            <div style={{ lineHeight: 1.8, opacity: 0.85, whiteSpace: 'pre-wrap' }}>
-              {getTranslated('text', String(content.text || ''))}
-            </div>
+            {(textImagePosition === 'left' || textImagePosition === 'right') && textImageUrl ? (
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: textImagePosition === 'left' ? 'row' : 'row-reverse',
+                gap: '3rem',
+                alignItems: 'center',
+                flexWrap: 'wrap'
+              }}>
+                <div style={{ flex: '1 1 50%', minWidth: '300px' }}>
+                  <TextImage />
+                </div>
+                <div style={{ flex: '1 1 40%', minWidth: '280px' }}>
+                  <TextContent />
+                </div>
+              </div>
+            ) : (
+              <TextContent />
+            )}
           </div>
         </section>
       )
