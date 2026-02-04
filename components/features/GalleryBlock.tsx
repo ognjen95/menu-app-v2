@@ -91,8 +91,7 @@ export function GalleryBlock({ images, title, theme }: GalleryBlockProps) {
           <h2 style={{ 
             fontFamily: theme.fontHeading, 
             fontSize: '2rem', 
-            marginBottom: '2rem',
-            fontWeight: 700,
+            textAlign: 'center',
           }}>
             {title}
           </h2>
@@ -200,6 +199,7 @@ export function GalleryBlock({ images, title, theme }: GalleryBlockProps) {
                     color: '#fff', 
                     fontSize: '0.875rem',
                     fontWeight: 600,
+                    fontFamily: theme.fontBody,
                     textShadow: '0 2px 4px rgba(0,0,0,0.3)',
                   }}>
                     {idx + 1} / {images.length}
@@ -211,6 +211,7 @@ export function GalleryBlock({ images, title, theme }: GalleryBlockProps) {
                     padding: '0.5rem 1rem',
                     fontSize: '0.75rem',
                     fontWeight: 500,
+                    fontFamily: theme.fontBody,
                     color: '#fff',
                     opacity: isHovering === idx ? 1 : 0,
                     transform: isHovering === idx ? 'scale(1)' : 'scale(0.9)',
@@ -313,6 +314,7 @@ export function GalleryBlock({ images, title, theme }: GalleryBlockProps) {
                 color: '#fff', 
                 fontSize: '0.875rem', 
                 fontWeight: 500,
+                fontFamily: theme.fontBody,
                 minWidth: '50px',
                 textAlign: 'center',
               }}>
@@ -483,8 +485,8 @@ export function GalleryBlock({ images, title, theme }: GalleryBlockProps) {
             alignItems: 'center',
             gap: '1rem',
           }}>
-            <span>{selectedImage + 1} / {images.length}</span>
-            <span style={{ opacity: 0.5, fontSize: '0.75rem' }}>
+            <span style={{ fontFamily: theme.fontBody }}>{selectedImage + 1} / {images.length}</span>
+            <span style={{ opacity: 0.5, fontSize: '0.75rem', fontFamily: theme.fontBody }}>
               {t('navigateHint')}
             </span>
           </div>

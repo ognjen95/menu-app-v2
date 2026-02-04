@@ -248,7 +248,6 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
       <footer style={{
         backgroundColor: theme.secondary,
         padding: '3rem 2rem',
-        marginTop: '4rem',
       }}>
         <div style={{
           maxWidth: '1200px',
