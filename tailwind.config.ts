@@ -223,22 +223,6 @@ const config = {
   					backgroundPosition: '200% 0'
   				}
   			},
-  			'accordion-down': {
-  				from: {
-  					height: '0'
-  				},
-  				to: {
-  					height: 'var(--radix-accordion-content-height)'
-  				}
-  			},
-  			'accordion-up': {
-  				from: {
-  					height: 'var(--radix-accordion-content-height)'
-  				},
-  				to: {
-  					height: '0'
-  				}
-  			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
@@ -256,9 +240,7 @@ const config = {
   			'slide-in-down': 'slide-in-down 0.3s ease-out',
   			'pop-in': 'pop-in 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
   			'bounce-in': 'bounce-in 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-  			'shimmer': 'shimmer 2s linear infinite',
-  			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'shimmer': 'shimmer 2s linear infinite'
   		}
   	}
   },
