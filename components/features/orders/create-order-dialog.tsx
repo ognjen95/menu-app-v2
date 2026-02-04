@@ -1032,8 +1032,8 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
           if (!isOpen) setMobileStep(1) // Reset to step 1 when closing
           onOpenChange(isOpen)
         }}>
-          <SheetContent side="bottom" className="h-[95vh] p-0">
-            <SheetHeader className="p-4 border-b">
+          <SheetContent side="bottom" className="max-h-[100dvh] h-[95dvh] p-0 flex flex-col">
+            <SheetHeader className="p-4 border-b shrink-0">
               <SheetTitle className="flex items-center gap-2">
                 {mobileStep === 2 && (
                   <button
@@ -1050,7 +1050,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
                 {t('step', { current: mobileStep, total: 2 })}
               </p>
             </SheetHeader>
-            <div className="h-[calc(95vh-85px)] relative">
+            <div className="flex-1 min-h-0 overflow-hidden">
               {mobileStep === 1 ? <MobileSetupStep /> : <MobileMenuStep />}
             </div>
           </SheetContent>
@@ -1058,7 +1058,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
 
         {/* Cart sheet for mobile */}
         <Sheet open={showCart} onOpenChange={setShowCart}>
-          <SheetContent side="right" className="w-full sm:max-w-md p-0">
+          <SheetContent side="right" className="w-full sm:max-w-md p-0 max-h-[100dvh] flex flex-col">
             <CartSidebar />
           </SheetContent>
         </Sheet>
@@ -1077,14 +1077,14 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="min-w-[80vw] h-[90vh] p-0 gap-0">
-          <DialogHeader className="p-4 border-b">
+        <DialogContent className="min-w-[80vw] max-h-[100vh] h-[90vh] p-0 gap-0 flex flex-col">
+          <DialogHeader className="p-4 border-b shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <UtensilsCrossed className="h-5 w-5" />
               {t('title')}
             </DialogTitle>
           </DialogHeader>
-          <div className="flex h-[calc(90vh-65px)]">
+          <div className="flex flex-1 min-h-0 overflow-hidden">
             {/* Menu section */}
             <div className="flex-1 border-r">
               <MainContent />
