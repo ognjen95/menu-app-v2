@@ -857,7 +857,8 @@
       "friday": "Petak",
       "saturday": "Subota",
       "sunday": "Nedelja"
-    }
+    },
+    "viewMenu": "Pogledaj meni"
   },
   "checkoutDialog": {
     "checkout": "Plaćanje",

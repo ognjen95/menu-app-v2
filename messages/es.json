@@ -857,7 +857,8 @@
       "friday": "Viernes",
       "saturday": "Sábado",
       "sunday": "Domingo"
-    }
+    },
+    "viewMenu": "Ver Menú"
   },
   "checkoutDialog": {
     "checkout": "Finalizar Compra",

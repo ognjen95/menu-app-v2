@@ -39,6 +39,7 @@ interface WebsiteNavbarProps {
   languages: Language[]
   currentLanguage: string
   theme: Theme
+  viewMenuText?: string
 }
 
 export function WebsiteNavbar({
@@ -51,17 +52,22 @@ export function WebsiteNavbar({
   languages,
   currentLanguage,
   theme,
+  viewMenuText = 'View Menu',
 }: WebsiteNavbarProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState<boolean | null>(null)
 
-  // Detect mobile screen size
+  // Detect mobile screen size - use null initially to prevent flash
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
+
+  // Don't render nav items until we know screen size to prevent flash
+  const showDesktop = isMobile === false
+  const showMobile = isMobile === true
 
   return (
     <>
@@ -96,7 +102,7 @@ export function WebsiteNavbar({
         </Link>
 
         {/* Desktop Navigation - hidden on mobile */}
-        {!isMobile && (
+        {showDesktop && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             {navPages.map((navPage) => (
               <Link
@@ -120,7 +126,7 @@ export function WebsiteNavbar({
         )}
 
         {/* Desktop Right Side - hidden on mobile */}
-        {!isMobile && (
+        {showDesktop && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             {languages.length > 1 && (
               <WebsiteLanguageSelector
@@ -133,6 +139,7 @@ export function WebsiteNavbar({
             )}
             <Link
               href={`/m/${tenantSlug}`}
+              prefetch
               style={{
                 backgroundColor: theme.primary,
                 color: '#fff',
@@ -146,13 +153,13 @@ export function WebsiteNavbar({
                 transition: 'all 0.2s ease',
               }}
             >
-              View Menu
+              {viewMenuText}
             </Link>
           </div>
         )}
 
         {/* Mobile Right Side - language selector + menu button */}
-        {isMobile && (
+        {showMobile && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             {languages.length > 1 && (
               <WebsiteLanguageSelector
@@ -221,8 +228,8 @@ export function WebsiteNavbar({
             borderBottom: `1px solid ${theme.foreground}10`,
           }}
         >
-          <Link 
-            href={`/site/${subdomain}`} 
+          <Link
+            href={`/site/${subdomain}`}
             style={{ textDecoration: 'none' }}
             onClick={() => setIsDrawerOpen(false)}
           >
@@ -285,13 +292,16 @@ export function WebsiteNavbar({
           style={{
             padding: '1.5rem',
             borderTop: `1px solid ${theme.foreground}10`,
+            width: '100%',
           }}
         >
           {/* View Menu Button */}
           <Link
+            prefetch
             href={`/m/${tenantSlug}`}
             onClick={() => setIsDrawerOpen(false)}
             style={{
+              display: 'block',
               backgroundColor: theme.primary,
               color: '#fff',
               padding: '0.875rem 1.5rem',
@@ -302,9 +312,10 @@ export function WebsiteNavbar({
               textAlign: 'center',
               boxShadow: `0 4px 12px ${theme.primary}30`,
               transition: 'all 0.2s ease',
+              width: '100%',
             }}
           >
-            View Menu
+            {viewMenuText}
           </Link>
         </div>
       </div>

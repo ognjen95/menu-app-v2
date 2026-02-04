@@ -179,6 +179,7 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
         languages={languages}
         currentLanguage={currentLanguage}
         theme={theme}
+        viewMenuText={t('viewMenu')}
       />
 
       {/* Page Content - Render Blocks */}
