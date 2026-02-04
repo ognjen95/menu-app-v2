@@ -25,7 +25,8 @@ import {
   RefreshCw, PanelRightClose, PanelRight, UtensilsCrossed, Layers, Paintbrush, Check, Sparkles, File, Languages,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { BlockEditor } from '@/components/features/website-builder/BlockEditorComponents'
+import { BlockEditor, ImageUpload } from '@/components/features/website-builder/BlockEditorComponents'
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
 import { PageTranslationEditor } from '@/components/features/website-builder/PageTranslationEditor'
 import { THEME_PRESETS, FONT_OPTIONS, BLOCK_TYPES, WEBSITE_TEMPLATES, type WebsiteTemplate } from '@/lib/constants/website'
 import { getWebsiteUrl } from '@/utils/urls'
@@ -75,6 +76,8 @@ export default function WebsiteBuilderPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<WebsiteTemplate | null>(null)
   const [isApplyingTemplate, setIsApplyingTemplate] = useState(false)
   const [templateProgress, setTemplateProgress] = useState({ current: 0, total: 0, step: '' })
+  const [deletePageConfirm, setDeletePageConfirm] = useState<{ page: WebsitePage; blocksCount: number } | null>(null)
+  const [deleteBlockConfirm, setDeleteBlockConfirm] = useState<WebsiteBlock | null>(null)
   
   // Local state for settings inputs (to prevent re-render on every keystroke)
   const [settingsForm, setSettingsForm] = useState({
@@ -598,9 +601,11 @@ export default function WebsiteBuilderPage() {
               <Separator className="bg-white/10" />
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-white">{t('design.logo')}</h3>
-                <Input value={website?.logo_url || ''} onChange={(e) => updateWebsite.mutate({ logo_url: e.target.value })} placeholder="https://..." className="bg-white/5 border-white/10 text-white text-sm" />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                {website?.logo_url && <div className="p-3 rounded-lg bg-white/5 border border-white/10"><img src={website.logo_url} alt="Logo" className="max-h-12 object-contain" /></div>}
+                <ImageUpload
+                  value={website?.logo_url || ''}
+                  onChange={(url) => updateWebsite.mutate({ logo_url: url })}
+                  label=""
+                />
               </div>
             </>)}
 
@@ -630,7 +635,13 @@ export default function WebsiteBuilderPage() {
                           {page.is_published ? t('pages.liveStatus') : t('pages.draftStatus')}
                         </button>
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-500 hover:text-blue-400" onClick={(e) => { e.stopPropagation(); setEditingPageTranslation(page) }} title={t('pages.translateTitle')}><Languages className="h-3 w-3" /></Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-500 hover:text-red-400" onClick={(e) => { e.stopPropagation(); deletePage.mutate(page.id) }}><Trash2 className="h-3 w-3" /></Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-500 hover:text-red-400" onClick={async (e) => { 
+                          e.stopPropagation()
+                          // Fetch block count for this page
+                          const blocksRes = await apiGet<{ data: { blocks: WebsiteBlock[] } }>(`/website/pages/${page.id}/blocks`)
+                          const blocksCount = blocksRes?.data?.blocks?.length || 0
+                          setDeletePageConfirm({ page, blocksCount })
+                        }}><Trash2 className="h-3 w-3" /></Button>
                       </div>
                     </div>
                   </div>
@@ -662,7 +673,7 @@ export default function WebsiteBuilderPage() {
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-500 hover:text-white hover:bg-white/10" onClick={() => moveBlock.mutate({ blockId: block.id, direction: 'down' })} disabled={idx === blocks.length - 1}><ChevronDown className="h-3 w-3" /></Button>
                           <Switch checked={block.is_visible} onCheckedChange={(v) => updateBlock.mutate({ blockId: block.id, is_visible: v })} className="scale-75" />
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-500 hover:text-white" onClick={() => setEditingBlock(block)}><Edit className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-500 hover:text-red-400" onClick={() => deleteBlock.mutate(block.id)}><Trash2 className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-500 hover:text-red-400" onClick={() => setDeleteBlockConfirm(block)}><Trash2 className="h-3 w-3" /></Button>
                         </div>
                       </div>
                     </div>
@@ -1006,6 +1017,37 @@ export default function WebsiteBuilderPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Page Confirmation */}
+      <ConfirmDeleteDialog
+        open={!!deletePageConfirm}
+        onOpenChange={(open) => !open && setDeletePageConfirm(null)}
+        title={t('pages.deletePage')}
+        description={t('pages.deletePageDescription', { title: deletePageConfirm?.page.title || '' })}
+        warningMessage={deletePageConfirm?.blocksCount ? t('pages.deletePageWarning', { count: deletePageConfirm.blocksCount }) : undefined}
+        onConfirm={() => {
+          if (deletePageConfirm) {
+            deletePage.mutate(deletePageConfirm.page.id)
+            setDeletePageConfirm(null)
+          }
+        }}
+        isLoading={deletePage.isPending}
+      />
+
+      {/* Delete Block Confirmation */}
+      <ConfirmDeleteDialog
+        open={!!deleteBlockConfirm}
+        onOpenChange={(open) => !open && setDeleteBlockConfirm(null)}
+        title={t('blocks.deleteBlock')}
+        description={t('blocks.deleteBlockDescription')}
+        onConfirm={() => {
+          if (deleteBlockConfirm) {
+            deleteBlock.mutate(deleteBlockConfirm.id)
+            setDeleteBlockConfirm(null)
+          }
+        }}
+        isLoading={deleteBlock.isPending}
+      />
     </div>
   )
 }

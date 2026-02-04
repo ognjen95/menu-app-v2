@@ -20,7 +20,7 @@ import type { Tenant, Menu, MenuItem, Allergen, Location, Website, Translation }
 import { CheckoutDialog } from './checkout-dialog'
 import { ItemDetailModal } from './item-detail-modal'
 import Image from 'next/image'
-import { motion, staggerContainer, staggerItemScale } from '@/components/ui/animated'
+import { motion, AnimatePresence, staggerContainer, staggerItemScale } from '@/components/ui/animated'
 
 // Language type for public menu
 type PublicLanguage = {
@@ -110,6 +110,7 @@ export function PublicMenuView({
   const [cartAnimation, setCartAnimation] = useState<number[]>([])
   const [langMenuOpen, setLangMenuOpen] = useState(false)
   const [currentLanguage, setCurrentLanguage] = useState(initialLanguage)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   // Sync language from URL on mount and when searchParams change
   useEffect(() => {
@@ -148,10 +149,10 @@ export function PublicMenuView({
   const handleLanguageChange = useCallback((langCode: string) => {
     setCurrentLanguage(langCode) // Immediate state update for menu content translations
     setLangMenuOpen(false)
-    
+
     // Set PUBLIC_LOCALE cookie (expires in 1 year)
     document.cookie = `PUBLIC_LOCALE=${langCode}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
-    
+
     // Update URL param and refresh to load new UI translations from server
     const params = new URLSearchParams(searchParams.toString())
     params.set('lang', langCode)
@@ -223,10 +224,10 @@ export function PublicMenuView({
           const query = searchQuery.toLowerCase()
           items = items.filter(item => {
             // Search in original values
-            const matchesOriginal = 
+            const matchesOriginal =
               item.name.toLowerCase().includes(query) ||
               item.description?.toLowerCase().includes(query)
-            
+
             // Search in translated values
             const translatedName = translations.find(
               t => t.key === `menu_item.${item.id}.name` && t.language_code === currentLanguage
@@ -234,11 +235,11 @@ export function PublicMenuView({
             const translatedDesc = translations.find(
               t => t.key === `menu_item.${item.id}.description` && t.language_code === currentLanguage
             )?.value?.toLowerCase()
-            
-            const matchesTranslation = 
+
+            const matchesTranslation =
               translatedName?.includes(query) ||
               translatedDesc?.includes(query)
-            
+
             return matchesOriginal || matchesTranslation
           })
         }
@@ -309,6 +310,8 @@ export function PublicMenuView({
     return cart.reduce((total, item) => total + item.quantity, 0)
   }, [cart])
 
+  const haveLogo = website?.logo_url || tenant.logo_url
+
   return (
     <div
       className="min-h-screen"
@@ -332,17 +335,17 @@ export function PublicMenuView({
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {tenant.logo_url && (
+              {(haveLogo) && (
                 <Image
-                  src={tenant.logo_url}
+                  src={website?.logo_url || tenant.logo_url || ''}
                   alt={tenant.name}
-                  width={40}
+                  width={120}
                   height={40}
-                  className="h-10 w-10 rounded-full object-cover"
+                  className="h-8 w-auto object-contain"
                 />
               )}
               <div>
-                <h1 className="font-bold text-lg" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>{tenant.name}</h1>
+                {!haveLogo && <h1 className="font-bold text-lg" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>{tenant.name}</h1>}
                 {tableId && (
                   <p className="text-sm" style={{ color: mutedForeground }}>Table ordering</p>
                 )}
@@ -350,6 +353,23 @@ export function PublicMenuView({
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Search button */}
+              <button
+                className="p-2 rounded-md transition-colors"
+                style={{
+                  border: `1px solid ${borderColor}`,
+                  backgroundColor: isSearchOpen ? cardBg : 'transparent',
+                  color: theme.foreground,
+                }}
+                onClick={() => {
+                  setIsSearchOpen(!isSearchOpen)
+                  if (isSearchOpen) setSearchQuery('')
+                }}
+                aria-label={isSearchOpen ? 'Close search' : 'Search'}
+              >
+                {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+              </button>
+
               {/* Language selector */}
               {languages.length > 1 && (
                 <div className="relative">
@@ -443,26 +463,37 @@ export function PublicMenuView({
           </div>
 
           {/* Search */}
-          <div className="mt-4 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: mutedForeground }} />
-            <input
-              type="text"
-              placeholder={t('searchPlaceholder')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-md"
-              style={{
-                backgroundColor: cardBg,
-                border: `1px solid ${borderColor}`,
-                color: theme.foreground,
-              }}
-            />
-          </div>
+          <AnimatePresence>
+            {isSearchOpen && (
+              <motion.div
+                className="mt-4 relative"
+                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+              >
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: mutedForeground }} />
+                <input
+                  type="text"
+                  placeholder={t('searchPlaceholder')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 rounded-md"
+                  style={{
+                    backgroundColor: cardBg,
+                    border: `1px solid ${borderColor}`,
+                    color: theme.foreground,
+                  }}
+                  autoFocus
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Category tabs */}
-        <motion.div 
-          className="overflow-x-auto scrollbar-hide" 
+        <motion.div
+          className="overflow-x-auto scrollbar-hide"
           style={{ borderTop: `1px solid ${borderColor}` }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -501,7 +532,7 @@ export function PublicMenuView({
       {/* Menu items */}
       <main className="container mx-auto px-4 py-6 pb-24">
         {/* Dietary filters */}
-        <motion.div 
+        <motion.div
           className="flex flex-wrap gap-2 mb-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -538,8 +569,8 @@ export function PublicMenuView({
         ) : (
           <div className="space-y-10">
             {filteredCategories.map((category, categoryIndex) => (
-              <motion.section 
-                key={category.id} 
+              <motion.section
+                key={category.id}
                 id={`category-${category.id}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -547,8 +578,8 @@ export function PublicMenuView({
               >
                 {/* Category header */}
                 <div className="mb-4">
-                  <h2 
-                    className="text-2xl font-bold" 
+                  <h2
+                    className="text-2xl font-bold"
                     style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}
                   >
                     {getTranslatedText(category.id, 'name', category.name, 'category')}
@@ -561,7 +592,7 @@ export function PublicMenuView({
                 </div>
 
                 {/* Items grid */}
-                <motion.div 
+                <motion.div
                   className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
                   initial="initial"
                   animate="animate"
@@ -583,95 +614,95 @@ export function PublicMenuView({
                           style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}
                           onClick={() => setSelectedItem(item)}
                         >
-                        {/* Image - fixed height */}
-                        {item.image_urls && item.image_urls.length > 0 ? (
-                          <div className="h-40 flex-shrink-0" style={{ backgroundColor: theme.secondary }}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={item.image_urls[0]}
-                              alt={item.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <div className="h-40 flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: theme.secondary }}>
-                            <span className="text-4xl">🍽️</span>
-                          </div>
-                        )}
-
-                        <div className="p-5 flex-1 flex flex-col">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5">
-                                <h3 className="font-semibold truncate" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>
-                                  {getTranslatedText(item.id, 'name', item.name)}
-                                </h3>
-                                {item.is_featured && (
-                                  <Star className="h-4 w-4 fill-current" style={{ color: theme.accent }} />
-                                )}
-                              </div>
-                              {item.description && (
-                                <p className="text-sm line-clamp-2 mt-1" style={{ color: mutedForeground }}>
-                                  {getTranslatedText(item.id, 'description', item.description)}
-                                </p>
-                              )}
+                          {/* Image - fixed height */}
+                          {item.image_urls && item.image_urls.length > 0 ? (
+                            <div className="h-40 flex-shrink-0" style={{ backgroundColor: theme.secondary }}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={item.image_urls[0]}
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                              />
                             </div>
-                            <div className="text-right">
-                              <span className="font-bold whitespace-nowrap" style={{ color: theme.primary }}>
-                                €{item.base_price.toFixed(2)}
-                              </span>
-                              {item.compare_price && item.compare_price > item.base_price && (
-                                <div className="text-xs line-through" style={{ color: mutedForeground }}>
-                                  €{item.compare_price.toFixed(2)}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Tags and info - limited to prevent overflow */}
-                          {(item.is_new || (item.compare_price && item.compare_price > item.base_price) || item.dietary_tags?.length || itemAllergens.length > 0) && (
-                            <div className="flex flex-wrap gap-1.5 mt-3 max-h-14 overflow-hidden">
-                              {item.is_new && (
-                                <span className="text-xs px-2 py-0.5 rounded font-medium flex-shrink-0" style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}>{t('new')}</span>
-                              )}
-                              {item.compare_price && item.compare_price > item.base_price && (
-                                <span className="text-xs px-2 py-0.5 rounded font-medium flex-shrink-0" style={{ backgroundColor: theme.accent, color: getContrastColor(theme.accent) }}>{t('sale')}</span>
-                              )}
-                              {item.dietary_tags?.slice(0, 2).map((tag: string) => (
-                                <span key={tag} className="text-xs px-2 py-0.5 rounded flex items-center gap-1 flex-shrink-0 max-w-24 truncate" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
-                                  <Leaf className="h-3 w-3 flex-shrink-0" />
-                                  <span className="truncate">{tDietary(tag as any) || tag}</span>
-                                </span>
-                              ))}
-                              {itemAllergens.length > 0 && (
-                                <span className="text-xs px-2 py-0.5 rounded flex items-center gap-1 flex-shrink-0" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
-                                  <AlertTriangle className="h-3 w-3" />
-                                  {itemAllergens.length}
-                                </span>
-                              )}
+                          ) : (
+                            <div className="h-40 flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: theme.secondary }}>
+                              <span className="text-4xl">🍽️</span>
                             </div>
                           )}
 
-                          {/* Add to cart button */}
-                          <div className="mt-auto pt-5">
-                            <button
-                              className="w-full py-2.5 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] active:shadow-md"
-                              style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: `0 4px 14px 0 ${theme.primary}40` }}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                if (item.variants?.length || item.option_groups?.length) {
-                                  setSelectedItem(item)
-                                } else {
-                                  addToCart(item)
-                                }
-                              }}
-                            >
-                              <Plus className="h-4 w-4" />
-                              {t('addToOrder')}
-                            </button>
+                          <div className="p-5 flex-1 flex flex-col">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5">
+                                  <h3 className="font-semibold truncate" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>
+                                    {getTranslatedText(item.id, 'name', item.name)}
+                                  </h3>
+                                  {item.is_featured && (
+                                    <Star className="h-4 w-4 fill-current" style={{ color: theme.accent }} />
+                                  )}
+                                </div>
+                                {item.description && (
+                                  <p className="text-sm line-clamp-2 mt-1" style={{ color: mutedForeground }}>
+                                    {getTranslatedText(item.id, 'description', item.description)}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <span className="font-bold whitespace-nowrap" style={{ color: theme.primary }}>
+                                  €{item.base_price.toFixed(2)}
+                                </span>
+                                {item.compare_price && item.compare_price > item.base_price && (
+                                  <div className="text-xs line-through" style={{ color: mutedForeground }}>
+                                    €{item.compare_price.toFixed(2)}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Tags and info - limited to prevent overflow */}
+                            {(item.is_new || (item.compare_price && item.compare_price > item.base_price) || item.dietary_tags?.length || itemAllergens.length > 0) && (
+                              <div className="flex flex-wrap gap-1.5 mt-3 max-h-14 overflow-hidden">
+                                {item.is_new && (
+                                  <span className="text-xs px-2 py-0.5 rounded font-medium flex-shrink-0" style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}>{t('new')}</span>
+                                )}
+                                {item.compare_price && item.compare_price > item.base_price && (
+                                  <span className="text-xs px-2 py-0.5 rounded font-medium flex-shrink-0" style={{ backgroundColor: theme.accent, color: getContrastColor(theme.accent) }}>{t('sale')}</span>
+                                )}
+                                {item.dietary_tags?.slice(0, 2).map((tag: string) => (
+                                  <span key={tag} className="text-xs px-2 py-0.5 rounded flex items-center gap-1 flex-shrink-0 max-w-24 truncate" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
+                                    <Leaf className="h-3 w-3 flex-shrink-0" />
+                                    <span className="truncate">{tDietary(tag as any) || tag}</span>
+                                  </span>
+                                ))}
+                                {itemAllergens.length > 0 && (
+                                  <span className="text-xs px-2 py-0.5 rounded flex items-center gap-1 flex-shrink-0" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
+                                    <AlertTriangle className="h-3 w-3" />
+                                    {itemAllergens.length}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Add to cart button */}
+                            <div className="mt-auto pt-5">
+                              <button
+                                className="w-full py-2.5 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] active:shadow-md"
+                                style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: `0 4px 14px 0 ${theme.primary}40` }}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  if (item.variants?.length || item.option_groups?.length) {
+                                    setSelectedItem(item)
+                                  } else {
+                                    addToCart(item)
+                                  }
+                                }}
+                              >
+                                <Plus className="h-4 w-4" />
+                                {t('addToOrder')}
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
                       </motion.div>
                     )
                   })}

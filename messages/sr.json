@@ -6,6 +6,9 @@
     "save": "Sačuvaj",
     "cancel": "Otkaži",
     "delete": "Obriši",
+    "deleting": "Brisanje...",
+    "areYouSure": "Da li ste sigurni?",
+    "cannotBeUndone": "Ova radnja se ne može poništiti.",
     "edit": "Izmeni",
     "add": "Dodaj",
     "back": "Nazad",
@@ -999,7 +1002,10 @@
       "clickToPublishPage": "Kliknite da objavite",
       "translateTitle": "Prevedi naslov stranice",
       "translatePageTitle": "Prevedi Naslov Stranice",
-      "translatePageDescription": "Dodajte prevode za naslov stranice \"{title}\""
+      "translatePageDescription": "Dodajte prevode za naslov stranice \"{title}\"",
+      "deletePage": "Obriši stranicu",
+      "deletePageDescription": "Da li ste sigurni da želite da obrišete stranicu \"{title}\"? Ova radnja se ne može poništiti.",
+      "deletePageWarning": "Ova stranica sadrži {count} blok(ova) koji će takođe biti obrisani."
     },
     "blocks": {
       "selectPage": "Izaberi stranicu",
@@ -1009,7 +1015,9 @@
       "addBlockDialog": "Dodaj blok",
       "chooseBlockType": "Izaberite tip bloka",
       "editBlock": "Izmeni blok",
-      "customizeContent": "Prilagodi sadržaj"
+      "customizeContent": "Prilagodi sadržaj",
+      "deleteBlock": "Obriši blok",
+      "deleteBlockDescription": "Da li ste sigurni da želite da obrišete ovaj blok? Ova radnja se ne može poništiti."
     },
     "settings": {
       "domain": "Domen",

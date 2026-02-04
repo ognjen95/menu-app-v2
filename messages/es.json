@@ -6,6 +6,9 @@
     "save": "Guardar",
     "cancel": "Cancelar",
     "delete": "Eliminar",
+    "deleting": "Eliminando...",
+    "areYouSure": "¿Estás seguro?",
+    "cannotBeUndone": "Esta acción no se puede deshacer.",
     "edit": "Editar",
     "add": "Añadir",
     "back": "Atrás",
@@ -999,7 +1002,10 @@
       "clickToPublishPage": "Haz clic para publicar",
       "translateTitle": "Traducir título de página",
       "translatePageTitle": "Traducir Título de Página",
-      "translatePageDescription": "Añadir traducciones para el título de página \"{title}\""
+      "translatePageDescription": "Añadir traducciones para el título de página \"{title}\"",
+      "deletePage": "Eliminar Página",
+      "deletePageDescription": "¿Estás seguro de que quieres eliminar la página \"{title}\"? Esta acción no se puede deshacer.",
+      "deletePageWarning": "Esta página contiene {count} bloque(s) que también serán eliminados."
     },
     "blocks": {
       "selectPage": "Seleccionar página",
@@ -1009,7 +1015,9 @@
       "addBlockDialog": "Añadir Bloque",
       "chooseBlockType": "Elige el tipo de bloque",
       "editBlock": "Editar Bloque",
-      "customizeContent": "Personalizar contenido"
+      "customizeContent": "Personalizar contenido",
+      "deleteBlock": "Eliminar Bloque",
+      "deleteBlockDescription": "¿Estás seguro de que quieres eliminar este bloque? Esta acción no se puede deshacer."
     },
     "settings": {
       "domain": "Dominio",

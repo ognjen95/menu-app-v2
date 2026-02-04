@@ -6,6 +6,9 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
+    "deleting": "Deleting...",
+    "areYouSure": "Are you sure?",
+    "cannotBeUndone": "This action cannot be undone.",
     "edit": "Edit",
     "add": "Add",
     "back": "Back",
@@ -999,7 +1002,10 @@
       "clickToPublishPage": "Click to publish",
       "translateTitle": "Translate page title",
       "translatePageTitle": "Translate Page Title",
-      "translatePageDescription": "Add translations for the page title \"{title}\""
+      "translatePageDescription": "Add translations for the page title \"{title}\"",
+      "deletePage": "Delete Page",
+      "deletePageDescription": "Are you sure you want to delete the page \"{title}\"? This action cannot be undone.",
+      "deletePageWarning": "This page contains {count} block(s) that will also be deleted."
     },
     "blocks": {
       "selectPage": "Select page",
@@ -1009,7 +1015,9 @@
       "addBlockDialog": "Add Block",
       "chooseBlockType": "Choose block type",
       "editBlock": "Edit Block",
-      "customizeContent": "Customize content"
+      "customizeContent": "Customize content",
+      "deleteBlock": "Delete Block",
+      "deleteBlockDescription": "Are you sure you want to delete this block? This action cannot be undone."
     },
     "settings": {
       "domain": "Domain",
