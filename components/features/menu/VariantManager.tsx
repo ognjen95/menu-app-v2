@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Select,
   SelectContent,
@@ -33,9 +34,17 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
-import { Plus, Trash2, Edit, Loader2, Tag, Settings } from 'lucide-react'
+import { TranslationEditor } from '@/components/features/translations/translation-editor'
+import { Plus, Trash2, Edit, Loader2, Tag, Settings, Languages } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import {
+  useTenantLanguages,
+  useSaveTranslations,
+  useTranslationsByPrefix,
+  generateVariantCategoryTranslationKey,
+  generateMenuItemVariantTranslationKey,
+} from '@/lib/hooks/use-translations'
 
 interface VariantManagerProps {
   menuItemId: string
@@ -59,6 +68,25 @@ export function VariantManager({ menuItemId, menuItemName, basePrice, currency =
   // Form states
   const [categoryForm, setCategoryForm] = useState({ name: '', description: '', is_required: false, allow_multiple: false })
   const [variantForm, setVariantForm] = useState({ name: '', price_adjustment: '', category_id: '', is_default: false })
+
+  // Translation states
+  const [categoryTranslations, setCategoryTranslations] = useState<Record<string, { name: string; description: string }>>({})
+  const [variantTranslations, setVariantTranslations] = useState<Record<string, { name: string }>>({})
+
+  // Translation hooks
+  const { data: languagesData } = useTenantLanguages()
+  const saveTranslations = useSaveTranslations()
+  const tenantLanguages = languagesData?.data?.languages || []
+
+  // Fetch existing translations when editing a category
+  const { data: existingCategoryTranslationsData } = useTranslationsByPrefix(
+    editingCategory ? `variant_category.${editingCategory.id}` : ''
+  )
+
+  // Fetch existing translations when editing a variant
+  const { data: existingVariantTranslationsData } = useTranslationsByPrefix(
+    editingVariant ? `menu_item_variant.${editingVariant.id}` : ''
+  )
 
   // Queries
   const { data: categoriesData, isLoading: loadingCategories } = useQuery({
@@ -84,8 +112,11 @@ export function VariantManager({ menuItemId, menuItemName, basePrice, currency =
   // Mutations
   const createCategory = useMutation({
     mutationFn: (data: { name: string; description?: string; is_required?: boolean; allow_multiple?: boolean }) =>
-      apiPost('/menu/variant-categories', data),
-    onSuccess: () => {
+      apiPost<{ data: { category: VariantCategory } }>('/menu/variant-categories', data),
+    onSuccess: async (data) => {
+      if (data?.data?.category?.id) {
+        await saveCategoryTranslationsAsync(data.data.category.id)
+      }
       queryClient.invalidateQueries({ queryKey: ['variant-categories'] })
       toast.success(t('categoryCreated'))
       resetCategoryForm() // Keep modal open for adding more
@@ -98,7 +129,8 @@ export function VariantManager({ menuItemId, menuItemName, basePrice, currency =
   const updateCategory = useMutation({
     mutationFn: ({ id, ...data }: { id: string; name?: string; description?: string; is_required?: boolean; allow_multiple?: boolean; is_active?: boolean }) =>
       apiPatch(`/menu/variant-categories/${id}`, data),
-    onSuccess: () => {
+    onSuccess: async (_, variables) => {
+      await saveCategoryTranslationsAsync(variables.id)
       queryClient.invalidateQueries({ queryKey: ['variant-categories'] })
       toast.success(t('categoryUpdated'))
       setEditingCategory(null)
@@ -122,12 +154,16 @@ export function VariantManager({ menuItemId, menuItemName, basePrice, currency =
 
   const createVariant = useMutation({
     mutationFn: (data: { category_id: string; name: string; price_adjustment?: number; is_default?: boolean }) =>
-      apiPost(`/menu/items/${menuItemId}/variants`, data),
-    onSuccess: () => {
+      apiPost<{ data: { variant: MenuItemVariant } }>(`/menu/items/${menuItemId}/variants`, data),
+    onSuccess: async (data) => {
+      if (data?.data?.variant?.id) {
+        await saveVariantTranslationsAsync(data.data.variant.id)
+      }
       queryClient.invalidateQueries({ queryKey: ['menu-item-variants', menuItemId] })
       toast.success(t('variantCreated'))
       // Keep modal open and category selected for adding more variants
       setVariantForm(prev => ({ ...prev, name: '', price_adjustment: '', is_default: false }))
+      setVariantTranslations({})
     },
     onError: (error: any) => {
       toast.error(t('variantCreateFailed'), { description: error?.message })
@@ -137,7 +173,8 @@ export function VariantManager({ menuItemId, menuItemName, basePrice, currency =
   const updateVariant = useMutation({
     mutationFn: ({ id, ...data }: { id: string; name?: string; price_adjustment?: number; is_default?: boolean; is_available?: boolean }) =>
       apiPatch(`/menu/items/${menuItemId}/variants/${id}`, data),
-    onSuccess: () => {
+    onSuccess: async (_, variables) => {
+      await saveVariantTranslationsAsync(variables.id)
       queryClient.invalidateQueries({ queryKey: ['menu-item-variants', menuItemId] })
       toast.success(t('variantUpdated'))
       setEditingVariant(null)
@@ -162,10 +199,12 @@ export function VariantManager({ menuItemId, menuItemName, basePrice, currency =
   // Form handlers
   const resetCategoryForm = () => {
     setCategoryForm({ name: '', description: '', is_required: false, allow_multiple: false })
+    setCategoryTranslations({})
   }
 
   const resetVariantForm = () => {
     setVariantForm({ name: '', price_adjustment: '', category_id: '', is_default: false })
+    setVariantTranslations({})
     setSelectedCategoryId(null)
   }
 
@@ -234,6 +273,91 @@ export function VariantManager({ menuItemId, menuItemName, basePrice, currency =
       })
     }
   }, [editingVariant])
+
+  // Populate category translations when editing
+  useEffect(() => {
+    if (editingCategory && existingCategoryTranslationsData?.data?.translations) {
+      const translations: Record<string, { name: string; description: string }> = {}
+      const existingTranslations = existingCategoryTranslationsData.data.translations
+      
+      existingTranslations.forEach(t => {
+        if (!translations[t.language_code]) {
+          translations[t.language_code] = { name: '', description: '' }
+        }
+        if (t.key.endsWith('.name')) {
+          translations[t.language_code].name = t.value
+        } else if (t.key.endsWith('.description')) {
+          translations[t.language_code].description = t.value
+        }
+      })
+      
+      setCategoryTranslations(translations)
+    }
+  }, [editingCategory, existingCategoryTranslationsData])
+
+  // Populate variant translations when editing
+  useEffect(() => {
+    if (editingVariant && existingVariantTranslationsData?.data?.translations) {
+      const translations: Record<string, { name: string }> = {}
+      const existingTranslations = existingVariantTranslationsData.data.translations
+      
+      existingTranslations.forEach(t => {
+        if (!translations[t.language_code]) {
+          translations[t.language_code] = { name: '' }
+        }
+        if (t.key.endsWith('.name')) {
+          translations[t.language_code].name = t.value
+        }
+      })
+      
+      setVariantTranslations(translations)
+    }
+  }, [editingVariant, existingVariantTranslationsData])
+
+  // Helper to save category translations
+  const saveCategoryTranslationsAsync = async (categoryId: string) => {
+    const translationsToSave: { key: string; language_code: string; value: string }[] = []
+    
+    Object.entries(categoryTranslations).forEach(([langCode, values]) => {
+      if (values.name) {
+        translationsToSave.push({
+          key: generateVariantCategoryTranslationKey(categoryId, 'name'),
+          language_code: langCode,
+          value: values.name,
+        })
+      }
+      if (values.description) {
+        translationsToSave.push({
+          key: generateVariantCategoryTranslationKey(categoryId, 'description'),
+          language_code: langCode,
+          value: values.description,
+        })
+      }
+    })
+    
+    if (translationsToSave.length > 0) {
+      await saveTranslations.mutateAsync(translationsToSave)
+    }
+  }
+
+  // Helper to save variant translations
+  const saveVariantTranslationsAsync = async (variantId: string) => {
+    const translationsToSave: { key: string; language_code: string; value: string }[] = []
+    
+    Object.entries(variantTranslations).forEach(([langCode, values]) => {
+      if (values.name) {
+        translationsToSave.push({
+          key: generateMenuItemVariantTranslationKey(variantId, 'name'),
+          language_code: langCode,
+          value: values.name,
+        })
+      }
+    })
+    
+    if (translationsToSave.length > 0) {
+      await saveTranslations.mutateAsync(translationsToSave)
+    }
+  }
 
   const formatPrice = (amount: number) => {
     if (amount === 0) return t('included')
@@ -375,69 +499,98 @@ export function VariantManager({ menuItemId, menuItemName, basePrice, currency =
 
       {/* Add/Edit Category Dialog */}
       <Dialog open={isAddCategoryOpen || !!editingCategory} onOpenChange={(open) => { if (!open) { setIsAddCategoryOpen(false); setEditingCategory(null); resetCategoryForm() } }}>
-        <DialogContent onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col" onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>{editingCategory ? t('editCategory') : t('addCategory')}</DialogTitle>
             <DialogDescription>{t('categoryDialogDesc')}</DialogDescription>
           </DialogHeader>
-          <form onSubmit={editingCategory ? handleUpdateCategory : handleCreateCategory} className="space-y-4">
-            <div className="space-y-2">
-              <Label>{t('categoryName')} *</Label>
-              <Input
-                value={categoryForm.name}
-                onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
-                placeholder={t('categoryNamePlaceholder')}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('categoryDescription')}</Label>
-              <Input
-                value={categoryForm.description}
-                onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
-                placeholder={t('categoryDescPlaceholder')}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>{t('isRequired')}</Label>
-                <p className="text-sm text-muted-foreground">{t('isRequiredDesc')}</p>
-              </div>
-              <Switch
-                checked={categoryForm.is_required}
-                onCheckedChange={(checked) => setCategoryForm({ ...categoryForm, is_required: checked })}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>{t('allowMultiple')}</Label>
-                <p className="text-sm text-muted-foreground">{t('allowMultipleDesc')}</p>
-              </div>
-              <Switch
-                checked={categoryForm.allow_multiple}
-                onCheckedChange={(checked) => setCategoryForm({ ...categoryForm, allow_multiple: checked })}
-              />
-            </div>
+          <form onSubmit={editingCategory ? handleUpdateCategory : handleCreateCategory} className="flex-1 overflow-hidden flex flex-col">
+            <Tabs defaultValue="basic" className="flex-1 flex flex-col overflow-hidden">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="basic">{t('basicInfo')}</TabsTrigger>
+                <TabsTrigger value="translations" className="gap-1">
+                  <Languages className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{t('translations')}</span>
+                </TabsTrigger>
+              </TabsList>
+              
+              <ScrollArea className="flex-1 pr-4 mt-4">
+                {/* Basic Info Tab */}
+                <TabsContent value="basic" className="space-y-4 mt-0">
+                  <div className="space-y-2">
+                    <Label>{t('categoryName')} *</Label>
+                    <Input
+                      value={categoryForm.name}
+                      onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                      placeholder={t('categoryNamePlaceholder')}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('categoryDescription')}</Label>
+                    <Input
+                      value={categoryForm.description}
+                      onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                      placeholder={t('categoryDescPlaceholder')}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>{t('isRequired')}</Label>
+                      <p className="text-sm text-muted-foreground">{t('isRequiredDesc')}</p>
+                    </div>
+                    <Switch
+                      checked={categoryForm.is_required}
+                      onCheckedChange={(checked) => setCategoryForm({ ...categoryForm, is_required: checked })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>{t('allowMultiple')}</Label>
+                      <p className="text-sm text-muted-foreground">{t('allowMultipleDesc')}</p>
+                    </div>
+                    <Switch
+                      checked={categoryForm.allow_multiple}
+                      onCheckedChange={(checked) => setCategoryForm({ ...categoryForm, allow_multiple: checked })}
+                    />
+                  </div>
 
-            {/* Show existing categories if creating */}
-            {!editingCategory && categories.length > 0 && (
-              <div className="pt-4 border-t">
-                <Label className="text-sm text-muted-foreground">{t('existingCategories')}</Label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {categories.map((c) => (
-                    <Badge key={c.id} variant="secondary" className="cursor-pointer" onClick={() => {
-                      setEditingCategory(c)
-                      setIsAddCategoryOpen(false)
-                    }}>
-                      {c.name}
-                      <Edit className="h-3 w-3 ml-1" />
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
+                  {/* Show existing categories if creating */}
+                  {!editingCategory && categories.length > 0 && (
+                    <div className="pt-4 border-t">
+                      <Label className="text-sm text-muted-foreground">{t('existingCategories')}</Label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {categories.map((c) => (
+                          <Badge key={c.id} variant="secondary" className="cursor-pointer" onClick={() => {
+                            setEditingCategory(c)
+                            setIsAddCategoryOpen(false)
+                          }}>
+                            {c.name}
+                            <Edit className="h-3 w-3 ml-1" />
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
 
-            <DialogFooter>
+                {/* Translations Tab */}
+                <TabsContent value="translations" className="mt-0">
+                  <TranslationEditor
+                    languages={tenantLanguages}
+                    translations={categoryTranslations}
+                    onTranslationsChange={(vals) => setCategoryTranslations(vals as Record<string, { name: string; description: string }>)}
+                    fields={[
+                      { key: 'name', label: t('categoryName'), type: 'input', placeholder: t('categoryNamePlaceholder') },
+                      { key: 'description', label: t('categoryDescription'), type: 'input', placeholder: t('categoryDescPlaceholder') },
+                    ]}
+                    defaultValues={{ name: categoryForm.name, description: categoryForm.description }}
+                  />
+                </TabsContent>
+              </ScrollArea>
+            </Tabs>
+
+            <DialogFooter className="mt-4 pt-4 border-t">
               {editingCategory && (
                 <Button
                   type="button"
@@ -462,67 +615,96 @@ export function VariantManager({ menuItemId, menuItemName, basePrice, currency =
 
       {/* Add/Edit Variant Dialog */}
       <Dialog open={isAddVariantOpen || !!editingVariant} onOpenChange={(open) => { if (!open) { setIsAddVariantOpen(false); setEditingVariant(null); resetVariantForm() } }}>
-        <DialogContent onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col" onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>{editingVariant ? t('editVariant') : t('addVariant')}</DialogTitle>
             <DialogDescription>{t('variantDialogDesc')}</DialogDescription>
           </DialogHeader>
-          <form onSubmit={editingVariant ? handleUpdateVariant : handleCreateVariant} className="space-y-4">
-            {!editingVariant && (
-              <div className="space-y-2">
-                <Label>{t('selectCategory')} *</Label>
-                <Select
-                  value={variantForm.category_id}
-                  onValueChange={(v) => setVariantForm({ ...variantForm, category_id: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('selectCategoryPlaceholder')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.filter(c => c.is_active).map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label>{t('variantName')} *</Label>
-              <Input
-                value={variantForm.name}
-                onChange={(e) => setVariantForm({ ...variantForm, name: e.target.value })}
-                placeholder={t('variantNamePlaceholder')}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('priceAdjustment')}</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={variantForm.price_adjustment}
-                  onChange={(e) => setVariantForm({ ...variantForm, price_adjustment: e.target.value })}
-                  placeholder="0.00"
-                  className="flex-1"
-                />
-                <span className="text-muted-foreground">{currency}</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t('priceAdjustmentDesc', { basePrice: basePrice.toFixed(2), currency })}
-              </p>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>{t('isDefault')}</Label>
-                <p className="text-sm text-muted-foreground">{t('isDefaultDesc')}</p>
-              </div>
-              <Switch
-                checked={variantForm.is_default}
-                onCheckedChange={(checked) => setVariantForm({ ...variantForm, is_default: checked })}
-              />
-            </div>
-            <DialogFooter>
+          <form onSubmit={editingVariant ? handleUpdateVariant : handleCreateVariant} className="flex-1 overflow-hidden flex flex-col">
+            <Tabs defaultValue="basic" className="flex-1 flex flex-col overflow-hidden">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="basic">{t('basicInfo')}</TabsTrigger>
+                <TabsTrigger value="translations" className="gap-1">
+                  <Languages className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{t('translations')}</span>
+                </TabsTrigger>
+              </TabsList>
+              
+              <ScrollArea className="flex-1 pr-4 mt-4">
+                {/* Basic Info Tab */}
+                <TabsContent value="basic" className="space-y-4 mt-0">
+                  {!editingVariant && (
+                    <div className="space-y-2">
+                      <Label>{t('selectCategory')} *</Label>
+                      <Select
+                        value={variantForm.category_id}
+                        onValueChange={(v) => setVariantForm({ ...variantForm, category_id: v })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('selectCategoryPlaceholder')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.filter(c => c.is_active).map((c) => (
+                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <Label>{t('variantName')} *</Label>
+                    <Input
+                      value={variantForm.name}
+                      onChange={(e) => setVariantForm({ ...variantForm, name: e.target.value })}
+                      placeholder={t('variantNamePlaceholder')}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('priceAdjustment')}</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={variantForm.price_adjustment}
+                        onChange={(e) => setVariantForm({ ...variantForm, price_adjustment: e.target.value })}
+                        placeholder="0.00"
+                        className="flex-1"
+                      />
+                      <span className="text-muted-foreground">{currency}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {t('priceAdjustmentDesc', { basePrice: basePrice.toFixed(2), currency })}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>{t('isDefault')}</Label>
+                      <p className="text-sm text-muted-foreground">{t('isDefaultDesc')}</p>
+                    </div>
+                    <Switch
+                      checked={variantForm.is_default}
+                      onCheckedChange={(checked) => setVariantForm({ ...variantForm, is_default: checked })}
+                    />
+                  </div>
+                </TabsContent>
+
+                {/* Translations Tab */}
+                <TabsContent value="translations" className="mt-0">
+                  <TranslationEditor
+                    languages={tenantLanguages}
+                    translations={variantTranslations}
+                    onTranslationsChange={(vals) => setVariantTranslations(vals as Record<string, { name: string }>)}
+                    fields={[
+                      { key: 'name', label: t('variantName'), type: 'input', placeholder: t('variantNamePlaceholder') },
+                    ]}
+                    defaultValues={{ name: variantForm.name }}
+                  />
+                </TabsContent>
+              </ScrollArea>
+            </Tabs>
+
+            <DialogFooter className="mt-4 pt-4 border-t">
               <Button type="button" variant="outline" onClick={() => { setIsAddVariantOpen(false); setEditingVariant(null); resetVariantForm() }}>
                 {t('cancel')}
               </Button>

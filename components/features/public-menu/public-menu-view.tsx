@@ -158,13 +158,13 @@ export function PublicMenuView({
     }
   }, [cartOpen, checkoutOpen])
 
-  // Get translated text for items or categories
+  // Get translated text for items, categories, variant categories, or variants
   // Always look for translation first, fallback to DB value if not found
   const getTranslatedText = useCallback((
     id: string,
     field: 'name' | 'description',
     fallback: string,
-    type: 'menu_item' | 'category' = 'menu_item'
+    type: 'menu_item' | 'category' | 'variant_category' | 'menu_item_variant' = 'menu_item'
   ) => {
     const key = `${type}.${id}.${field}`
     const translation = translations.find(t => t.key === key && t.language_code === currentLanguage)
@@ -811,12 +811,16 @@ export function PublicMenuView({
                       return (
                         <div key={cartItem.id} className="flex gap-3 p-3 rounded-lg" style={{ backgroundColor: cardBg }}>
                           <div className="flex-1">
-                            <h4 className="font-medium" style={{ color: theme.foreground }}>{cartItem.item.name}</h4>
+                            <h4 className="font-medium" style={{ color: theme.foreground }}>
+                              {getTranslatedText(cartItem.item.id, 'name', cartItem.item.name)}
+                            </h4>
                             {cartItem.variant && (
                               <p className="text-sm" style={{ color: mutedForeground }}>{cartItem.variant.name}</p>
                             )}
-                            {variantNames.length > 0 && (
-                              <p className="text-sm" style={{ color: mutedForeground }}>{variantNames.join(', ')}</p>
+                            {cartItem.selectedVariantInfos && cartItem.selectedVariantInfos.length > 0 && (
+                              <p className="text-sm" style={{ color: mutedForeground }}>
+                                {cartItem.selectedVariantInfos.map(v => getTranslatedText(v.id, 'name', v.name, 'menu_item_variant')).join(', ')}
+                              </p>
                             )}
                             {cartItem.selectedOptions.length > 0 && (
                               <p className="text-sm" style={{ color: mutedForeground }}>

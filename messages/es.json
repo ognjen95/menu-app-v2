@@ -1326,6 +1326,8 @@
     "variantDeleteFailed": "Error al eliminar variante",
     "deleteVariant": "Eliminar Variante",
     "deleteVariantConfirm": "¿Estás seguro de que quieres eliminar esta variante?",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "basicInfo": "Información Básica",
+    "translations": "Traducciones"
   }
 }

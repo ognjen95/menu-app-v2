@@ -80,6 +80,7 @@
     "checkout": "Pagar",
     "placeOrder": "Realizar Pedido",
     "selectOptions": "Seleccionar Opciones",
+    "selectMultiple": "selección múltiple",
     "required": "Requerido",
     "optional": "Opcional",
     "add": "Añadir",

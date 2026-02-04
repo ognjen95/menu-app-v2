@@ -44,7 +44,7 @@ export interface ItemDetailModalProps {
   onClose: () => void
   onAddToCart: (item: any) => void // eslint-disable-line
   theme: Theme
-  getTranslatedText: (id: string, field: 'name' | 'description', fallback: string) => string
+  getTranslatedText: (id: string, field: 'name' | 'description', fallback: string, type?: 'menu_item' | 'category' | 'variant_category' | 'menu_item_variant') => string
 }
 
 // Helper function for contrast color
@@ -231,12 +231,14 @@ export function ItemDetailModal({
           return (
             <div key={categoryId} className="mb-6">
               <h3 className="font-semibold mb-2 flex items-center gap-2" style={{ color: theme.foreground }}>
-                {category.name}
+                {getTranslatedText(category.id, 'name', category.name, 'variant_category')}
                 {category.is_required && <span style={{ color: '#EF4444' }}>*</span>}
                 {category.allow_multiple && <span className="text-xs font-normal" style={{ color: mutedForeground }}>({t('selectMultiple')})</span>}
               </h3>
               {category.description && (
-                <p className="text-sm mb-2" style={{ color: mutedForeground }}>{category.description}</p>
+                <p className="text-sm mb-2" style={{ color: mutedForeground }}>
+                  {getTranslatedText(category.id, 'description', category.description, 'variant_category')}
+                </p>
               )}
               <div className="flex flex-wrap gap-2">
                 {variants.filter((v: any) => v.is_available).map((variant: any) => {
@@ -253,7 +255,7 @@ export function ItemDetailModal({
                       }}
                       onClick={() => handleVariantClick(categoryId, variant.id, category.allow_multiple)}
                     >
-                      {variant.name}
+                      {getTranslatedText(variant.id, 'name', variant.name, 'menu_item_variant')}
                       {variant.price_adjustment !== 0 && (
                         <span style={{ color: mutedForeground, marginLeft: '4px' }}>
                           {variant.price_adjustment > 0 ? '+' : ''}€{variant.price_adjustment.toFixed(2)}

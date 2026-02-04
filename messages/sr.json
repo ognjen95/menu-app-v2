@@ -1326,6 +1326,8 @@
     "variantDeleteFailed": "Greška pri brisanju varijante",
     "deleteVariant": "Obriši Varijantu",
     "deleteVariantConfirm": "Da li ste sigurni da želite da obrišete ovu varijantu?",
-    "cancel": "Otkaži"
+    "cancel": "Otkaži",
+    "basicInfo": "Osnovne Informacije",
+    "translations": "Prevodi"
   }
 }
