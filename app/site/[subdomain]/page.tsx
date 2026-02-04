@@ -4,7 +4,7 @@ import { FaFacebookF, FaInstagram, FaXTwitter } from 'react-icons/fa6'
 import { unstable_noStore as noStore } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { BlockRenderer } from '@/components/features/public-menu/block-renderer'
-import { WebsiteLanguageSelector } from '@/components/features/public-menu/website-language-selector'
+import { WebsiteNavbar } from '@/components/features/public-menu/website-navbar'
 import type { Translation } from '@/lib/types'
 import { getWebsiteBySubdomain, supabase } from './utils'
 
@@ -169,84 +169,17 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
   return (
     <>
       {/* Navigation */}
-      <nav style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '1rem 2rem',
-        backgroundColor: theme.background,
-        borderBottom: `1px solid ${theme.foreground}10`,
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        backdropFilter: 'blur(12px)',
-      }}>
-        <Link href={`/site/${subdomain}`} style={{ textDecoration: 'none' }}>
-          {website.logo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={website.logo_url} alt={tenantName || 'Logo'} style={{ height: 40 }} />
-          ) : (
-            <span style={{
-              fontFamily: theme.fontHeading,
-              fontWeight: 700,
-              fontSize: '1.25rem',
-              color: theme.foreground,
-              letterSpacing: '-0.02em',
-            }}>
-              {tenantName}
-            </span>
-          )}
-        </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          {navPages.map((navPage) => (
-            <Link
-              key={navPage.id}
-              href={`/site/${subdomain}?page=${navPage.slug}`}
-              style={{
-                color: navPage.slug === currentSlug ? theme.primary : theme.foreground,
-                textDecoration: 'none',
-                fontWeight: 500,
-                fontSize: '0.9rem',
-                padding: '0.5rem 1rem',
-                borderRadius: '0.5rem',
-                backgroundColor: navPage.slug === currentSlug ? `${theme.primary}15` : 'transparent',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              {navPage.title}
-            </Link>
-          ))}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          {/* Language Selector */}
-          {languages.length > 1 && (
-            <WebsiteLanguageSelector
-              languages={languages}
-              currentLanguage={currentLanguage}
-              subdomain={subdomain}
-              currentPage={currentSlug}
-              theme={theme}
-            />
-          )}
-          <Link
-            href={`/m/${tenantSlug}`}
-            style={{
-              backgroundColor: theme.primary,
-              color: '#fff',
-              padding: '0.6rem 1.25rem',
-              borderRadius: '9999px',
-              textDecoration: 'none',
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              marginLeft: '0.5rem',
-              boxShadow: `0 2px 8px ${theme.primary}40`,
-              transition: 'all 0.2s ease',
-            }}
-          >
-            View Menu
-          </Link>
-        </div>
-      </nav>
+      <WebsiteNavbar
+        subdomain={subdomain}
+        tenantName={tenantName}
+        tenantSlug={tenantSlug}
+        logoUrl={website.logo_url}
+        navPages={navPages}
+        currentSlug={currentSlug}
+        languages={languages}
+        currentLanguage={currentLanguage}
+        theme={theme}
+      />
 
       {/* Page Content - Render Blocks */}
       <main>
