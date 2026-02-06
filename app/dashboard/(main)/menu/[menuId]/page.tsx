@@ -95,6 +95,92 @@ import { VariantManager } from '@/components/features/menu/VariantManager'
 import type { Category } from '@/lib/types'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+
+type OverlapInfo = {
+  menuName: string
+  overlappingDays: number[]
+  timeRange: string
+}
+
+/**
+ * Check if two time ranges overlap
+ */
+function timeRangesOverlap(
+  from1: string | null | undefined,
+  until1: string | null | undefined,
+  from2: string | null | undefined,
+  until2: string | null | undefined
+): boolean {
+  const noRestriction1 = !from1 && !until1
+  const noRestriction2 = !from2 && !until2
+  if (noRestriction1 || noRestriction2) return true
+
+  const start1 = from1 || '00:00'
+  const end1 = until1 || '23:59'
+  const start2 = from2 || '00:00'
+  const end2 = until2 || '23:59'
+
+  return start1 < end2 && start2 < end1
+}
+
+/**
+ * Find menus that have overlapping schedules
+ */
+function findOverlappingMenus(
+  menus: Menu[],
+  form: {
+    is_active: boolean
+    available_days: number[]
+    available_from: string
+    available_until: string
+    location_id: string | null
+  },
+  editingMenuId?: string
+): OverlapInfo[] {
+  if (!form.is_active) return []
+
+  const overlaps: OverlapInfo[] = []
+
+  for (const menu of menus) {
+    if (editingMenuId && menu.id === editingMenuId) continue
+    if (!menu.is_active) continue
+    if (form.location_id && menu.location_id && form.location_id !== menu.location_id) continue
+
+    const formDays = form.available_days.length > 0 ? form.available_days : [0, 1, 2, 3, 4, 5, 6]
+    const menuDays = menu.available_days?.length > 0 ? menu.available_days : [0, 1, 2, 3, 4, 5, 6]
+    const overlappingDays = formDays.filter(d => menuDays.includes(d))
+
+    if (overlappingDays.length === 0) continue
+
+    const hasTimeOverlap = timeRangesOverlap(
+      form.available_from || null,
+      form.available_until || null,
+      menu.available_from,
+      menu.available_until
+    )
+
+    if (hasTimeOverlap) {
+      overlaps.push({
+        menuName: menu.name,
+        overlappingDays,
+        timeRange: menu.available_from || menu.available_until
+          ? `${menu.available_from || '00:00'} - ${menu.available_until || '23:59'}`
+          : 'All day',
+      })
+    }
+  }
+
+  return overlaps
+}
 
 // Dietary tag icons mapping
 const dietaryTagIcons: Record<string, LucideIcon> = {
@@ -130,6 +216,9 @@ export default function MenuConfigPage() {
   
   // Delete confirmation state
   const [itemToDelete, setItemToDelete] = useState<MenuItem | null>(null)
+  
+  // Overlap alert state
+  const [overlapAlert, setOverlapAlert] = useState<OverlapInfo[] | null>(null)
   
   // Form states
   const [menuForm, setMenuForm] = useState({
@@ -271,6 +360,14 @@ export default function MenuConfigPage() {
 
   const handleSubmitMenu = (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Check for overlapping schedules
+    const overlaps = findOverlappingMenus(menus, menuForm, menuId)
+    if (overlaps.length > 0) {
+      setOverlapAlert(overlaps)
+      return
+    }
+
     updateMenu.mutate({
       id: menuId,
       name: menuForm.name,
@@ -1041,6 +1138,40 @@ export default function MenuConfigPage() {
         }}
         isLoading={deleteItem.isPending}
       />
+
+      {/* Overlap Alert Dialog */}
+      <AlertDialog open={!!overlapAlert} onOpenChange={(open) => !open && setOverlapAlert(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              {t('overlapAlertTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-left">
+              <p className="mb-3">{t('overlapAlertDesc')}</p>
+              <div className="space-y-2">
+                <p className="font-medium text-foreground">{t('overlapWith')}</p>
+                {overlapAlert?.map((overlap, idx) => {
+                  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+                  const days = overlap.overlappingDays.map(d => dayNames[d]).join(', ')
+                  return (
+                    <div key={idx} className="bg-muted rounded-lg p-3 text-sm">
+                      <span className="font-semibold text-foreground">{overlap.menuName}</span>
+                      <br />
+                      <span className="text-muted-foreground">
+                        {t('overlapDays')} {days} - {overlap.timeRange}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>{t('understood')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

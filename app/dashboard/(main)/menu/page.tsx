@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useMenus, useCreateMenu, useUpdateMenu } from '@/lib/hooks/use-menu'
 import { useLocations } from '@/lib/hooks/use-tenant'
-import type { Menu } from '@/lib/types'
+import type { Menu, Location } from '@/lib/types'
+import { cn } from '@/lib/utils'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -31,7 +32,132 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { motion, staggerContainer, staggerItemScale } from '@/components/ui/animated'
 import { MenuSelectionGridSkeleton } from '@/components/ui/skeletons'
-import { Plus, Edit, Clock, Loader2, BookOpen } from 'lucide-react'
+import { Plus, Edit, Clock, Loader2, BookOpen, AlertTriangle, MapPin, CalendarDays } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+
+type OverlapInfo = {
+  menuName: string
+  overlappingDays: number[]
+  timeRange: string
+}
+
+// ! [IMPORTANT]
+// ! THIS VALIDATION OF OVERLAPPING MENUS COPY FOR BACKEND LOGIC ALSO
+/**
+ * Check if two time ranges overlap
+ * Handles both normal ranges (09:00-17:00) and overnight ranges (22:00-06:00)
+ */
+function timeRangesOverlap(
+  from1: string | null | undefined,
+  until1: string | null | undefined,
+  from2: string | null | undefined,
+  until2: string | null | undefined
+): boolean {
+  // If either menu has no time restriction, they can overlap
+  const noRestriction1 = !from1 && !until1
+  const noRestriction2 = !from2 && !until2
+  
+  if (noRestriction1 || noRestriction2) return true
+
+  // Default values for partial restrictions
+  const start1 = from1 || '00:00'
+  const end1 = until1 || '23:59'
+  const start2 = from2 || '00:00'
+  const end2 = until2 || '23:59'
+
+  // Check if ranges overlap (simple string comparison works for HH:MM format)
+  return start1 < end2 && start2 < end1
+}
+
+/**
+ * Find menus that have overlapping schedules with the given menu form
+ */
+function findOverlappingMenus(
+  menus: Menu[],
+  form: {
+    is_active: boolean
+    available_days: number[]
+    available_from: string
+    available_until: string
+    location_id: string | null
+  },
+  editingMenuId?: string
+): OverlapInfo[] {
+  // Only check if the new/edited menu is active
+  if (!form.is_active) return []
+
+  const overlaps: OverlapInfo[] = []
+
+  for (const menu of menus) {
+    // Skip the menu being edited
+    if (editingMenuId && menu.id === editingMenuId) continue
+    // Skip inactive menus
+    if (!menu.is_active) continue
+    // Skip menus at different locations (unless one has no location)
+    if (form.location_id && menu.location_id && form.location_id !== menu.location_id) continue
+
+    // Find overlapping days
+    const formDays = form.available_days.length > 0 ? form.available_days : [0, 1, 2, 3, 4, 5, 6]
+    const menuDays = menu.available_days?.length > 0 ? menu.available_days : [0, 1, 2, 3, 4, 5, 6]
+    const overlappingDays = formDays.filter(d => menuDays.includes(d))
+
+    if (overlappingDays.length === 0) continue
+
+    // Check time overlap
+    const hasTimeOverlap = timeRangesOverlap(
+      form.available_from || null,
+      form.available_until || null,
+      menu.available_from,
+      menu.available_until
+    )
+
+    if (hasTimeOverlap) {
+      overlaps.push({
+        menuName: menu.name,
+        overlappingDays,
+        timeRange: menu.available_from || menu.available_until
+          ? `${menu.available_from || '00:00'} - ${menu.available_until || '23:59'}`
+          : 'All day',
+      })
+    }
+  }
+
+  return overlaps
+}
+
+/**
+ * Check if a menu is currently active based on is_active, available_days, and time range
+ */
+function isMenuCurrentlyActive(menu: Menu): boolean {
+  if (!menu.is_active) return false
+
+  const now = new Date()
+  const currentDay = now.getDay()
+  const currentTime = now.toTimeString().slice(0, 5) // HH:MM format
+
+  // Check day availability
+  const menuDays = menu.available_days?.length ? menu.available_days : [0, 1, 2, 3, 4, 5, 6]
+  if (!menuDays.includes(currentDay)) return false
+
+  // Check time availability
+  const from = menu.available_from || '00:00'
+  const until = menu.available_until || '23:59'
+
+  // Handle overnight ranges (e.g., 22:00 - 06:00)
+  if (from > until) {
+    return currentTime >= from || currentTime <= until
+  }
+
+  return currentTime >= from && currentTime <= until
+}
 
 export default function MenuListPage() {
   const t = useTranslations('menuPage')
@@ -39,12 +165,13 @@ export default function MenuListPage() {
   
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false)
   const [editingMenu, setEditingMenu] = useState<Menu | null>(null)
+  const [overlapAlert, setOverlapAlert] = useState<OverlapInfo[] | null>(null)
   
   const [menuForm, setMenuForm] = useState({
     name: '',
     description: '',
     location_id: '' as string | null,
-    is_active: true,
+    is_active: false,
     available_from: '',
     available_until: '',
     available_days: [0, 1, 2, 3, 4, 5, 6] as number[],
@@ -57,14 +184,14 @@ export default function MenuListPage() {
   const updateMenu = useUpdateMenu()
   
   const menus = useMemo(() => menusData?.data?.menus || [], [menusData?.data?.menus])
-  const locations = useMemo(() => locationsData?.locations || [], [locationsData?.locations])
+  const locations = useMemo<Location[]>(() => locationsData?.locations || [], [locationsData?.locations])
 
   const resetMenuForm = () => {
     setMenuForm({
       name: '',
       description: '',
       location_id: null,
-      is_active: true,
+      is_active: false,
       available_from: '',
       available_until: '',
       available_days: [0, 1, 2, 3, 4, 5, 6],
@@ -88,6 +215,14 @@ export default function MenuListPage() {
 
   const handleSubmitMenu = (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Check for overlapping schedules
+    const overlaps = findOverlappingMenus(menus, menuForm, editingMenu?.id)
+    if (overlaps.length > 0) {
+      setOverlapAlert(overlaps)
+      return
+    }
+
     const menuData = {
       name: menuForm.name,
       description: menuForm.description || undefined,
@@ -152,7 +287,10 @@ export default function MenuListPage() {
           {menus.map((menu, index) => (
             <motion.div key={menu.id} variants={staggerItemScale} custom={index}>
               <Card 
-                className="cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all hover:shadow-lg group relative"
+                className={cn(
+                  "cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all hover:shadow-lg group relative",
+                  isMenuCurrentlyActive(menu) && "ring-2 ring-primary border-primary"
+                )}
                 onClick={() => router.push(`/dashboard/menu/${menu.id}`)}
               >
                 <Button
@@ -182,6 +320,20 @@ export default function MenuListPage() {
                           {menu.available_from || '00:00'} - {menu.available_until || '24:00'}
                         </p>
                       )}
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
+                        {menu.available_days && menu.available_days.length < 7 && (
+                          <p className="text-xs text-muted-foreground">
+                            <CalendarDays className="h-3 w-3 inline mr-1" />
+                            {menu.available_days.map(d => [t('sunday'), t('monday'), t('tuesday'), t('wednesday'), t('thursday'), t('friday'), t('saturday')][d]).join(', ')}
+                          </p>
+                        )}
+                        {menu.location_id && (
+                          <p className="text-xs text-muted-foreground">
+                            <MapPin className="h-3 w-3 inline mr-1" />
+                            {locations.find(l => l.id === menu.location_id)?.name || t('location')}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardHeader>
@@ -316,6 +468,40 @@ export default function MenuListPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Overlap Alert Dialog */}
+      <AlertDialog open={!!overlapAlert} onOpenChange={(open) => !open && setOverlapAlert(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              {t('overlapAlertTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-left">
+              <p className="mb-3">{t('overlapAlertDesc')}</p>
+              <div className="space-y-2">
+                <p className="font-medium text-foreground">{t('overlapWith')}</p>
+                {overlapAlert?.map((overlap, idx) => {
+                  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+                  const days = overlap.overlappingDays.map(d => dayNames[d]).join(', ')
+                  return (
+                    <div key={idx} className="bg-muted rounded-lg p-3 text-sm">
+                      <span className="font-semibold text-foreground">{overlap.menuName}</span>
+                      <br />
+                      <span className="text-muted-foreground">
+                        {t('overlapDays')} {days} - {overlap.timeRange}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>{t('understood')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

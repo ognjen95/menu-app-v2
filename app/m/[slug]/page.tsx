@@ -5,6 +5,58 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { PublicMenuView } from '@/components/features/public-menu/public-menu-view'
 import { PublicIntlProvider } from '@/components/providers/public-intl-provider'
 import { locales, defaultLocale, type Locale } from '@/i18n/config'
+import type { Menu } from '@/lib/types'
+
+// Menu with nested categories from the query
+type MenuWithNested = Menu & { categories?: unknown[] }
+
+/**
+ * Filter menus based on availability (time and day of week)
+ * - available_days: array of days (0=Sunday, 6=Saturday)
+ * - available_from/available_until: time strings (HH:MM)
+ */
+function filterMenusByAvailability<T extends Menu>(menus: T[]): T[] {
+  const now = new Date()
+  const currentDay = now.getDay() // 0=Sunday, 6=Saturday
+  const currentTime = now.toTimeString().slice(0, 5) // HH:MM format
+
+  return menus.filter(menu => {
+    // Check day availability (default: all days)
+    const availableDays = menu.available_days ?? [0, 1, 2, 3, 4, 5, 6]
+    if (!availableDays.includes(currentDay)) {
+      return false
+    }
+
+    // Check time availability
+    const from = menu.available_from // e.g., "09:00"
+    const until = menu.available_until // e.g., "22:00"
+
+    // If no time restrictions, menu is available
+    if (!from && !until) {
+      return true
+    }
+
+    // Handle time comparison
+    if (from && until) {
+      // Both bounds set
+      if (from <= until) {
+        // Normal range (e.g., 09:00 - 22:00)
+        return currentTime >= from && currentTime <= until
+      } else {
+        // Overnight range (e.g., 22:00 - 06:00)
+        return currentTime >= from || currentTime <= until
+      }
+    } else if (from) {
+      // Only start time set
+      return currentTime >= from
+    } else if (until) {
+      // Only end time set
+      return currentTime <= until
+    }
+
+    return true
+  })
+}
 
 type PageProps = {
   params: Promise<{ slug: string }>
@@ -119,9 +171,12 @@ async function getTenantData(slug: string) {
     return null
   }
 
+  // Filter menus by current time and day of week
+  const availableMenus = filterMenusByAvailability(menusResult.data || [])
+
   return {
     tenant,
-    menus: menusResult.data || [],
+    menus: availableMenus,
     locations: locationsResult.data || [],
     allergens: allergensResult.data || [],
     website: websiteResult.data || null,
