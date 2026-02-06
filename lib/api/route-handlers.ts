@@ -6,11 +6,13 @@ export type RouteContext = {
   params: Promise<Record<string, string>>
 }
 
+export type UserRoles = 'owner' | 'manager' | 'staff' | 'waiter'
+
 export type AuthenticatedUser = {
   id: string
   email: string
   tenant_id: string | null
-  role: string | null
+  role: UserRoles | null
 }
 
 // Standard API response type
@@ -31,9 +33,9 @@ export async function queryHandler<T>(
 ): Promise<NextResponse<ApiResponse<T>>> {
   try {
     const supabase = await createServerSupabaseClient(request)
-    
+
     const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
+
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -55,7 +57,7 @@ export async function queryHandler<T>(
 
     const params = request.nextUrl.searchParams
     const data = await handler(supabase, authenticatedUser, params)
-    
+
     return NextResponse.json({ data })
   } catch (error) {
     console.error('Query handler error:', error)
@@ -75,9 +77,9 @@ export async function mutationHandler<T>(
 ): Promise<NextResponse<ApiResponse<T>>> {
   try {
     const supabase = await createServerSupabaseClient(request)
-    
+
     const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
+
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -107,7 +109,7 @@ export async function mutationHandler<T>(
     }
 
     const data = await handler(supabase, authenticatedUser, body)
-    
+
     return NextResponse.json({ data })
   } catch (error) {
     console.error('Mutation handler error:', error)
@@ -128,7 +130,7 @@ export async function publicQueryHandler<T>(
     const supabase = await createServerSupabaseClient(request)
     const params = request.nextUrl.searchParams
     const data = await handler(supabase, params)
-    
+
     return NextResponse.json({ data })
   } catch (error) {
     console.error('Public query handler error:', error)
@@ -138,7 +140,7 @@ export async function publicQueryHandler<T>(
 }
 
 // Role-based authorization helper
-export function requireRole(user: AuthenticatedUser, allowedRoles: string[]): void {
+export function requireRole(user: AuthenticatedUser, allowedRoles: UserRoles[]): void {
   if (!user.role || !allowedRoles.includes(user.role)) {
     throw new Error('Forbidden: insufficient permissions')
   }
