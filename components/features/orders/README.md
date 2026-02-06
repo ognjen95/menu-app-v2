@@ -30,6 +30,41 @@ A dedicated mobile-optimized page for waiters to take orders on phones.
 
 ## Components
 
+### `components/order-card.tsx`
+
+A reusable card component for displaying order information in grid and kanban views.
+
+**Features:**
+- Status indicator bar with color coding
+- Order number and type badge
+- Time elapsed since order placed (color-coded urgency)
+- Table info and notes indicator
+- Expandable item list with variants, options, and allergens
+- Customer notes display
+- Total price and status badge
+
+**Props:**
+```typescript
+interface OrderCardProps {
+  order: OrderWithRelations
+  onSelect: (order: OrderWithRelations) => void
+}
+```
+
+**Exports:**
+- `OrderCard` - The main component
+- `statusConfig` - Order status configurations (colors, icons, labels)
+- `typeIcons` - Order type icons (dine_in, takeaway, delivery)
+- `formatTimeElapsed` - Utility to format time since order
+- `getTimerColor` - Utility to get urgency color based on time
+
+**Usage:**
+```tsx
+import { OrderCard, statusConfig } from '@/components/features/orders/components/order-card'
+
+<OrderCard order={order} onSelect={(order) => setSelectedOrder(order)} />
+```
+
 ### `create-order-dialog.tsx`
 
 A POS-style dialog/sheet for creating new orders. Designed for waiters and staff to quickly create orders.

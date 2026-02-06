@@ -61,6 +61,7 @@ import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Image from 'next/image'
 import type { Location, Table, MenuItem, Category } from '@/lib/types'
+import { CompactMenuItemsGridSkeleton, CategoryButtonsRowSkeleton } from '@/components/ui/skeletons'
 
 const LOCATION_STORAGE_KEY = 'pos-selected-location'
 
@@ -349,64 +350,70 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
   }, [open])
 
   // Menu items grid component
-  const MenuItemsGrid = () => (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-      {filteredItems.map(item => (
-        <button
-          key={item.id}
-          onClick={() => handleItemClick(item)}
-          disabled={item.is_sold_out}
-          className={cn(
-            "relative flex gap-3 p-3 rounded-lg border text-left transition-all",
-            "hover:border-primary hover:shadow-sm active:scale-[0.98]",
-            item.is_sold_out && "opacity-50 cursor-not-allowed"
-          )}
-        >
-          {/* Product image */}
-          <div className="w-14 h-14 rounded-lg bg-muted overflow-hidden shrink-0">
-            {item.image_urls && item.image_urls[0] ? (
-              <Image
-                src={item.image_urls[0]}
-                alt={item.name}
-                width={56}
-                height={56}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                <UtensilsCrossed className="h-6 w-6" />
-              </div>
+  const MenuItemsGrid = () => {
+    if (isLoadingItems) {
+      return <CompactMenuItemsGridSkeleton count={8} />
+    }
+
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+        {filteredItems.map(item => (
+          <button
+            key={item.id}
+            onClick={() => handleItemClick(item)}
+            disabled={item.is_sold_out}
+            className={cn(
+              "relative flex gap-3 p-3 rounded-lg border text-left transition-all",
+              "hover:border-primary hover:shadow-sm active:scale-[0.98]",
+              item.is_sold_out && "opacity-50 cursor-not-allowed"
             )}
+          >
+            {/* Product image */}
+            <div className="w-14 h-14 rounded-lg bg-muted overflow-hidden shrink-0">
+              {item.image_urls && item.image_urls[0] ? (
+                <Image
+                  src={item.image_urls[0]}
+                  alt={item.name}
+                  width={56}
+                  height={56}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                  <UtensilsCrossed className="h-6 w-6" />
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="font-medium text-sm line-clamp-2">{item.name}</span>
+              <span className="text-xs text-muted-foreground block">
+                {item.category?.name}
+              </span>
+              <span className="font-semibold text-sm">
+                €{item.base_price.toFixed(2)}
+              </span>
+            </div>
+            {item.is_sold_out && (
+              <Badge variant="destructive" className="absolute top-1 right-1 text-xs">
+                {t('soldOut')}
+              </Badge>
+            )}
+            {!item.is_sold_out && item.menu_item_variants && item.menu_item_variants.length > 0 && (
+              <Badge variant="secondary" className="absolute top-1 right-1 text-xs">
+                <Settings2 className="h-3 w-3 mr-0.5" />
+                {t('hasVariants')}
+              </Badge>
+            )}
+          </button>
+        ))}
+        {filteredItems.length === 0 && (
+          <div className="col-span-full text-center py-8 text-muted-foreground">
+            {t('noItemsFound')}
           </div>
-          <div className="flex-1 min-w-0">
-            <span className="font-medium text-sm line-clamp-2">{item.name}</span>
-            <span className="text-xs text-muted-foreground block">
-              {item.category?.name}
-            </span>
-            <span className="font-semibold text-sm">
-              €{item.base_price.toFixed(2)}
-            </span>
-          </div>
-          {item.is_sold_out && (
-            <Badge variant="destructive" className="absolute top-1 right-1 text-xs">
-              {t('soldOut')}
-            </Badge>
-          )}
-          {!item.is_sold_out && item.menu_item_variants && item.menu_item_variants.length > 0 && (
-            <Badge variant="secondary" className="absolute top-1 right-1 text-xs">
-              <Settings2 className="h-3 w-3 mr-0.5" />
-              {t('hasVariants')}
-            </Badge>
-          )}
-        </button>
-      ))}
-      {filteredItems.length === 0 && !isLoadingItems && (
-        <div className="col-span-full text-center py-8 text-muted-foreground">
-          {t('noItemsFound')}
-        </div>
-      )}
-    </div>
-  )
+        )}
+      </div>
+    )
+  }
 
   // Cart sidebar component
   const CartSidebar = ({ className }: { className?: string }) => (
@@ -648,25 +655,29 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
 
         {/* Category filter */}
         <ScrollArea className="w-full whitespace-nowrap">
-          <div className="flex gap-2 pb-2">
-            <Button
-              variant={selectedCategoryId === null ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedCategoryId(null)}
-            >
-              {t('allCategories')}
-            </Button>
-            {categories.map(cat => (
+          {isLoadingItems ? (
+            <CategoryButtonsRowSkeleton count={6} />
+          ) : (
+            <div className="flex gap-2 pb-2">
               <Button
-                key={cat.id}
-                variant={selectedCategoryId === cat.id ? 'default' : 'outline'}
+                variant={selectedCategoryId === null ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setSelectedCategoryId(cat.id)}
+                onClick={() => setSelectedCategoryId(null)}
               >
-                {cat.name}
+                {t('allCategories')}
               </Button>
-            ))}
-          </div>
+              {categories.map(cat => (
+                <Button
+                  key={cat.id}
+                  variant={selectedCategoryId === cat.id ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedCategoryId(cat.id)}
+                >
+                  {cat.name}
+                </Button>
+              ))}
+            </div>
+          )}
         </ScrollArea>
       </div>
 
@@ -922,25 +933,29 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
 
         {/* Category filter */}
         <ScrollArea className="w-full whitespace-nowrap">
-          <div className="flex gap-2 pb-2">
-            <Button
-              variant={selectedCategoryId === null ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedCategoryId(null)}
-            >
-              {t('allCategories')}
-            </Button>
-            {categories.map(cat => (
+          {isLoadingItems ? (
+            <CategoryButtonsRowSkeleton count={6} />
+          ) : (
+            <div className="flex gap-2 pb-2">
               <Button
-                key={cat.id}
-                variant={selectedCategoryId === cat.id ? 'default' : 'outline'}
+                variant={selectedCategoryId === null ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => setSelectedCategoryId(cat.id)}
+                onClick={() => setSelectedCategoryId(null)}
               >
-                {cat.name}
+                {t('allCategories')}
               </Button>
-            ))}
-          </div>
+              {categories.map(cat => (
+                <Button
+                  key={cat.id}
+                  variant={selectedCategoryId === cat.id ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedCategoryId(cat.id)}
+                >
+                  {cat.name}
+                </Button>
+              ))}
+            </div>
+          )}
         </ScrollArea>
       </div>
 

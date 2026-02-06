@@ -59,6 +59,49 @@ export function MenuItemCardSkeleton() {
   )
 }
 
+// Compact Menu Item Skeleton (for POS/create order dialog)
+export function CompactMenuItemSkeleton() {
+  return (
+    <div className="flex gap-3 p-3 rounded-lg border animate-pulse">
+      <Skeleton className="w-14 h-14 rounded-lg shrink-0" />
+      <div className="flex-1 min-w-0 space-y-2">
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-3 w-1/2" />
+        <Skeleton className="h-4 w-16" />
+      </div>
+    </div>
+  )
+}
+
+// Compact Menu Items Grid Skeleton (for POS/create order dialog)
+export function CompactMenuItemsGridSkeleton({ count = 8 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+      {Array.from({ length: count }).map((_, i) => (
+        <CompactMenuItemSkeleton key={i} />
+      ))}
+    </div>
+  )
+}
+
+// Category Button Skeleton
+export function CategoryButtonSkeleton() {
+  return (
+    <Skeleton className="h-8 w-20 rounded-md shrink-0" />
+  )
+}
+
+// Category Buttons Row Skeleton
+export function CategoryButtonsRowSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <div className="flex gap-2 pb-2">
+      {Array.from({ length: count }).map((_, i) => (
+        <CategoryButtonSkeleton key={i} />
+      ))}
+    </div>
+  )
+}
+
 // Menu Selection Card Skeleton
 export function MenuSelectionCardSkeleton() {
   return (
