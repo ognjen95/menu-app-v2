@@ -3,6 +3,7 @@ import { FaFacebookF, FaInstagram, FaXTwitter, FaTiktok, FaYoutube, FaLinkedinIn
 import { SiTripadvisor } from "react-icons/si";
 import { GalleryBlock } from "../GalleryBlock";
 import Image from "next/image";
+import Link from "next/link";
 // Location type from database
 export interface Location {
   id: string
@@ -509,7 +510,10 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
                 })}
               </div>
             ) : (
-              <p style={{ textAlign: 'center', opacity: 0.6 }}>{t('noMenuItems')}</p>
+              <div style={{ textAlign: 'center', padding: '2rem' }}>
+                <p style={{ opacity: 0.6, marginBottom: '0.5rem' }}>{t('noMenuItems')}</p>
+                <p style={{ fontSize: '0.875rem', opacity: 0.5, marginBottom: '1.5rem' }}>{t('noMenuItemsHint')}</p>
+              </div>
             )}
           </div>
         </section>
@@ -874,6 +878,12 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
       const mapLocations = getBlockLocations()
       const useLocationsForMap = content.use_locations && mapLocations.length > 0
 
+      // Display options (default to true if not set)
+      const showMap = content.show_map !== false
+      const showAddress = content.show_address !== false
+      const showPhone = content.show_phone !== false
+      const showDirections = content.show_directions !== false
+
       // Single location map card component
       const LocationMapCard = ({ loc, showName = false, isOnlyOne = false }: { loc: Location; showName?: boolean; isOnlyOne?: boolean }) => {
         const mapUrl = content.map_embed ? String(content.map_embed) : getMapEmbedUrl(loc)
@@ -889,7 +899,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
             width: isOnlyOne ? '100%' : undefined,
           }}>
             {/* Map */}
-            {mapUrl && (
+            {showMap && mapUrl && (
               <div style={{ height: isOnlyOne ? '350px' : '220px', width: '100%' }}>
                 <iframe
                   src={mapUrl}
@@ -907,13 +917,13 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
                   <h3 style={{ fontFamily: theme.fontHeading, fontWeight: 600, margin: 0 }}>{loc.name}</h3>
                 </div>
               )}
-              {address && (
+              {showAddress && address && (
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.5rem' }}>
                   <MapPin size={18} color={theme.primary} style={{ flexShrink: 0, marginTop: '2px' }} />
                   <p style={{ margin: 0, fontSize: '0.9rem' }}>{address}</p>
                 </div>
               )}
-              {loc.phone && (
+              {showPhone && loc.phone && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                   <Phone size={18} color={theme.primary} />
                   <a href={`tel:${loc.phone}`} style={{ color: theme.foreground, textDecoration: 'none', fontSize: '0.9rem' }}>
@@ -922,7 +932,7 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
                 </div>
               )}
               {/* Directions link */}
-              {(loc.latitude && loc.longitude) && (
+              {showDirections && (loc.latitude && loc.longitude) && (
                 <a
                   href={`https://www.google.com/maps/dir/?api=1&destination=${loc.latitude},${loc.longitude}`}
                   target="_blank"
@@ -980,17 +990,25 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={String(content.image_url)} alt="Location" style={{ width: '100%', borderRadius: '1rem', marginBottom: '1.5rem' }} />
                   )}
-                  {Boolean(content.address) && (
+                  {showAddress && Boolean(content.address) && (
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1rem' }}>
                       <MapPin size={20} color={theme.primary} style={{ flexShrink: 0, marginTop: '2px' }} />
                       <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{getTranslated('address', String(content.address))}</p>
                     </div>
                   )}
-                  {Boolean(content.directions) && (
+                  {showPhone && Boolean(content.phone) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                      <Phone size={20} color={theme.primary} style={{ flexShrink: 0 }} />
+                      <a href={`tel:${content.phone}`} style={{ color: theme.foreground, textDecoration: 'none' }}>
+                        {String(content.phone)}
+                      </a>
+                    </div>
+                  )}
+                  {showDirections && Boolean(content.directions) && (
                     <p style={{ fontSize: '0.875rem', opacity: 0.7, marginTop: '1rem' }}>{getTranslated('directions', String(content.directions))}</p>
                   )}
                 </div>
-                {Boolean(content.map_embed) && (
+                {showMap && Boolean(content.map_embed) && (
                   <div style={{ flex: '2', minWidth: '300px', height: '300px', borderRadius: '1rem', overflow: 'hidden' }}>
                     <iframe
                       src={String(content.map_embed)}

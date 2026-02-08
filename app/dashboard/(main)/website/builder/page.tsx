@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPatch, apiPost, apiDelete } from '@/lib/api'
@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils'
 import { BlockEditor, ImageUpload } from '@/components/features/website-builder/BlockEditorComponents'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
 import { PageTranslationEditor } from '@/components/features/website-builder/PageTranslationEditor'
-import { THEME_PRESETS, FONT_OPTIONS, BLOCK_TYPES, WEBSITE_TEMPLATES, type WebsiteTemplate } from '@/lib/constants/website'
+import { THEME_PRESETS, FONT_OPTIONS, BLOCK_TYPES, WEBSITE_TEMPLATES, DEFAULT_BLOCK_CONTENT, type WebsiteTemplate } from '@/lib/constants/website'
 import { getWebsiteUrl } from '@/utils/urls'
 import { motion, staggerContainer, staggerItemScale } from '@/components/ui/animated'
 import { LoadingPage } from '@/components/ui/loading-logo'
@@ -95,21 +95,26 @@ export default function WebsiteBuilderPage() {
   const { data: blocksData, isFetched: isBlocksFetched } = useQuery({ queryKey: ['website-blocks', selectedPageId], queryFn: () => apiGet<{ data: { blocks: WebsiteBlock[] } }>(`/website/pages/${selectedPageId}/blocks`), enabled: !!selectedPageId })
 
   const website = websiteData?.data?.website
-  const pages = pagesData?.data?.pages || []
+  const pages = useMemo(() => pagesData?.data?.pages || [], [pagesData?.data?.pages])
   const blocks = blocksData?.data?.blocks || []
+
+  // Get the current page slug for preview URL
+  const getPreviewUrl = useCallback(() => {
+    const baseUrl = getWebsiteUrl(website)
+    if (!baseUrl) return null
+    const selectedPage = pages.find(p => p.id === selectedPageId)
+    const pageParam = selectedPage?.slug && selectedPage.slug !== 'home' ? `&page=${selectedPage.slug}` : ''
+    return `${baseUrl}?preview=true${pageParam}`
+  }, [website, pages, selectedPageId])
 
   // Debounced preview refresh using iframe reload (no unmount/remount flash)
   const refreshPreview = useCallback((immediate = false) => {
     if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current)
     const doRefresh = () => {
-      try {
-        iframeRef.current?.contentWindow?.location.reload()
-      } catch {
-        // Cross-origin fallback: update src to force reload
-        if (iframeRef.current) {
-          const currentSrc = iframeRef.current.src
-          iframeRef.current.src = currentSrc
-        }
+      // Always set the src to the current page URL to ensure we stay on the right page
+      if (iframeRef.current) {
+        const url = getPreviewUrl()
+        if (url) iframeRef.current.src = url
       }
     }
     if (immediate) {
@@ -117,7 +122,7 @@ export default function WebsiteBuilderPage() {
     } else {
       refreshTimeoutRef.current = setTimeout(doRefresh, 500) // 500ms debounce
     }
-  }, [])
+  }, [getPreviewUrl])
 
   // Cache structure types matching API response
   type WebsiteCache = { data: { website: Website | null } }
@@ -194,12 +199,16 @@ export default function WebsiteBuilderPage() {
 
   // Optimistic update for creating block
   const createBlock = useMutation({
-    mutationFn: (data: { page_id: string; type: string }) => apiPost(`/website/pages/${data.page_id}/blocks`, { type: data.type }),
+    mutationFn: (data: { page_id: string; type: string }) => {
+      const defaultContent = DEFAULT_BLOCK_CONTENT[data.type] || {}
+      return apiPost(`/website/pages/${data.page_id}/blocks`, { type: data.type, content: defaultContent })
+    },
     onMutate: async (data) => {
       await queryClient.cancelQueries({ queryKey: ['website-blocks', selectedPageId] })
       const prev = queryClient.getQueryData<BlocksCache>(['website-blocks', selectedPageId])
       const pageBlocks = prev?.data?.blocks || []
-      const optimisticBlock: WebsiteBlock = { id: `temp-${Date.now()}`, page_id: data.page_id, type: data.type, content: {}, settings: { padding: 'medium', background: 'transparent', alignment: 'center' }, is_visible: true, sort_order: pageBlocks.length + 1 }
+      const defaultContent = DEFAULT_BLOCK_CONTENT[data.type] || {}
+      const optimisticBlock: WebsiteBlock = { id: `temp-${Date.now()}`, page_id: data.page_id, type: data.type, content: defaultContent, settings: { padding: 'medium', background: 'transparent', alignment: 'center' }, is_visible: true, sort_order: pageBlocks.length + 1 }
       queryClient.setQueryData<BlocksCache>(['website-blocks', selectedPageId], (old) => ({ data: { blocks: [...(old?.data?.blocks || []), optimisticBlock] } }))
       return { prev }
     },
@@ -273,6 +282,31 @@ export default function WebsiteBuilderPage() {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (pages.length > 0 && !selectedPageId) setSelectedPageId(pages[0].id) }, [pages.length, selectedPageId])
+  
+  // Update iframe when selected page changes
+  useEffect(() => {
+    if (selectedPageId && iframeRef.current) {
+      const url = getPreviewUrl()
+      if (url && iframeRef.current.src !== url) {
+        iframeRef.current.src = url
+      }
+    }
+  }, [selectedPageId, getPreviewUrl])
+
+  // Listen for page navigation messages from iframe
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'PAGE_NAVIGATION' && event.data?.slug !== undefined) {
+        const slug = event.data.slug || 'home'
+        const page = pages.find(p => p.slug === slug || (slug === 'home' && (p.slug === 'home' || p.slug === '')))
+        if (page && page.id !== selectedPageId) {
+          setSelectedPageId(page.id)
+        }
+      }
+    }
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [pages, selectedPageId])
   
   // Sync settings form with website data (only on initial load)
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -378,7 +412,7 @@ export default function WebsiteBuilderPage() {
 
   // const websiteUrl = website?.subdomain ? (process.env.NODE_ENV === 'development' ? `http://localhost:3000/site/${website.subdomain}` : `https://${website.subdomain}.klopay.app`) : null
   const previewWidth = previewMode === 'desktop' ? '100%' : previewMode === 'tablet' ? '768px' : '375px'
-  const websiteUrl = getWebsiteUrl(website) + '?preview=true'
+  const websiteUrl = getPreviewUrl()
 
   return (
     <div className="fixed inset-0 flex overflow-hidden bg-background">
@@ -398,27 +432,33 @@ export default function WebsiteBuilderPage() {
                 </div>
               )}
               {/* Empty state overlay when no pages OR no blocks - only show after queries finished */}
-              {!isSubdomainUpdating && ((isPagesFetched && pages.length === 0) || (isBlocksFetched && blocks.length === 0 && selectedPageId)) && (
-                <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/95 to-zinc-800/95 backdrop-blur-sm flex items-center justify-center">
-                  <div className="text-center max-w-md px-6">
-                    <div className="h-20 w-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-xl shadow-blue-500/20">
-                      <Sparkles className="h-10 w-10 text-white" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-white mb-3">{t('emptyState.title')}</h2>
-                    <p className="text-zinc-400 mb-8">{t('emptyState.description')}</p>
-                    <div className="space-y-3">
-                      <Button size="lg" onClick={() => setShowTemplateModal(true)} className="w-full text-base">
-                        <Sparkles className="h-5 w-5 mr-2" />
-                        {t('emptyState.chooseTemplate')}
-                      </Button>
-                      <Button variant="outline" size="lg" onClick={() => { setActivePanel('blocks'); setIsAddBlockOpen(true) }} className="w-full text-base border-zinc-600 text-zinc-300 hover:bg-zinc-700 hover:text-white">
-                        <Plus className="h-5 w-5 mr-2" />
-                        {t('emptyState.addBlockManually')}
-                      </Button>
+              {!isSubdomainUpdating && ((isPagesFetched && pages.length === 0) || (isBlocksFetched && blocks.length === 0 && selectedPageId)) && (() => {
+                const selectedPage = pages.find(p => p.id === selectedPageId)
+                const isHomePage = !selectedPage || selectedPage.slug === 'home' || selectedPage.slug === '' || pages.indexOf(selectedPage) === 0
+                return (
+                  <div className="absolute inset-0 bg-gradient-to-b from-zinc-900/95 to-zinc-800/95 backdrop-blur-sm flex items-center justify-center">
+                    <div className="text-center max-w-md px-6">
+                      <div className="h-20 w-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-xl shadow-blue-500/20">
+                        {isHomePage ? <Sparkles className="h-10 w-10 text-white" /> : <Plus className="h-10 w-10 text-white" />}
+                      </div>
+                      <h2 className="text-2xl font-bold text-white mb-3">{isHomePage ? t('emptyState.title') : t('emptyState.addBlocksTitle')}</h2>
+                      <p className="text-zinc-400 mb-8">{isHomePage ? t('emptyState.description') : t('emptyState.addBlocksDescription')}</p>
+                      <div className="space-y-3">
+                        {isHomePage && (
+                          <Button size="lg" onClick={() => setShowTemplateModal(true)} className="w-full text-base">
+                            <Sparkles className="h-5 w-5 mr-2" />
+                            {t('emptyState.chooseTemplate')}
+                          </Button>
+                        )}
+                        <Button variant={isHomePage ? "outline" : "default"} size="lg" onClick={() => { setActivePanel('blocks'); setIsAddBlockOpen(true) }} className={isHomePage ? "w-full text-base border-zinc-600 text-zinc-300 hover:bg-zinc-700 hover:text-white" : "w-full text-base"}>
+                          <Plus className="h-5 w-5 mr-2" />
+                          {t('emptyState.addBlockManually')}
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )
+              })()}
             </>
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -450,7 +490,7 @@ export default function WebsiteBuilderPage() {
           <motion.div whileHover={{ scale: 1.05, rotate: 180 }} whileTap={{ scale: 0.95 }}>
             <Button variant="ghost" size="icon" onClick={() => refreshPreview(true)}><RefreshCw className="h-4 w-4" /></Button>
           </motion.div>
-          {websiteUrl && <Button variant="ghost" size="icon" asChild><a href={websiteUrl} target="_blank"><ExternalLink className="h-4 w-4" /></a></Button>}
+          {websiteUrl && <Button variant="ghost" size="icon" asChild><a href={websiteUrl.replace('?preview=true', '')} target="_blank"><ExternalLink className="h-4 w-4" /></a></Button>}
           <Badge variant={website?.is_published ? "default" : "secondary"} className="ml-2">{website?.is_published ? t('live') : t('draft')}</Badge>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button onClick={() => publishWebsite.mutate()} disabled={publishWebsite.isPending} size="sm" variant={website?.is_published ? "outline" : "default"}>
@@ -679,25 +719,31 @@ export default function WebsiteBuilderPage() {
                     </div>
                   )
                 })}
-                {((isPagesFetched && pages.length === 0) || (isBlocksFetched && blocks.length === 0 && selectedPageId)) && (
-                  <div className="text-center py-8 px-4">
-                    <div className="h-14 w-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-600/20 flex items-center justify-center">
-                      <Sparkles className="h-7 w-7 text-blue-400" />
+                {((isPagesFetched && pages.length === 0) || (isBlocksFetched && blocks.length === 0 && selectedPageId)) && (() => {
+                  const selectedPage = pages.find(p => p.id === selectedPageId)
+                  const isHomePage = !selectedPage || selectedPage.slug === 'home' || selectedPage.slug === '' || pages.indexOf(selectedPage) === 0
+                  return (
+                    <div className="text-center py-8 px-4">
+                      <div className="h-14 w-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-600/20 flex items-center justify-center">
+                        {isHomePage ? <Sparkles className="h-7 w-7 text-blue-400" /> : <Plus className="h-7 w-7 text-blue-400" />}
+                      </div>
+                      <h3 className="text-white font-semibold mb-2">{isHomePage ? t('emptyState.title') : t('emptyState.addBlocksTitle')}</h3>
+                      <p className="text-sm text-zinc-400 mb-4">{isHomePage ? t('emptyState.description') : t('emptyState.addBlocksDescription')}</p>
+                      <div className="space-y-2">
+                        {isHomePage && (
+                          <Button onClick={() => setShowTemplateModal(true)} className="w-full">
+                            <Sparkles className="h-4 w-4 mr-2" />
+                            {t('emptyState.chooseTemplate')}
+                          </Button>
+                        )}
+                        <Button variant={isHomePage ? "outline" : "default"} size="sm" onClick={() => setIsAddBlockOpen(true)} className={isHomePage ? "w-full border-zinc-700 text-zinc-300 hover:bg-zinc-800" : "w-full"}>
+                          <Plus className="h-4 w-4 mr-1" />
+                          {t('emptyState.addBlockManually')}
+                        </Button>
+                      </div>
                     </div>
-                    <h3 className="text-white font-semibold mb-2">{t('emptyState.title')}</h3>
-                    <p className="text-sm text-zinc-400 mb-4">{t('emptyState.description')}</p>
-                    <div className="space-y-2">
-                      <Button onClick={() => setShowTemplateModal(true)} className="w-full">
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        {t('emptyState.chooseTemplate')}
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setIsAddBlockOpen(true)} className="w-full border-zinc-700 text-zinc-300 hover:bg-zinc-800">
-                        <Plus className="h-4 w-4 mr-1" />
-                        {t('emptyState.addBlockManually')}
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                  )
+                })()}
               </div>
             </>)}
 

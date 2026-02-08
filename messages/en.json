@@ -667,6 +667,8 @@
     "phone": "Phone",
     "currency": "Currency",
     "vatRate": "VAT Rate (%)",
+    "vatInfo": "When set, this VAT rate will be added to all prices displayed in your public menu and order totals.",
+    "vatAdvice": "Recommendation: Enter your menu item prices with VAT already included and set this to 0% to avoid confusion.",
     "timezone": "Timezone",
     "saveChanges": "Save Changes",
     "cancel": "Cancel",
@@ -886,6 +888,8 @@
     "whatOurGuestsSay": "What Our Guests Say",
     "featuredMenuItems": "Featured Menu Items",
     "noMenuItems": "No menu items selected",
+    "noMenuItemsHint": "Create your menu items in the Menu tab first, then select them here to display on your website.",
+    "createMenuItems": "Go to Menu",
     "followUs": "Follow Us",
     "noSocialLinks": "No social links configured",
     "todaysSpecials": "Today's Specials",
@@ -1122,7 +1126,9 @@
       "title": "Let's build your website!",
       "description": "Start with a professional template or add blocks one by one to create your perfect website.",
       "chooseTemplate": "Choose a Template",
-      "addBlockManually": "Add blocks manually"
+      "addBlockManually": "Add blocks manually",
+      "addBlocksTitle": "Start building this page",
+      "addBlocksDescription": "Add content blocks to create your page layout."
     },
     "updatingDomain": "Updating domain..."
   },

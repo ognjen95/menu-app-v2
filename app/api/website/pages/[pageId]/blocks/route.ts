@@ -92,7 +92,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     requireRole(user, ['owner', 'manager'])
     const { pageId } = await params
 
-    const { type } = body as { type: string }
+    const { type, content: providedContent } = body as { type: string; content?: Record<string, unknown> }
 
     if (!type) {
       throw new Error('Block type is required')
@@ -131,14 +131,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const sortOrder = (lastBlock?.sort_order || 0) + 1
 
-    // Create block with default content
+    // Create block with default content (merge provided content with defaults)
+    const defaultContent = DEFAULT_BLOCK_CONTENT[type] || {}
+    const blockContent = providedContent ? { ...defaultContent, ...providedContent } : defaultContent
+    
     const { data: block, error } = await supabase
       .from('website_blocks')
       .insert({
         tenant_id: tenantId,
         page_id: pageId,
         type,
-        content: DEFAULT_BLOCK_CONTENT[type] || {},
+        content: blockContent,
         settings: {
           padding: 'normal',
           background: 'default',

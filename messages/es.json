@@ -667,6 +667,8 @@
     "phone": "Teléfono",
     "currency": "Moneda",
     "vatRate": "Tasa de IVA (%)",
+    "vatInfo": "Cuando se configura, esta tasa de IVA se añadirá a todos los precios mostrados en tu menú público y en los totales de los pedidos.",
+    "vatAdvice": "Recomendación: Ingresa los precios de tus artículos con el IVA ya incluido y configura esto en 0% para evitar confusiones.",
     "timezone": "Zona Horaria",
     "saveChanges": "Guardar Cambios",
     "cancel": "Cancelar",
@@ -886,6 +888,8 @@
     "whatOurGuestsSay": "Lo que dicen nuestros huéspedes",
     "featuredMenuItems": "Artículos destacados del menú",
     "noMenuItems": "No hay artículos de menú seleccionados",
+    "noMenuItemsHint": "Primero crea los artículos del menú en la pestaña Menú, luego selecciónalos aquí para mostrarlos en tu sitio web.",
+    "createMenuItems": "Ir al Menú",
     "followUs": "Síguenos",
     "noSocialLinks": "No hay enlaces sociales configurados",
     "todaysSpecials": "Especiales de hoy",
@@ -1122,7 +1126,9 @@
       "title": "¡Construyamos tu sitio web!",
       "description": "Comienza con una plantilla profesional o agrega bloques uno por uno para crear tu sitio web perfecto.",
       "chooseTemplate": "Elegir una plantilla",
-      "addBlockManually": "Agregar bloques manualmente"
+      "addBlockManually": "Agregar bloques manualmente",
+      "addBlocksTitle": "Comienza a construir esta página",
+      "addBlocksDescription": "Agrega bloques de contenido para crear el diseño de tu página."
     },
     "updatingDomain": "Actualizando dominio..."
   },

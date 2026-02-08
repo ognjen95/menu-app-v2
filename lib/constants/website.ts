@@ -1,5 +1,106 @@
 import { Layout, FileText, Image as ImageIcon, Star, Phone, Clock, Instagram, Sparkles, Calendar, BookOpen, Video, MousePointer, Users, MapPin, Type, Gift, Wine } from 'lucide-react'
 import { UtensilsCrossed } from 'lucide-react'
+import { HERO_IMAGES, ABOUT_IMAGES, GALLERY_IMAGES, TEAM_IMAGES } from './default-images'
+
+// Default location data for location blocks
+export const DEFAULT_LOCATION = {
+  address: '123 Main Street, City Center',
+  map_embed: 'https://maps.google.com/maps?q=40.7128,-74.0060&z=15&output=embed',
+  phone: '+1 (555) 000-0000',
+  email: 'info@restaurant.com',
+} as const
+
+// Default content for each block type when adding a new block
+export const DEFAULT_BLOCK_CONTENT: Record<string, Record<string, unknown>> = {
+  hero: {
+    headline: 'Welcome to Our Restaurant',
+    subheadline: 'Discover the finest dining experience',
+    button_text: 'View Menu',
+    image_url: HERO_IMAGES.default,
+  },
+  about: {
+    title: 'About Us',
+    text: 'Tell your story here. Share what makes your restaurant special and unique.',
+    image_url: ABOUT_IMAGES.default,
+  },
+  gallery: {
+    title: 'Our Gallery',
+    images: GALLERY_IMAGES.default,
+  },
+  menu_preview: {
+    title: 'Featured Items',
+    item_ids: [],
+  },
+  testimonials: {
+    title: 'What Our Guests Say',
+    testimonials: [
+      { name: 'Guest Name', text: 'Amazing food and great atmosphere!', image_url: TEAM_IMAGES.chef },
+    ],
+  },
+  contact: {
+    title: 'Contact Us',
+    address: 'Your Address Here',
+    phone: '+1 (555) 000-0000',
+    email: 'info@restaurant.com',
+  },
+  hours: {
+    title: 'Opening Hours',
+    hours_text: 'Monday - Friday: 11:00 AM - 10:00 PM\nSaturday - Sunday: 10:00 AM - 11:00 PM',
+  },
+  social: {
+    title: 'Follow Us',
+    links: {
+      instagram: '',
+      facebook: '',
+    },
+  },
+  events: {
+    title: 'Upcoming Events',
+    events: [
+      { title: 'Event Name', date: 'Date', time: 'Time', description: 'Event description' },
+    ],
+  },
+  reservation: {
+    title: 'Make a Reservation',
+    subtitle: 'Book your table today',
+    phone: '+1 (555) 000-0000',
+    button_text: 'Book Now',
+  },
+  features: {
+    title: 'What We Offer',
+    features: [
+      { icon: 'wifi', title: 'Free WiFi', description: 'Stay connected' },
+      { icon: 'parking', title: 'Parking', description: 'Convenient parking available' },
+    ],
+  },
+  video: {
+    title: 'Watch Our Story',
+    video_url: '',
+  },
+  cta: {
+    title: 'Special Offer',
+    subtitle: 'Don\'t miss out on our latest deals',
+    button_text: 'Learn More',
+    image_url: HERO_IMAGES.default,
+  },
+  team: {
+    title: 'Meet Our Team',
+    members: [
+      { name: 'Chef Name', role: 'Head Chef', image_url: TEAM_IMAGES.chef },
+    ],
+  },
+  text: {
+    title: 'Section Title',
+    text: 'Add your content here.',
+  },
+  location: {
+    title: 'Find Us',
+    use_locations: false,
+    show_address: true,
+    address: DEFAULT_LOCATION.address,
+    map_embed: DEFAULT_LOCATION.map_embed,
+  },
+}
 
 export const BLOCK_TYPES = [
   { type: 'hero', label: 'Hero Banner', icon: Layout, description: 'Large banner with image and text' },
@@ -33,129 +134,129 @@ export const FONT_OPTIONS = [
 
 export const THEME_PRESETS = [
   // Dark Themes
-  { 
-    name: 'Midnight Blue', 
-    primary: '#3B82F6', 
-    secondary: '#1E293B', 
-    background: '#0F172A', 
+  {
+    name: 'Midnight Blue',
+    primary: '#3B82F6',
+    secondary: '#1E293B',
+    background: '#0F172A',
     foreground: '#F8FAFC',
     accent: '#22D3EE',
     isDark: true,
   },
-  { 
-    name: 'Obsidian', 
-    primary: '#A855F7', 
-    secondary: '#1C1917', 
-    background: '#0C0A09', 
+  {
+    name: 'Obsidian',
+    primary: '#A855F7',
+    secondary: '#1C1917',
+    background: '#0C0A09',
     foreground: '#FAFAF9',
     accent: '#F472B6',
     isDark: true,
   },
-  { 
-    name: 'Cyber Noir', 
-    primary: '#10B981', 
-    secondary: '#18181B', 
-    background: '#09090B', 
+  {
+    name: 'Cyber Noir',
+    primary: '#10B981',
+    secondary: '#18181B',
+    background: '#09090B',
     foreground: '#FAFAFA',
     accent: '#14B8A6',
     isDark: true,
   },
-  { 
-    name: 'Deep Ocean', 
-    primary: '#06B6D4', 
-    secondary: '#164E63', 
-    background: '#0E1726', 
+  {
+    name: 'Deep Ocean',
+    primary: '#06B6D4',
+    secondary: '#164E63',
+    background: '#0E1726',
     foreground: '#E0F2FE',
     accent: '#38BDF8',
     isDark: true,
   },
-  { 
-    name: 'Crimson Night', 
-    primary: '#EF4444', 
-    secondary: '#1F1315', 
-    background: '#0D0809', 
+  {
+    name: 'Crimson Night',
+    primary: '#EF4444',
+    secondary: '#1F1315',
+    background: '#0D0809',
     foreground: '#FEF2F2',
     accent: '#FB923C',
     isDark: true,
   },
-  { 
-    name: 'Forest Dark', 
-    primary: '#22C55E', 
-    secondary: '#14241A', 
-    background: '#0A120E', 
+  {
+    name: 'Forest Dark',
+    primary: '#22C55E',
+    secondary: '#14241A',
+    background: '#0A120E',
     foreground: '#F0FDF4',
     accent: '#86EFAC',
     isDark: true,
   },
   // Light Themes
-  { 
-    name: 'Clean White', 
-    primary: '#18181B', 
-    secondary: '#F4F4F5', 
-    background: '#FFFFFF', 
+  {
+    name: 'Clean White',
+    primary: '#18181B',
+    secondary: '#F4F4F5',
+    background: '#FFFFFF',
     foreground: '#18181B',
     accent: '#F97316',
     isDark: false,
   },
-  { 
-    name: 'Soft Cream', 
-    primary: '#B45309', 
-    secondary: '#FEF3C7', 
-    background: '#FFFBEB', 
+  {
+    name: 'Soft Cream',
+    primary: '#B45309',
+    secondary: '#FEF3C7',
+    background: '#FFFBEB',
     foreground: '#78350F',
     accent: '#F59E0B',
     isDark: false,
   },
-  { 
-    name: 'Fresh Mint', 
-    primary: '#16A34A', 
-    secondary: '#DCFCE7', 
-    background: '#F0FDF4', 
+  {
+    name: 'Fresh Mint',
+    primary: '#16A34A',
+    secondary: '#DCFCE7',
+    background: '#F0FDF4',
     foreground: '#14532D',
     accent: '#84CC16',
     isDark: false,
   },
-  { 
-    name: 'Sky Blue', 
-    primary: '#0EA5E9', 
-    secondary: '#E0F2FE', 
-    background: '#F0F9FF', 
+  {
+    name: 'Sky Blue',
+    primary: '#0EA5E9',
+    secondary: '#E0F2FE',
+    background: '#F0F9FF',
     foreground: '#0C4A6E',
     accent: '#06B6D4',
     isDark: false,
   },
-  { 
-    name: 'Rose Garden', 
-    primary: '#E11D48', 
-    secondary: '#FFE4E6', 
-    background: '#FFF1F2', 
+  {
+    name: 'Rose Garden',
+    primary: '#E11D48',
+    secondary: '#FFE4E6',
+    background: '#FFF1F2',
     foreground: '#881337',
     accent: '#F472B6',
     isDark: false,
   },
-  { 
-    name: 'Lavender Dreams', 
-    primary: '#7C3AED', 
-    secondary: '#EDE9FE', 
-    background: '#FAF5FF', 
+  {
+    name: 'Lavender Dreams',
+    primary: '#7C3AED',
+    secondary: '#EDE9FE',
+    background: '#FAF5FF',
     foreground: '#4C1D95',
     accent: '#A78BFA',
     isDark: false,
   },
-  { 
-    name: 'Warm Sand', 
-    primary: '#92400E', 
-    secondary: '#FDE68A', 
-    background: '#FFFBEB', 
+  {
+    name: 'Warm Sand',
+    primary: '#92400E',
+    secondary: '#FDE68A',
+    background: '#FFFBEB',
     foreground: '#451A03',
     accent: '#D97706',
     isDark: false,
   },
-  { 
-    name: 'Nordic Gray', 
-    primary: '#6366F1', 
-    secondary: '#E5E7EB', 
-    background: '#F9FAFB', 
+  {
+    name: 'Nordic Gray',
+    primary: '#6366F1',
+    secondary: '#E5E7EB',
+    background: '#F9FAFB',
     foreground: '#1F2937',
     accent: '#8B5CF6',
     isDark: false,
@@ -205,7 +306,7 @@ export const WEBSITE_TEMPLATES: WebsiteTemplate[] = [
           headline: 'Experience Culinary Excellence',
           subheadline: 'Where tradition meets innovation in every dish',
           button_text: 'View Our Menu',
-          image_url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1920&q=80',
+          image_url: HERO_IMAGES.restaurant,
         },
         settings: { padding: 'large', background: 'transparent', alignment: 'center' },
       },
@@ -214,7 +315,7 @@ export const WEBSITE_TEMPLATES: WebsiteTemplate[] = [
         content: {
           title: 'Our Story',
           text: 'Welcome to our restaurant, where every dish tells a story. Our passionate chefs combine the finest ingredients with time-honored techniques to create unforgettable dining experiences. From farm to table, we are committed to excellence in every bite.',
-          image_url: 'https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?w=800&q=80',
+          image_url: ABOUT_IMAGES.restaurant,
         },
         settings: { padding: 'medium', background: 'transparent', alignment: 'left' },
       },
@@ -265,7 +366,8 @@ export const WEBSITE_TEMPLATES: WebsiteTemplate[] = [
           title: 'Find Us',
           use_locations: false,
           show_address: true,
-          address: '123 Gourmet Street, Culinary District',
+          address: DEFAULT_LOCATION.address,
+          map_embed: DEFAULT_LOCATION.map_embed,
         },
         settings: { padding: 'medium', background: 'secondary', alignment: 'center' },
       },
@@ -291,7 +393,7 @@ export const WEBSITE_TEMPLATES: WebsiteTemplate[] = [
           headline: 'Fresh. Local. Delicious.',
           subheadline: 'Your neighborhood café serving up smiles since 2015',
           button_text: 'See Our Menu',
-          image_url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1920&q=80',
+          image_url: HERO_IMAGES.cafe,
         },
         settings: { padding: 'large', background: 'transparent', alignment: 'center' },
       },
@@ -308,7 +410,7 @@ export const WEBSITE_TEMPLATES: WebsiteTemplate[] = [
         content: {
           title: 'Welcome to Our Café',
           text: 'We believe that great food starts with great ingredients. Every morning, our team handpicks the freshest produce from local farmers. Whether you\'re stopping by for your morning coffee or a leisurely lunch, we\'re here to brighten your day.',
-          image_url: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800&q=80',
+          image_url: ABOUT_IMAGES.cafe,
         },
         settings: { padding: 'medium', background: 'transparent', alignment: 'left' },
       },
@@ -317,9 +419,9 @@ export const WEBSITE_TEMPLATES: WebsiteTemplate[] = [
         content: {
           title: 'What Our Guests Say',
           testimonials: [
-            { name: 'Sarah M.', text: 'The best coffee in town! The staff is always so friendly and welcoming.' },
-            { name: 'James K.', text: 'Their avocado toast is legendary. I come here every weekend!' },
-            { name: 'Emily R.', text: 'Such a cozy atmosphere. Perfect for working or catching up with friends.' },
+            { name: 'Sarah M.', text: 'The best coffee in town! The staff is always so friendly and welcoming.', image: TEAM_IMAGES.default },
+            { name: 'James K.', text: 'Their avocado toast is legendary. I come here every weekend!', image: TEAM_IMAGES.default },
+            { name: 'Emily R.', text: 'Such a cozy atmosphere. Perfect for working or catching up with friends.', image: TEAM_IMAGES.default },
           ],
         },
         settings: { padding: 'medium', background: 'secondary', alignment: 'center' },
@@ -351,7 +453,8 @@ export const WEBSITE_TEMPLATES: WebsiteTemplate[] = [
           title: 'Our Location',
           use_locations: false,
           show_address: true,
-          address: '456 Coffee Lane, Downtown',
+          address: DEFAULT_LOCATION.address,
+          map_embed: DEFAULT_LOCATION.map_embed,
         },
         settings: { padding: 'medium', background: 'transparent', alignment: 'center' },
       },
@@ -377,7 +480,7 @@ export const WEBSITE_TEMPLATES: WebsiteTemplate[] = [
           headline: 'Bold Flavors. Good Vibes.',
           subheadline: 'Where great food meets unforgettable nights',
           button_text: 'Explore Menu',
-          image_url: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1920&q=80',
+          image_url: HERO_IMAGES.bar,
         },
         settings: { padding: 'large', background: 'transparent', alignment: 'center' },
       },
@@ -393,11 +496,7 @@ export const WEBSITE_TEMPLATES: WebsiteTemplate[] = [
         type: 'gallery',
         content: {
           title: 'The Vibe',
-          images: [
-            'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&q=80',
-            'https://images.unsplash.com/photo-1544148103-0773bf10d330?w=600&q=80',
-            'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=600&q=80',
-          ],
+          images: GALLERY_IMAGES.restaurant,
         },
         settings: { padding: 'medium', background: 'transparent', alignment: 'center' },
       },
@@ -446,7 +545,8 @@ export const WEBSITE_TEMPLATES: WebsiteTemplate[] = [
           title: 'Find Us',
           use_locations: false,
           show_address: true,
-          address: '321 Urban Street, City Center',
+          address: DEFAULT_LOCATION.address,
+          map_embed: DEFAULT_LOCATION.map_embed,
         },
         settings: { padding: 'medium', background: 'transparent', alignment: 'center' },
       },
@@ -472,7 +572,7 @@ export const WEBSITE_TEMPLATES: WebsiteTemplate[] = [
           headline: 'Ocean to Table',
           subheadline: 'The freshest catch, prepared with passion',
           button_text: 'View Menu',
-          image_url: 'https://images.unsplash.com/photo-1579631542720-3a87824fff86?w=1920&q=80',
+          image_url: HERO_IMAGES.seafood,
         },
         settings: { padding: 'large', background: 'transparent', alignment: 'center' },
       },
@@ -481,7 +581,7 @@ export const WEBSITE_TEMPLATES: WebsiteTemplate[] = [
         content: {
           title: 'Our Commitment to Freshness',
           text: 'Every day, we source our seafood directly from local fishermen who share our commitment to sustainability. From the dock to your plate, we ensure every dish celebrates the ocean\'s finest offerings.',
-          image_url: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&q=80',
+          image_url: ABOUT_IMAGES.seafood,
         },
         settings: { padding: 'medium', background: 'transparent', alignment: 'left' },
       },
@@ -532,7 +632,8 @@ export const WEBSITE_TEMPLATES: WebsiteTemplate[] = [
           title: 'Our Location',
           use_locations: false,
           show_address: true,
-          address: '789 Harbor Drive, Oceanfront',
+          address: DEFAULT_LOCATION.address,
+          map_embed: DEFAULT_LOCATION.map_embed,
         },
         settings: { padding: 'medium', background: 'transparent', alignment: 'center' },
       },

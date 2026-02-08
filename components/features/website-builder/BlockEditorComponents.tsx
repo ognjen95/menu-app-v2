@@ -602,11 +602,20 @@ export function BlockEditor({ block, onSave, isPending }: { block: WebsiteBlock;
           {!content.use_locations && (
             <>
               <div className="space-y-2"><Label className="text-zinc-300">Address</Label><Textarea value={(content.address as string) || ''} onChange={(e) => setContent({ ...content, address: e.target.value })} rows={2} className={inputClass} placeholder="123 Main St, City, State" /></div>
+              <div className="space-y-2"><Label className="text-zinc-300">Phone Number</Label><Input value={(content.phone as string) || ''} onChange={(e) => setContent({ ...content, phone: e.target.value })} className={inputClass} placeholder="+1 234 567 890" /></div>
               <div className="space-y-2"><Label className="text-zinc-300">Directions / Notes</Label><Input value={(content.directions as string) || ''} onChange={(e) => setContent({ ...content, directions: e.target.value })} className={inputClass} placeholder="e.g., Free parking behind building" /></div>
               <ImageUpload label="Location Photo (optional)" value={(content.image_url as string) || ''} onChange={(url) => setContent({ ...content, image_url: url })} />
               <div className="space-y-2"><Label className="text-zinc-300">Google Maps Embed URL</Label><Input value={(content.map_embed as string) || ''} onChange={(e) => setContent({ ...content, map_embed: e.target.value })} className={inputClass} placeholder="https://www.google.com/maps/embed?..." /><p className="text-xs text-zinc-500">Get embed URL from Google Maps → Share → Embed a map</p></div>
             </>
           )}
+          
+          <div className="space-y-2 pt-2 border-t border-zinc-700">
+            <Label className="text-zinc-300 text-sm font-medium">Display Options</Label>
+            <div className="flex items-center gap-2"><Checkbox checked={content.show_map !== false} onCheckedChange={(checked) => setContent({ ...content, show_map: checked })} /><Label className="text-zinc-300 text-sm">Show map</Label></div>
+            <div className="flex items-center gap-2"><Checkbox checked={content.show_address !== false} onCheckedChange={(checked) => setContent({ ...content, show_address: checked })} /><Label className="text-zinc-300 text-sm">Show address</Label></div>
+            <div className="flex items-center gap-2"><Checkbox checked={content.show_phone !== false} onCheckedChange={(checked) => setContent({ ...content, show_phone: checked })} /><Label className="text-zinc-300 text-sm">Show phone number</Label></div>
+            <div className="flex items-center gap-2"><Checkbox checked={content.show_directions !== false} onCheckedChange={(checked) => setContent({ ...content, show_directions: checked })} /><Label className="text-zinc-300 text-sm">Show directions link</Label></div>
+          </div>
         </div>)
 
       case 'drinks':

@@ -6,7 +6,7 @@ export type RouteContext = {
   params: Promise<Record<string, string>>
 }
 
-export type UserRoles = 'owner' | 'manager' | 'staff' | 'waiter'
+export type UserRoles = 'owner' | 'manager' | 'staff' | 'waiter' | 'kitchen';
 
 export type AuthenticatedUser = {
   id: string

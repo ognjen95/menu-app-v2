@@ -5,6 +5,7 @@ import { unstable_noStore as noStore } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { BlockRenderer } from '@/components/features/public-menu/block-renderer'
 import { WebsiteNavbar } from '@/components/features/public-menu/website-navbar'
+import { PreviewSync } from '@/components/features/website-builder/PreviewSync'
 import type { Translation } from '@/lib/types'
 import { getWebsiteBySubdomain, supabase } from './utils'
 
@@ -180,6 +181,9 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
 
   return (
     <>
+      {/* Preview sync - notifies builder of page navigation */}
+      {isPreview && <PreviewSync pageSlug={currentSlug} />}
+
       {/* Navigation */}
       <WebsiteNavbar
         subdomain={subdomain}

@@ -19,6 +19,7 @@ import {
   ShoppingBag,
   Utensils,
   Truck,
+  Info,
 } from 'lucide-react'
 import { motion } from '@/components/ui/animated'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -56,7 +57,7 @@ export default function SettingsPage() {
         phone: tenant.phone || '',
         timezone: tenant.timezone || 'Europe/Belgrade',
         default_currency: tenant.default_currency || 'EUR',
-        vat_rate: tenant.vat_rate || 20,
+        vat_rate: tenant.vat_rate ?? 20,
       })
       setIsEditing(true)
     }
@@ -204,6 +205,13 @@ export default function SettingsPage() {
                     value={formData.vat_rate}
                     onChange={(e) => setFormData({ ...formData, vat_rate: parseFloat(e.target.value) || 0 })}
                   />
+                  <div className="flex gap-2 p-3 rounded-md bg-blue-500/10 border border-blue-500/20 text-sm">
+                    <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+                    <div className="text-muted-foreground">
+                      <p>{t('vatInfo')}</p>
+                      <p className="mt-1 font-medium text-foreground">{t('vatAdvice')}</p>
+                    </div>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="timezone">{t('timezone')}</Label>

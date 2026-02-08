@@ -667,6 +667,8 @@
     "phone": "Telefon",
     "currency": "Valuta",
     "vatRate": "PDV stopa (%)",
+    "vatInfo": "Kada je podešeno, ova PDV stopa će biti dodata svim cenama prikazanim u vašem javnom meniju i ukupnim iznosima narudžbina.",
+    "vatAdvice": "Preporuka: Unesite cene svojih artikala sa već uračunatim PDV-om i postavite ovo na 0% da biste izbegli zabunu.",
     "timezone": "Vremenska zona",
     "saveChanges": "Sačuvaj izmene",
     "cancel": "Otkaži",
@@ -886,6 +888,8 @@
     "whatOurGuestsSay": "Šta kažu naši gosti",
     "featuredMenuItems": "Istaknute stavke menija",
     "noMenuItems": "Nema izabranih stavki menija",
+    "noMenuItemsHint": "Prvo kreirajte stavke menija u Meni tabu, a zatim ih ovde izaberite za prikaz na vašem sajtu.",
+    "createMenuItems": "Idi na Meni",
     "followUs": "Pratite nas",
     "noSocialLinks": "Nema konfigurisan ih društvenih mreža",
     "todaysSpecials": "Današnji specijali",
@@ -1122,7 +1126,9 @@
       "title": "Hajde da napravimo tvoj sajt!",
       "description": "Počni sa profesionalnim šablonom ili dodaj blokove jedan po jedan da kreiraš savršen sajt.",
       "chooseTemplate": "Izaberi šablon",
-      "addBlockManually": "Dodaj blokove ručno"
+      "addBlockManually": "Dodaj blokove ručno",
+      "addBlocksTitle": "Počni da gradiš ovu stranicu",
+      "addBlocksDescription": "Dodaj blokove sadržaja da kreiraš izgled stranice."
     },
     "updatingDomain": "Ažuriranje domena..."
   },
