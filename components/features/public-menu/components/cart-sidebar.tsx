@@ -8,6 +8,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import { Button } from '@/components/ui/button'
 
 type CartItem = {
   id: string
@@ -68,10 +69,15 @@ export const CartSidebar = memo(function CartSidebar(props: CartSidebarProps) {
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent 
-        side="right" 
+      <SheetContent
+        side="right"
         className="w-full sm:max-w-md p-0 flex flex-col h-full overflow-hidden"
         style={{ backgroundColor: theme.background, borderColor }}
+        renderCloseButton={() => (
+          <Button variant={'ghost'} onClick={onClose}>
+            <X className="h-4 w-4" style={{ color: theme.foreground }} />
+          </Button>
+        )}
       >
         <SheetHeader className="p-4 flex-shrink-0" style={{ borderBottom: `1px solid ${borderColor}` }}>
           <SheetTitle style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>
