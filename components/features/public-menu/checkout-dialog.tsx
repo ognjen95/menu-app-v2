@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { useTranslations } from 'next-intl'
 import {
   X,
@@ -68,7 +68,7 @@ interface CheckoutDialogProps {
 
 type Step = 'details' | 'payment' | 'confirmation'
 
-export function CheckoutDialog({
+export const CheckoutDialog = memo(function CheckoutDialog({
   isOpen,
   onClose,
   cart,
@@ -593,4 +593,4 @@ export function CheckoutDialog({
       </div>
     </div>
   )
-}
+})

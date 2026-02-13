@@ -83,8 +83,6 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      {/* Required for pricing table */}
-      <script async src="https://js.stripe.com/v3/pricing-table.js"></script>
       <body className={inter.className} suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
           <Providers>{children}</Providers>

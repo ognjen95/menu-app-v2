@@ -658,7 +658,7 @@ export default function WebsiteBuilderPage() {
               <p className="text-xs text-zinc-500">{t('pages.clickToPublish')}</p>
               <div className="space-y-2">
                 {pages.map((page) => (
-                  <div key={page.id} className={cn("p-3 rounded-lg border transition-colors cursor-pointer", selectedPageId === page.id ? "border-blue-500/50 bg-blue-500/10" : "border-white/10 bg-white/5 hover:bg-white/10")} onClick={() => { setSelectedPageId(page.id); setActivePanel('blocks') }}>
+                  <div key={page.id} className={cn("p-3 rounded-lg transition-colors cursor-pointer", selectedPageId === page.id ? "border-blue-500/50 bg-blue-500/10" : "border-white/10 bg-white/5 hover:bg-white/10")} onClick={() => { setSelectedPageId(page.id); setActivePanel('blocks') }}>
                     <div className="flex items-center justify-between">
                       <div><p className="text-sm text-white font-medium">{page.title}</p><p className="text-xs text-zinc-500">/{page.slug}</p></div>
                       <div className="flex items-center gap-1">
@@ -703,7 +703,7 @@ export default function WebsiteBuilderPage() {
                   const bt = BLOCK_TYPES.find(b => b.type === block.type)
                   const Icon = bt?.icon || Layout
                   return (
-                    <div key={block.id} className={cn("p-3 rounded-lg border border-white/10 bg-white/5", !block.is_visible && "opacity-50")}>
+                    <div key={block.id} className={cn("p-3 rounded-lg bg-white/5", !block.is_visible && "opacity-50")}>
                       <div className="flex items-center gap-3">
                         <GripVertical className="h-4 w-4 text-zinc-600 cursor-grab" />
                         <div className="h-8 w-8 rounded bg-blue-500/20 flex items-center justify-center"><Icon className="h-4 w-4 text-blue-400" /></div>

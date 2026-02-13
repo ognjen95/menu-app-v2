@@ -7,20 +7,21 @@ import {
   Search,
   ShoppingCart,
   Plus,
-  Minus,
   X,
   Leaf,
-  AlertTriangle,
-  Star,
-  Trash2,
   Globe,
   ChevronDown,
 } from 'lucide-react'
 import type { Tenant, Menu, MenuItem, Allergen, Location, Website, Translation } from '@/lib/types'
-import { CheckoutDialog } from './checkout-dialog'
-import { ItemDetailModal } from './item-detail-modal'
 import Image from 'next/image'
-import { motion, AnimatePresence, staggerContainer, staggerItemScale } from '@/components/ui/animated'
+import dynamic from 'next/dynamic'
+// Removed Framer Motion for better performance
+import { CategorySection } from './components/category-section'
+
+// Lazy load modals - not needed on initial render
+const CartSidebar = dynamic(() => import('./components/cart-sidebar').then(mod => mod.CartSidebar), { ssr: false })
+const ItemDetailModal = dynamic(() => import('./item-detail-modal').then(mod => mod.ItemDetailModal), { ssr: false })
+const CheckoutDialog = dynamic(() => import('./checkout-dialog').then(mod => mod.CheckoutDialog), { ssr: false })
 
 // Language type for public menu
 type PublicLanguage = {
@@ -230,11 +231,11 @@ export function PublicMenuView({
     ).sort((a, b) => a.sort_order - b.sort_order)
   }, [menus])
 
-  const allItems = useMemo(() => {
-    return allCategories.flatMap(cat =>
-      cat.items.filter(item => item.is_active && !item.is_sold_out)
-    )
-  }, [allCategories])
+  // const allItems = useMemo(() => {
+  //   return allCategories.flatMap(cat =>
+  //     cat.items.filter(item => item.is_active && !item.is_sold_out)
+  //   )
+  // }, [allCategories])
 
   // Filter items and group by category
   const filteredCategories = useMemo(() => {
@@ -285,7 +286,7 @@ export function PublicMenuView({
   const totalFilteredItems = filteredCategories.reduce((sum, cat) => sum + cat.items.length, 0)
 
   // Cart functions
-  const addToCart = (itemData: any) => {
+  const addToCart = useCallback((itemData: any) => {
     // Handle both old format (item, variant, options) and new format (item with selectedVariants)
     const item = itemData as MenuItemWithRelations & { 
       selectedVariants?: Record<string, string[]>
@@ -324,9 +325,9 @@ export function PublicMenuView({
     setTimeout(() => {
       setCartAnimation(prev => prev.filter(id => id !== animationId))
     }, 800)
-  }
+  }, [])
 
-  const updateCartQuantity = (cartItemId: string, delta: number) => {
+  const updateCartQuantity = useCallback((cartItemId: string, delta: number) => {
     setCart(prev => prev.map(item => {
       if (item.id === cartItemId) {
         const newQuantity = item.quantity + delta
@@ -334,11 +335,21 @@ export function PublicMenuView({
       }
       return item
     }).filter(item => item.quantity > 0))
-  }
+  }, [])
 
-  const removeFromCart = (cartItemId: string) => {
+  const removeFromCart = useCallback((cartItemId: string) => {
     setCart(prev => prev.filter(item => item.id !== cartItemId))
-  }
+  }, [])
+
+  // Memoized callbacks for modals
+  const handleCloseCart = useCallback(() => setCartOpen(false), [])
+  const handleCloseItemDetail = useCallback(() => setSelectedItem(null), [])
+  const handleCloseCheckout = useCallback(() => setCheckoutOpen(false), [])
+  const handleCheckout = useCallback(() => {
+    setCartOpen(false)
+    setCheckoutOpen(true)
+  }, [])
+  const handleOrderComplete = useCallback(() => setCart([]), [])
 
   const cartTotal = useMemo(() => {
     return cart.reduce((total, item) => {
@@ -365,15 +376,12 @@ export function PublicMenuView({
       }}
     >
       {/* Header */}
-      <motion.header
-        className="sticky top-0 z-40"
+      <header
+        className="sticky top-0 z-40 animate-fade-in-up"
         style={{
           backgroundColor: theme.background,
           borderBottom: `1px solid ${borderColor}`,
         }}
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
       >
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -506,41 +514,30 @@ export function PublicMenuView({
           </div>
 
           {/* Search */}
-          <AnimatePresence>
-            {isSearchOpen && (
-              <motion.div
-                className="mt-4 relative"
-                initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
-                exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                transition={{ duration: 0.2, ease: 'easeInOut' }}
-              >
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: mutedForeground }} />
-                <input
-                  type="text"
-                  placeholder={t('searchPlaceholder')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-md"
-                  style={{
-                    backgroundColor: cardBg,
-                    border: `1px solid ${borderColor}`,
-                    color: theme.foreground,
-                  }}
-                  autoFocus
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {isSearchOpen && (
+            <div className="mt-4 relative animate-fade-in-up">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: mutedForeground }} />
+              <input
+                type="text"
+                placeholder={t('searchPlaceholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 rounded-md"
+                style={{
+                  backgroundColor: cardBg,
+                  border: `1px solid ${borderColor}`,
+                  color: theme.foreground,
+                }}
+                autoFocus
+              />
+            </div>
+          )}
         </div>
 
         {/* Category tabs */}
-        <motion.div
+        <div
           className="overflow-x-auto scrollbar-hide"
           style={{ borderTop: `1px solid ${borderColor}` }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
         >
           <div className="container mx-auto px-4">
             <div className="flex gap-2 py-2">
@@ -569,18 +566,13 @@ export function PublicMenuView({
               ))}
             </div>
           </div>
-        </motion.div>
-      </motion.header>
+        </div>
+      </header>
 
       {/* Menu items */}
       <main className="container mx-auto px-4 py-6 pb-24">
         {/* Dietary filters */}
-        <motion.div
-          className="flex flex-wrap gap-2 mb-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-        >
+        <div className="flex flex-wrap gap-2 mb-6 animate-fade-in-up">
           {(['vegetarian', 'vegan', 'gluten-free', 'halal'] as const).map((filter) => (
             <button
               key={filter}
@@ -602,7 +594,7 @@ export function PublicMenuView({
               {tDietary(filter)}
             </button>
           ))}
-        </motion.div>
+        </div>
 
         {/* Items grouped by category */}
         {totalFilteredItems === 0 ? (
@@ -612,145 +604,23 @@ export function PublicMenuView({
         ) : (
           <div className="space-y-10">
             {filteredCategories.map((category, categoryIndex) => (
-              <motion.section
+              <CategorySection
                 key={category.id}
-                id={`category-${category.id}`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.3 + categoryIndex * 0.1 }}
-              >
-                {/* Category header */}
-                <div className="mb-4">
-                  <h2
-                    className="text-2xl font-bold"
-                    style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}
-                  >
-                    {getTranslatedText(category.id, 'name', category.name, 'category')}
-                  </h2>
-                  {category.description && (
-                    <p className="text-sm mt-1" style={{ color: mutedForeground }}>
-                      {getTranslatedText(category.id, 'description', category.description, 'category')}
-                    </p>
-                  )}
-                </div>
-
-                {/* Items grid */}
-                <motion.div
-                  className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-                  initial="initial"
-                  animate="animate"
-                  variants={staggerContainer}
-                >
-                  {category.items.map((item, itemIndex) => {
-                    const itemAllergens = item.item_allergens?.map((ia: { allergens: Allergen }) => ia.allergens) || []
-
-                    return (
-                      <motion.div
-                        key={item.id}
-                        variants={staggerItemScale}
-                        custom={itemIndex}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <div
-                          className="rounded-lg overflow-hidden hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full"
-                          style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}
-                          onClick={() => setSelectedItem(item)}
-                        >
-                          {/* Image - fixed height */}
-                          {item.image_urls && item.image_urls.length > 0 ? (
-                            <div className="h-40 flex-shrink-0" style={{ backgroundColor: theme.secondary }}>
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={item.image_urls[0]}
-                                alt={item.name}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          ) : (
-                            <div className="h-40 flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: theme.secondary }}>
-                              <span className="text-4xl">🍽️</span>
-                            </div>
-                          )}
-
-                          <div className="p-5 flex-1 flex flex-col">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-1.5">
-                                  <h3 className="font-semibold truncate" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>
-                                    {getTranslatedText(item.id, 'name', item.name)}
-                                  </h3>
-                                  {item.is_featured && (
-                                    <Star className="h-4 w-4 fill-current" style={{ color: theme.accent }} />
-                                  )}
-                                </div>
-                                {item.description && (
-                                  <p className="text-sm line-clamp-2 mt-1" style={{ color: mutedForeground }}>
-                                    {getTranslatedText(item.id, 'description', item.description)}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="text-right">
-                                <span className="font-bold whitespace-nowrap" style={{ color: theme.primary }}>
-                                  €{item.base_price.toFixed(2)}
-                                </span>
-                                {item.compare_price && item.compare_price > item.base_price && (
-                                  <div className="text-xs line-through" style={{ color: mutedForeground }}>
-                                    €{item.compare_price.toFixed(2)}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Tags and info - limited to prevent overflow */}
-                            {(item.is_new || (item.compare_price && item.compare_price > item.base_price) || item.dietary_tags?.length || itemAllergens.length > 0) && (
-                              <div className="flex flex-wrap gap-1.5 mt-3 max-h-14 overflow-hidden">
-                                {item.is_new && (
-                                  <span className="text-xs px-2 py-0.5 rounded font-medium flex-shrink-0" style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}>{t('new')}</span>
-                                )}
-                                {item.compare_price && item.compare_price > item.base_price && (
-                                  <span className="text-xs px-2 py-0.5 rounded font-medium flex-shrink-0" style={{ backgroundColor: theme.accent, color: getContrastColor(theme.accent) }}>{t('sale')}</span>
-                                )}
-                                {item.dietary_tags?.slice(0, 2).map((tag: string) => (
-                                  <span key={tag} className="text-xs px-2 py-0.5 rounded flex items-center gap-1 flex-shrink-0 max-w-24 truncate" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
-                                    <Leaf className="h-3 w-3 flex-shrink-0" />
-                                    <span className="truncate">{tDietary(tag as any) || tag}</span>
-                                  </span>
-                                ))}
-                                {itemAllergens.length > 0 && (
-                                  <span className="text-xs px-2 py-0.5 rounded flex items-center gap-1 flex-shrink-0" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
-                                    <AlertTriangle className="h-3 w-3" />
-                                    {itemAllergens.length}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Add to cart button */}
-                            <div className="mt-auto pt-5">
-                              <button
-                                className="w-full py-2.5 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] active:shadow-md"
-                                style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: `0 4px 14px 0 ${theme.primary}40` }}
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  if (item.variants?.length || item.option_groups?.length) {
-                                    setSelectedItem(item)
-                                  } else {
-                                    addToCart(item)
-                                  }
-                                }}
-                              >
-                                <Plus className="h-4 w-4" />
-                                {t('addToOrder')}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )
-                  })}
-                </motion.div>
-              </motion.section>
+                category={category}
+                categoryIndex={categoryIndex}
+                theme={theme}
+                cardBg={cardBg}
+                borderColor={borderColor}
+                mutedForeground={mutedForeground}
+                getTranslatedText={getTranslatedText}
+                getContrastColor={getContrastColor}
+                tDietary={(tag) => tDietary(tag as any) || tag}
+                tNew={t('new')}
+                tSale={t('sale')}
+                tAddToOrder={t('addToOrder')}
+                onItemClick={setSelectedItem}
+                onAddToCart={addToCart}
+              />
             ))}
           </div>
         )}
@@ -771,125 +641,31 @@ export function PublicMenuView({
       )}
 
       {/* Cart sidebar */}
-      {cartOpen && (
-        <div className="fixed inset-0 z-50 backdrop-blur-sm" style={{ backgroundColor: `${theme.background}cc` }}>
-          <div
-            className="fixed right-0 top-0 bottom-0 w-full max-w-md shadow-xl"
-            style={{ backgroundColor: theme.background, borderLeft: `1px solid ${borderColor}` }}
-          >
-            <div className="flex flex-col h-full">
-              {/* Header */}
-              <div className="flex items-center justify-between p-4" style={{ borderBottom: `1px solid ${borderColor}` }}>
-                <h2 className="font-bold text-lg" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>{t('yourOrder')}</h2>
-                <button
-                  className="p-2 rounded-md"
-                  style={{ color: theme.foreground }}
-                  onClick={() => setCartOpen(false)}
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Cart items */}
-              <div className="flex-1 overflow-y-auto p-4">
-                {cart.length === 0 ? (
-                  <div className="text-center py-12">
-                    <ShoppingCart className="h-12 w-12 mx-auto mb-4" style={{ color: mutedForeground }} />
-                    <p style={{ color: mutedForeground }}>{t('cartEmpty')}</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {cart.map((cartItem) => {
-                      // Use calculatedPrice if available (new variant system)
-                      const itemPrice = cartItem.calculatedPrice ?? (cartItem.item.base_price + (cartItem.variant?.price_modifier || 0))
-                      const optionsPrice = cartItem.selectedOptions.reduce((sum, opt) => sum + opt.price, 0)
-                      const totalPrice = (itemPrice + optionsPrice) * cartItem.quantity
-                      
-                      // Get selected variant names from pre-computed infos
-                      const variantNames = cartItem.selectedVariantInfos?.map(v => v.name) || []
-
-                      return (
-                        <div key={cartItem.id} className="flex gap-3 p-3 rounded-lg" style={{ backgroundColor: cardBg }}>
-                          <div className="flex-1">
-                            <h4 className="font-medium" style={{ color: theme.foreground }}>
-                              {getTranslatedText(cartItem.item.id, 'name', cartItem.item.name)}
-                            </h4>
-                            {cartItem.variant && (
-                              <p className="text-sm" style={{ color: mutedForeground }}>{cartItem.variant.name}</p>
-                            )}
-                            {cartItem.selectedVariantInfos && cartItem.selectedVariantInfos.length > 0 && (
-                              <p className="text-sm" style={{ color: mutedForeground }}>
-                                {cartItem.selectedVariantInfos.map(v => getTranslatedText(v.id, 'name', v.name, 'menu_item_variant')).join(', ')}
-                              </p>
-                            )}
-                            {cartItem.selectedOptions.length > 0 && (
-                              <p className="text-sm" style={{ color: mutedForeground }}>
-                                + {cartItem.selectedOptions.map(o => o.name).join(', ')}
-                              </p>
-                            )}
-                            <p className="font-semibold mt-1" style={{ color: theme.foreground }}>€{totalPrice.toFixed(2)}</p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              className="h-8 w-8 rounded-md flex items-center justify-center"
-                              style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}
-                              onClick={() => updateCartQuantity(cartItem.id, -1)}
-                            >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                            <span className="w-8 text-center font-medium" style={{ color: theme.foreground }}>{cartItem.quantity}</span>
-                            <button
-                              className="h-8 w-8 rounded-md flex items-center justify-center"
-                              style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}
-                              onClick={() => updateCartQuantity(cartItem.id, 1)}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
-                            <button
-                              className="h-8 w-8 rounded-md flex items-center justify-center ml-1"
-                              style={{ color: '#EF4444' }}
-                              onClick={() => removeFromCart(cartItem.id)}
-                              title="Remove item"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              {cart.length > 0 && (
-                <div className="p-4 space-y-4" style={{ borderTop: `1px solid ${borderColor}` }}>
-                  <div className="flex justify-between text-lg font-bold" style={{ color: theme.foreground }}>
-                    <span>{t('total')}</span>
-                    <span>€{cartTotal.toFixed(2)}</span>
-                  </div>
-                  <button
-                    className="w-full h-12 text-lg rounded-xl font-semibold transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
-                    style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: `0 6px 20px 0 ${theme.primary}50` }}
-                    onClick={() => {
-                      setCartOpen(false)
-                      setCheckoutOpen(true)
-                    }}
-                  >
-                    {t('placeOrder')}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <CartSidebar
+        isOpen={cartOpen}
+        cart={cart}
+        cartTotal={cartTotal}
+        theme={theme}
+        cardBg={cardBg}
+        borderColor={borderColor}
+        mutedForeground={mutedForeground}
+        tYourOrder={t('yourOrder')}
+        tCartEmpty={t('cartEmpty')}
+        tTotal={t('total')}
+        tPlaceOrder={t('placeOrder')}
+        getTranslatedText={getTranslatedText}
+        getContrastColor={getContrastColor}
+        onClose={handleCloseCart}
+        onUpdateQuantity={updateCartQuantity}
+        onRemoveItem={removeFromCart}
+        onCheckout={handleCheckout}
+      />
 
       {/* Item detail modal */}
       <ItemDetailModal
         item={selectedItem}
         isOpen={!!selectedItem}
-        onClose={() => setSelectedItem(null)}
+        onClose={handleCloseItemDetail}
         onAddToCart={addToCart}
         theme={theme}
         getTranslatedText={getTranslatedText}
@@ -898,7 +674,7 @@ export function PublicMenuView({
       {/* Checkout Dialog */}
       <CheckoutDialog
         isOpen={checkoutOpen}
-        onClose={() => setCheckoutOpen(false)}
+        onClose={handleCloseCheckout}
         cart={cart}
         cartTotal={cartTotal}
         tenantId={tenant.id}
@@ -906,7 +682,7 @@ export function PublicMenuView({
         locationId={locationId || locations[0]?.id || ''}
         tableId={tableId}
         currency={tenant.default_currency}
-        onOrderComplete={() => setCart([])}
+        onOrderComplete={handleOrderComplete}
         onlinePaymentsEnabled={(tenant.settings as { online_payments_enabled?: boolean } | null)?.online_payments_enabled === true}
         dineInEnabled={(tenant.settings as { dine_in_enabled?: boolean } | null)?.dine_in_enabled !== false}
         takeawayEnabled={(tenant.settings as { takeaway_enabled?: boolean } | null)?.takeaway_enabled !== false}

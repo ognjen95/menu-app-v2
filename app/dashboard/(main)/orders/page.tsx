@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import { useQuery } from '@tanstack/react-query'
-import { useActiveOrders, useUpdateOrderStatus } from '@/lib/hooks/use-orders'
+import { useActiveOrders } from '@/lib/hooks/use-orders'
 import { apiGet } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -119,7 +119,7 @@ export default function OrdersPage() {
   const { data, isLoading, refetch } = useActiveOrders(
     selectedLocationId !== 'all' ? selectedLocationId : undefined
   )
-  const updateStatus = useUpdateOrderStatus()
+  // const updateStatus = useUpdateOrderStatus()
 
   // Fetch locations
   const { data: locationsData } = useQuery({

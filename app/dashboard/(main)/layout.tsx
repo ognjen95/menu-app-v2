@@ -93,7 +93,7 @@ export default function DashboardLayout({
 
       <aside
         className={cn(
-          'fixed z-50 flex flex-col rounded-xl left-3 top-3 bottom-3 right-3 bg-background/95 backdrop-blur-xl border border-border/50 lg:right-auto lg:left-5 lg:top-5 lg:bottom-5 lg:bg-gradient-to-b lg:from-white lg:to-white lg:shadow-lg lg:shadow-black/5 dark:lg:from-white/[0.08] dark:lg:to-white/[0.03] dark:lg:shadow-none dark:lg:backdrop-blur-sm lg:border-border/30 dark:lg:border-white/[0.1]',
+          'fixed z-50 flex flex-col rounded-xl left-3 top-3 bottom-3 right-3 bg-background/95 backdrop-blur-xl lg:right-auto lg:left-5 lg:top-5 lg:bottom-5 lg:bg-gradient-to-b lg:from-white lg:to-white lg:shadow-lg lg:shadow-black/5 dark:lg:from-white/[0.08] dark:lg:to-white/[0.03] dark:lg:shadow-none dark:lg:backdrop-blur-sm lg:border-border/30 dark:lg:border-white/[0.1]',
           mounted ? 'transition-all duration-300 ease-in-out' : '',
           collapsed ? 'lg:w-[72px]' : 'lg:w-64',
           sidebarOpen ? 'translate-x-0' : '-translate-x-[calc(100%+24px)] lg:translate-x-0'

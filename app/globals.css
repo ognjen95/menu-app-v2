@@ -19,9 +19,9 @@
     --primary: 142.1 70.6% 45.3%;
     --primary-foreground: 144.9 80.4% 10%;
 
-    /* Secondary - Subtle Gray */
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
+    /* Secondary - Visible subtle green-gray */
+    --secondary: 150 15% 90%;
+    --secondary-foreground: 150 10% 15%;
 
     /* Muted - Soft Background */
     --muted: 240 4.8% 95.9%;
@@ -213,6 +213,22 @@
 
 .animate-cart-bounce {
   animation: cart-bounce 0.3s ease-out;
+}
+
+/* Fade in up animation for menu items */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out both;
 }
 
 /* Hide scrollbar utility */

@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { useTranslations } from 'next-intl'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { useVariantSelection } from '@/lib/hooks/use-variant-selection'
@@ -56,7 +57,7 @@ const getContrastColor = (hex: string): string => {
   return luminance > 0.5 ? '#18181B' : '#FFFFFF'
 }
 
-export function ItemDetailModal({
+export const ItemDetailModal = memo(function ItemDetailModal({
   item,
   isOpen,
   onClose,
@@ -346,4 +347,4 @@ export function ItemDetailModal({
       </DrawerContent>
     </Drawer>
   )
-}
+})
