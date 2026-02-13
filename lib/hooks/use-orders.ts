@@ -99,11 +99,11 @@ export function useOrder(id: string) {
   })
 }
 
-export function useActiveOrders(locationId?: string) {
+export function useActiveOrders(locationId?: string, options?: { disablePolling?: boolean }) {
   return useQuery({
     queryKey: orderKeys.active(locationId),
     queryFn: () => apiGet<OrdersResponse>('/orders/active', locationId ? { location_id: locationId } : undefined),
-    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchInterval: options?.disablePolling ? false : 10000, // Refetch every 10 seconds unless disabled
   })
 }
 

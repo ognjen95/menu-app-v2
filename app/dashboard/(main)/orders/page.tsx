@@ -195,7 +195,8 @@ export default function OrdersPage() {
   }, [newOrders, soundEnabled, t, clearNewOrders])
 
   const { data, isLoading, refetch } = useActiveOrders(
-    selectedLocationId !== 'all' ? selectedLocationId : undefined
+    selectedLocationId !== 'all' ? selectedLocationId : undefined,
+    { disablePolling: liveEnabled } // Disable polling when LIVE mode is on
   )
 
   // Fetch locations
