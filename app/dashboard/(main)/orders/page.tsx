@@ -9,6 +9,7 @@ import { apiGet } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 
 import {
   Select,
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/select'
 import {
   Bell,
+  BellRing,
   RefreshCw,
   List,
   Columns,
@@ -28,6 +30,7 @@ import {
   Radio,
   Wifi,
   WifiOff,
+  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -37,7 +40,7 @@ import { OrdersKanban } from '@/components/features/orders/components/orders-kan
 import { NewOrdersModal } from '@/components/features/orders/components/new-orders-modal'
 import { useUpdateOrderStatus } from '@/lib/hooks/use-orders'
 import { useRealtimeOrders } from '@/lib/hooks/use-realtime-orders'
-import { playNotificationSound, initNotificationSound } from '@/lib/utils/notification-sound'
+import { playNotificationSound, unlockAudio } from '@/lib/utils/notification-sound'
 import {
   Table,
   TableBody,
@@ -79,8 +82,10 @@ export default function OrdersPage() {
   const [liveEnabled, setLiveEnabled] = useState(false)
   const [uncheckedOrders, setUncheckedOrders] = useState<OrderWithRelations[]>([])
   const [showNewOrdersModal, setShowNewOrdersModal] = useState(false)
+  const [audioUnlocked, setAudioUnlocked] = useState(false)
+  const [soundAlertDismissed, setSoundAlertDismissed] = useState(false)
+  const [liveAlertDismissed, setLiveAlertDismissed] = useState(false)
   const lastOrderCountRef = useRef(0)
-  const audioInitializedRef = useRef(false)
   const updateOrderStatus = useUpdateOrderStatus()
 
   // Track if screen is mobile
@@ -105,6 +110,19 @@ export default function OrdersPage() {
     }
   }, [])
 
+  // Handle enabling sound notifications
+  const handleEnableSound = useCallback(async () => {
+    const unlocked = await unlockAudio()
+    if (unlocked) {
+      setAudioUnlocked(true)
+      toast.success(t('soundActivated') || 'Sound notifications enabled', {
+        description: t('soundActivatedDesc') || 'You will hear alerts for new orders'
+      })
+    } else {
+      toast.error(t('soundFailed') || 'Failed to enable sound')
+    }
+  }, [t])
+
   // Persist layout to localStorage
   const handleLayoutChange = (newLayout: 'list' | 'kanban') => {
     setLayout(newLayout)
@@ -113,12 +131,6 @@ export default function OrdersPage() {
 
   // Toggle live mode
   const handleLiveToggle = useCallback(() => {
-    // Initialize audio on first user interaction
-    if (!audioInitializedRef.current) {
-      initNotificationSound()
-      audioInitializedRef.current = true
-    }
-    
     setLiveEnabled(prev => {
       const newValue = !prev
       localStorage.setItem('orders-live-mode', String(newValue))
@@ -133,11 +145,7 @@ export default function OrdersPage() {
     })
   }, [t])
 
-  // Debug: log modal state changes
-  useEffect(() => {
-    console.log('[LIVE] Modal state:', { showNewOrdersModal, uncheckedOrdersCount: uncheckedOrders.length })
-  }, [showNewOrdersModal, uncheckedOrders.length])
-
+  
   // Handle viewing an order from the new orders modal
   const handleViewNewOrder = useCallback((order: OrderWithRelations) => {
     // Remove from unchecked list and check if we should close modal
@@ -165,9 +173,44 @@ export default function OrdersPage() {
     selectedLocationId !== 'all' ? selectedLocationId : undefined
   )
 
+  // Auto-reconnect when connection is lost (with retry limit)
+  const [reconnectAttempts, setReconnectAttempts] = useState(0)
+  const [isReconnecting, setIsReconnecting] = useState(false)
+  const maxReconnectAttempts = 3
+  
+  useEffect(() => {
+    if (!liveEnabled) {
+      setReconnectAttempts(0)
+      setIsReconnecting(false)
+      return
+    }
+    
+    // Reset attempts when successfully connected
+    if (isLive) {
+      setReconnectAttempts(0)
+      setIsReconnecting(false)
+      return
+    }
+    
+    // Auto-reconnect on error or disconnected (up to max attempts)
+    if ((realtimeStatus === 'error' || realtimeStatus === 'disconnected') && reconnectAttempts < maxReconnectAttempts) {
+      setIsReconnecting(true)
+      const timeout = setTimeout(() => {
+        console.log(`[LIVE] Auto-reconnecting... (attempt ${reconnectAttempts + 1}/${maxReconnectAttempts})`)
+        setReconnectAttempts(prev => prev + 1)
+        reconnect()
+      }, 2000 * (reconnectAttempts + 1)) // Exponential backoff: 2s, 4s, 6s
+      
+      return () => clearTimeout(timeout)
+    } else if (reconnectAttempts >= maxReconnectAttempts) {
+      setIsReconnecting(false)
+    }
+  }, [liveEnabled, isLive, realtimeStatus, reconnect, reconnectAttempts])
+
   // Store new order IDs to look up after refetch (with timestamp for cleanup)
   const [pendingOrderIds, setPendingOrderIds] = useState<{ id: string; addedAt: number }[]>([])
 
+  // ! TODO: THIS needs to be checked
   // Cleanup stale pending order IDs after 10 seconds (handles replication lag / filter mismatches)
   useEffect(() => {
     if (pendingOrderIds.length === 0) return
@@ -184,12 +227,6 @@ export default function OrdersPage() {
   // React to new orders from realtime - just store IDs and show notification
   useEffect(() => {
     if (newOrders.length > 0) {
-      
-      // Play sound for new orders
-      if (soundEnabled) {
-        playNotificationSound()
-      }
-      
       // Show toast and store IDs for lookup after refetch
       newOrders.forEach(order => {
         toast.success(t('newOrderReceived') || 'New order received!', {
@@ -198,13 +235,13 @@ export default function OrdersPage() {
         setPendingOrderIds(prev => [...prev, { id: order.id, addedAt: Date.now() }])
       })
       
-      // Show the modal
+      // Show the modal (sound loop is handled by modal)
       setShowNewOrdersModal(true)
       
       // Clear the processed orders
       clearNewOrders()
     }
-  }, [newOrders, soundEnabled, t, clearNewOrders])
+  }, [newOrders, t, clearNewOrders])
 
   const { data, isLoading, refetch } = useActiveOrders(
     selectedLocationId !== 'all' ? selectedLocationId : undefined,
@@ -240,11 +277,11 @@ export default function OrdersPage() {
 
   // Play sound when new orders arrive (for non-live mode polling)
   useEffect(() => {
-    if (!liveEnabled && soundEnabled && orders.length > lastOrderCountRef.current && lastOrderCountRef.current > 0) {
+    if (!liveEnabled && soundEnabled && audioUnlocked && orders.length > lastOrderCountRef.current && lastOrderCountRef.current > 0) {
       playNotificationSound()
     }
     lastOrderCountRef.current = orders.length
-  }, [orders.length, soundEnabled, liveEnabled])
+  }, [orders.length, soundEnabled, liveEnabled, audioUnlocked])
 
   // Filter orders by selected statuses
   const filteredOrders = orders.filter(o => selectedStatuses.has(o.status as OrderStatus))
@@ -422,6 +459,136 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6 h-full">
+      {/* Sound activation alert - show when audio not unlocked OR sound is disabled */}
+      {!soundAlertDismissed && (!audioUnlocked || !soundEnabled) && (
+        <Alert variant="warning" className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <BellRing className="h-5 w-5 animate-pulse" />
+            <div>
+              <AlertTitle>
+                {!audioUnlocked 
+                  ? t('enableSoundNotifications') || 'Enable Sound Notifications'
+                  : t('soundDisabledTitle') || 'Sound Notifications Disabled'
+                }
+              </AlertTitle>
+              <AlertDescription>
+                {!audioUnlocked
+                  ? t('enableSoundDesc') || 'Get audio alerts when new orders arrive in real-time'
+                  : t('soundDisabledDesc') || 'You will not hear alerts for new orders'
+                }
+              </AlertDescription>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 ml-4">
+            {!audioUnlocked ? (
+              <Button onClick={handleEnableSound} className="gap-2 shrink-0">
+                <Volume2 className="h-4 w-4" />
+                {t('enableSound') || 'Enable Sound'}
+              </Button>
+            ) : (
+              <Button onClick={() => setSoundEnabled(true)} className="gap-2 shrink-0">
+                <Volume2 className="h-4 w-4" />
+                {t('turnOnSound') || 'Turn On'}
+              </Button>
+            )}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setSoundAlertDismissed(true)}
+              className="shrink-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </Alert>
+      )}
+
+      {/* Live connection status alert */}
+      {!liveAlertDismissed && (
+        <Alert 
+          variant={
+            !liveEnabled ? 'muted' 
+            : isLive ? 'success' 
+            : (realtimeStatus === 'connecting' || isReconnecting) ? 'warning' 
+            : realtimeStatus === 'error' ? 'destructive' 
+            : 'muted'
+          }
+          className="flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            {!liveEnabled ? (
+              <Radio className="h-5 w-5" />
+            ) : isLive ? (
+              <Wifi className="h-5 w-5" />
+            ) : (realtimeStatus === 'connecting' || isReconnecting) ? (
+              <RefreshCw className="h-5 w-5 animate-spin" />
+            ) : realtimeStatus === 'error' ? (
+              <WifiOff className="h-5 w-5" />
+            ) : (
+              <Radio className="h-5 w-5" />
+            )}
+            <div>
+              <AlertTitle>
+                {!liveEnabled
+                  ? t('liveOff') || 'Real-time updates disabled'
+                  : isLive 
+                    ? t('liveConnected') || 'Connected - Real-time updates active'
+                    : isReconnecting
+                    ? `${t('reconnecting') || 'Reconnecting'}... (${reconnectAttempts}/${maxReconnectAttempts})`
+                    : realtimeStatus === 'connecting'
+                    ? t('liveConnecting') || 'Connecting...'
+                    : realtimeStatus === 'error' && reconnectAttempts >= maxReconnectAttempts
+                    ? t('liveErrorMaxRetries') || 'Connection failed - Manual retry required'
+                    : realtimeStatus === 'error'
+                    ? t('liveError') || 'Connection error'
+                    : t('liveDisconnected') || 'Disconnected'
+                }
+              </AlertTitle>
+              {liveEnabled && (!audioUnlocked || !soundEnabled) && isLive && (
+                <AlertDescription>
+                  {t('noSoundWarning') || 'Sound notifications are not enabled'}
+                </AlertDescription>
+              )}
+              {isReconnecting && (
+                <AlertDescription>
+                  {t('autoReconnecting') || 'Attempting to reconnect automatically...'}
+                </AlertDescription>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 ml-4">
+            {liveEnabled && realtimeStatus === 'error' && !isReconnecting && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  setReconnectAttempts(0)
+                  reconnect()
+                }} 
+                className="gap-1.5"
+              >
+                <RefreshCw className="h-3 w-3" />
+                {t('retry') || 'Retry'}
+              </Button>
+            )}
+            {!liveEnabled && (
+              <Button variant="outline" size="sm" onClick={handleLiveToggle} className="gap-1.5">
+                <Radio className="h-3 w-3" />
+                {t('enableLive') || 'Enable'}
+              </Button>
+            )}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setLiveAlertDismissed(true)}
+              className="shrink-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </Alert>
+      )}
+
       {/* Page header */}
       <motion.div
         className="flex items-center justify-between flex-wrap gap-4"
@@ -451,36 +618,26 @@ export default function OrdersPage() {
             </SelectContent>
           </Select>
 
-          {/* Sound toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={async () => {
-              // Initialize audio on first interaction
-              if (!audioInitializedRef.current) {
-                initNotificationSound()
-                audioInitializedRef.current = true
-              }
-              
-              const newValue = !soundEnabled
-              setSoundEnabled(newValue)
-              
-              // Play test sound when enabling to confirm it works
-              if (newValue) {
-                const played = await playNotificationSound()
-                if (played) {
+          {/* Sound toggle - only show if audio is unlocked */}
+          {audioUnlocked && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                const newValue = !soundEnabled
+                setSoundEnabled(newValue)
+                if (newValue) {
+                  playNotificationSound()
                   toast.success(t('soundEnabled') || 'Sound enabled')
                 } else {
-                  toast.warning(t('soundFailed') || 'Sound may not work', {
-                    description: 'Check browser permissions'
-                  })
+                  toast.info(t('soundDisabled') || 'Sound disabled')
                 }
-              }
-            }}
-            title={soundEnabled ? t('disableSound') : t('enableSound')}
-          >
-            {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
-          </Button>
+              }}
+              title={soundEnabled ? t('disableSound') : t('enableSound')}
+            >
+              {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+            </Button>
+          )}
 
           {/* Live mode toggle */}
           <TooltipProvider>

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
+import { startNotificationLoop, stopNotificationLoop } from '@/lib/utils/notification-sound'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -62,6 +63,20 @@ export function NewOrdersModal({
 }: NewOrdersModalProps) {
   const t = useTranslations('ordersPage')
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set())
+
+  // Start/stop notification loop based on modal open state
+  useEffect(() => {
+    if (open && orders.length > 0) {
+      startNotificationLoop()
+    } else {
+      stopNotificationLoop()
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      stopNotificationLoop()
+    }
+  }, [open, orders.length])
 
   const toggleExpanded = (orderId: string) => {
     setExpandedOrders(prev => {
