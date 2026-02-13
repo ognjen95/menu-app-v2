@@ -40,6 +40,7 @@ type CreateOrderInput = {
   location_id: string
   table_id?: string
   type: string
+  status?: OrderStatus;
   customer_name?: string
   customer_phone?: string
   customer_email?: string

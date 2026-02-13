@@ -308,6 +308,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
         location_id: selectedLocationId,
         table_id: orderType === 'dine_in' ? selectedTableId : undefined,
         type: orderType,
+        status: 'accepted',
         customer_name: customerName || undefined,
         customer_phone: customerPhone || undefined,
         customer_notes: customerNotes || undefined,

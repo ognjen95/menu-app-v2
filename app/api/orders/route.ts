@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { queryHandler, mutationHandler, requireTenant, requireRole } from '@/lib/api/route-handlers'
+import { OrderStatus } from '@/lib/types'
 
 // GET - List orders with filters
 export async function GET(request: NextRequest) {
@@ -79,6 +80,7 @@ export async function POST(request: NextRequest) {
       location_id: string
       table_id?: string
       type: string
+      status?: OrderStatus
       customer_name?: string
       customer_phone?: string
       customer_email?: string
@@ -107,6 +109,49 @@ export async function POST(request: NextRequest) {
       .eq('id', tenantId)
       .single()
 
+    // Build order data with appropriate timestamps based on status
+    const status = orderData.status || 'placed'
+    const now = new Date().toISOString()
+    
+    // Map status to timestamp fields
+    const statusTimestamps: Record<string, unknown> = {
+      placed_at: now, // Always set placed_at
+    }
+    
+    // Set additional timestamps and user tracking based on initial status
+    if (status === 'accepted') {
+      statusTimestamps.accepted_at = now
+      statusTimestamps.accepted_by = user.id
+    } else if (status === 'preparing') {
+      statusTimestamps.accepted_at = now
+      statusTimestamps.accepted_by = user.id
+      statusTimestamps.preparing_at = now
+      statusTimestamps.prepared_by = user.id
+    } else if (status === 'ready') {
+      statusTimestamps.accepted_at = now
+      statusTimestamps.accepted_by = user.id
+      statusTimestamps.preparing_at = now
+      statusTimestamps.prepared_by = user.id
+      statusTimestamps.ready_at = now
+    } else if (status === 'served') {
+      statusTimestamps.accepted_at = now
+      statusTimestamps.accepted_by = user.id
+      statusTimestamps.preparing_at = now
+      statusTimestamps.prepared_by = user.id
+      statusTimestamps.ready_at = now
+      statusTimestamps.served_at = now
+      statusTimestamps.served_by = user.id
+    } else if (status === 'completed') {
+      statusTimestamps.accepted_at = now
+      statusTimestamps.accepted_by = user.id
+      statusTimestamps.preparing_at = now
+      statusTimestamps.prepared_by = user.id
+      statusTimestamps.ready_at = now
+      statusTimestamps.served_at = now
+      statusTimestamps.served_by = user.id
+      statusTimestamps.completed_at = now
+    }
+
     // Create order
     const { data: order, error: orderError } = await supabase
       .from('orders')
@@ -115,14 +160,14 @@ export async function POST(request: NextRequest) {
         location_id: orderData.location_id,
         table_id: orderData.table_id,
         type: orderData.type || 'dine_in',
-        status: 'placed',
+        status,
         customer_name: orderData.customer_name,
         customer_phone: orderData.customer_phone,
         customer_email: orderData.customer_email,
         customer_notes: orderData.customer_notes,
         tax_rate: tenant?.vat_rate || 0,
         currency: tenant?.default_currency || 'EUR',
-        placed_at: new Date().toISOString(),
+        ...statusTimestamps,
       })
       .select()
       .single()

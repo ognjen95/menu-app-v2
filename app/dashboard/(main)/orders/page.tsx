@@ -503,8 +503,8 @@ export default function OrdersPage() {
         </Alert>
       )}
 
-      {/* Live connection status alert */}
-      {!liveAlertDismissed && (
+      {/* Live connection status alert - hide when successfully connected */}
+      {!liveAlertDismissed && !(liveEnabled && isLive) && (
         <Alert 
           variant={
             !liveEnabled ? 'muted' 

@@ -79,23 +79,28 @@ export function useRealtimeOrders(
         table: 'orders',
       },
       (payload) => {
+        const newOrder = payload.new as { status?: string; [key: string]: unknown }
         
-        // Add to new orders array
-        setNewOrders(prev => {
-          const updated = [payload.new, ...prev]
-          return updated
-        })
+        // Only trigger modal/sound for orders with status 'placed'
+        // Orders created with other statuses (e.g. 'accepted' from create-order dialog) are ignored
+        if (newOrder.status === 'placed') {
+          // Add to new orders array
+          setNewOrders(prev => {
+            const updated = [newOrder, ...prev]
+            return updated
+          })
+          
+          // Dispatch custom event for other listeners (sound notification)
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent(NEW_ORDER_EVENT, { 
+              detail: newOrder 
+            }))
+          }
+        }
         
-        // Invalidate queries to refresh the list
+        // Always invalidate queries to refresh the list (for all new orders)
         queryClient.invalidateQueries({ queryKey: ['orders'] })
         queryClient.invalidateQueries({ queryKey: ['orders', 'active'] })
-        
-        // Dispatch custom event for other listeners
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent(NEW_ORDER_EVENT, { 
-            detail: payload.new 
-          }))
-        }
       }
     )
     

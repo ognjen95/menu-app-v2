@@ -54,7 +54,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       case 'cancelled':
         updateData.cancelled_at = now
         updateData.cancelled_by = user.id
-        updateData.cancelled_reason = cancellation_reason
+        updateData.cancellation_reason = cancellation_reason
         break
     }
 

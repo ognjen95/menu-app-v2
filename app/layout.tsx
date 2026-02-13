@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/lib/providers";
@@ -21,6 +21,20 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://klopay.app'),
   alternates: {
     canonical: '/',
+  },
+  // PWA Configuration
+  applicationName: 'KloPay',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'KloPay',
+    // TODO: Add startup images for iOS devices
+    // startupImage: [
+    //   { url: '/splash/apple-splash-2048-2732.png', media: '(device-width: 1024px) and (device-height: 1366px)' },
+    // ],
+  },
+  formatDetection: {
+    telephone: false,
   },
   openGraph: {
     type: 'website',
@@ -46,15 +60,23 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
       { url: '/logo.png', sizes: 'any' },
-      { url: '/logo.png', type: 'image/png' },
     ],
     apple: [
-      { url: '/logo.png' },
+      { url: '/icons/icon-152x152.png', sizes: '152x152' },
+      { url: '/icons/icon-192x192.png', sizes: '192x192' },
     ],
-    shortcut: ['/logo.png'],
+    shortcut: ['/icons/icon-192x192.png'],
   },
   manifest: '/manifest.json',
+  // PWA theme color (should match manifest.json)
+  other: {
+    'mobile-web-app-capable': 'yes',
+    'msapplication-TileColor': '#3b82f6',
+    'msapplication-tap-highlight': 'no',
+  },
   robots: {
     index: true,
     follow: true,
@@ -71,6 +93,19 @@ export const metadata: Metadata = {
     // google: 'your-google-verification-code',
     // yandex: 'your-yandex-verification-code',
   },
+};
+
+// PWA Viewport configuration
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
+  ],
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false, // Prevents zoom on iOS for app-like experience
+  viewportFit: 'cover', // For notched devices
 };
 
 export default async function RootLayout({
