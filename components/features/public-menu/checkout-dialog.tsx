@@ -237,7 +237,7 @@ export const CheckoutDialog = memo(function CheckoutDialog({
       style={{ backgroundColor: `${colors.foreground}40` }}
     >
       <div 
-        className="fixed right-0 top-0 bottom-0 w-full max-w-md border-l shadow-xl h-screen overflow-hidden"
+        className="fixed right-0 top-0 bottom-0 w-full max-w-md border-l shadow-xl h-[100dvh] overflow-hidden"
         style={{ backgroundColor: colors.background, color: colors.foreground }}
       >
         <div className="flex flex-col h-full overflow-hidden">
@@ -557,7 +557,7 @@ export const CheckoutDialog = memo(function CheckoutDialog({
 
           {/* Footer */}
           {step === 'details' && (
-            <div className="p-4" style={{ borderTop: `1px solid ${colors.foreground}15` }}>
+            <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))]" style={{ borderTop: `1px solid ${colors.foreground}15` }}>
               <button
                 className="w-full h-12 text-lg font-semibold rounded-xl disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] flex items-center justify-center"
                 onClick={handleSubmitOrder}
@@ -579,7 +579,7 @@ export const CheckoutDialog = memo(function CheckoutDialog({
           )}
 
           {step === 'confirmation' && (
-            <div className="p-4" style={{ borderTop: `1px solid ${colors.foreground}15` }}>
+            <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))]" style={{ borderTop: `1px solid ${colors.foreground}15` }}>
               <button 
                 className="w-full h-12 font-semibold rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
                 onClick={handleClose}
