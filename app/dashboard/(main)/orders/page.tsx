@@ -171,7 +171,6 @@ export default function OrdersPage() {
   // React to new orders from realtime - just store IDs and show notification
   useEffect(() => {
     if (newOrders.length > 0) {
-      console.log('[LIVE] New orders detected:', newOrders.length)
       
       // Play sound for new orders
       if (soundEnabled) {
@@ -196,6 +195,7 @@ export default function OrdersPage() {
 
   const { data, isLoading, refetch } = useActiveOrders(
     selectedLocationId !== 'all' ? selectedLocationId : undefined,
+    // ! TODO: Check should poll be on if Live mode is on / Or based on subscription type
     { disablePolling: liveEnabled } // Disable polling when LIVE mode is on
   )
 

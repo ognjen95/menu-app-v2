@@ -237,10 +237,10 @@ export const CheckoutDialog = memo(function CheckoutDialog({
       style={{ backgroundColor: `${colors.foreground}40` }}
     >
       <div 
-        className="fixed right-0 top-0 bottom-0 w-full max-w-md border-l shadow-xl"
+        className="fixed right-0 top-0 bottom-0 w-full max-w-md border-l shadow-xl h-screen overflow-hidden"
         style={{ backgroundColor: colors.background, color: colors.foreground }}
       >
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full overflow-hidden">
           {/* Header */}
           <div 
             className="flex items-center justify-between p-4"
@@ -270,7 +270,7 @@ export const CheckoutDialog = memo(function CheckoutDialog({
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 min-h-0 overflow-y-auto p-4">
             {/* Step: Details */}
             {step === 'details' && (
               <div className="space-y-6">

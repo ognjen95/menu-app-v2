@@ -3,12 +3,11 @@
 import { memo } from 'react'
 import { X, ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react'
 import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerClose,
-} from '@/components/ui/drawer'
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 
 type CartItem = {
   id: string
@@ -68,89 +67,39 @@ export const CartSidebar = memo(function CartSidebar(props: CartSidebarProps) {
   } = props || {};
 
   return (
-    <>
-      {isOpen && (
-        <>
-          <div
-            className="hidden md:block fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm animate-fade-in"
-            onClick={onClose}
-          />
-          <div
-            className="hidden md:flex fixed right-0 top-0 bottom-0 w-full max-w-md shadow-2xl z-[70] animate-slide-in-right rounded-3xl"
-            style={{ backgroundColor: theme.background, borderLeft: `1px solid ${borderColor}` }}
-          >
-            <div className="flex flex-col h-full w-full">
-              <div className="flex items-center justify-between p-4 flex-shrink-0" style={{ borderBottom: `1px solid ${borderColor}` }}>
-                <h2 className="font-bold text-lg" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>{tYourOrder}</h2>
-                <button
-                  className="p-2 rounded-md hover:bg-opacity-10 transition-colors"
-                  style={{ color: theme.foreground }}
-                  onClick={onClose}
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent 
+        side="right" 
+        className="w-full sm:max-w-md p-0 flex flex-col h-full overflow-hidden"
+        style={{ backgroundColor: theme.background, borderColor }}
+      >
+        <SheetHeader className="p-4 flex-shrink-0" style={{ borderBottom: `1px solid ${borderColor}` }}>
+          <SheetTitle style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>
+            {tYourOrder}
+          </SheetTitle>
+        </SheetHeader>
 
-              <div className="flex-1 overflow-y-auto p-4">
-                <CartItems {...props} />
-              </div>
+        <div className="flex-1 min-h-0 overflow-y-auto p-4">
+          <CartItems {...props} />
+        </div>
 
-              {cart.length > 0 && (
-                <div className="p-4 space-y-4 flex-shrink-0" style={{ borderTop: `1px solid ${borderColor}` }}>
-                  <div className="flex justify-between text-lg font-bold" style={{ color: theme.foreground }}>
-                    <span>{tTotal}</span>
-                    <span>€{cartTotal.toFixed(2)}</span>
-                  </div>
-                  <button
-                    className="w-full h-12 text-lg rounded-xl font-semibold transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
-                    style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: `0 6px 20px 0 ${theme.primary}50` }}
-                    onClick={onCheckout}
-                  >
-                    {tPlaceOrder}
-                  </button>
-                </div>
-              )}
+        {cart.length > 0 && (
+          <div className="p-4 space-y-4 flex-shrink-0" style={{ borderTop: `1px solid ${borderColor}` }}>
+            <div className="flex justify-between text-lg font-bold" style={{ color: theme.foreground }}>
+              <span>{tTotal}</span>
+              <span>€{cartTotal.toFixed(2)}</span>
             </div>
+            <button
+              className="w-full h-12 text-lg rounded-xl font-semibold transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
+              style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: `0 6px 20px 0 ${theme.primary}50` }}
+              onClick={onCheckout}
+            >
+              {tPlaceOrder}
+            </button>
           </div>
-        </>
-      )}
-
-      <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DrawerContent className="md:hidden max-h-[85vh]" style={{ backgroundColor: theme.background, borderColor }}>
-          <DrawerHeader className="flex items-center justify-between px-4 pb-3" style={{ borderBottom: `1px solid ${borderColor}` }}>
-            <DrawerTitle style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>{tYourOrder}</DrawerTitle>
-            <DrawerClose asChild>
-              <button
-                className="p-2 rounded-md"
-                style={{ color: theme.foreground }}
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </DrawerClose>
-          </DrawerHeader>
-
-          <div className="flex-1 overflow-y-auto px-4 py-4" style={{ maxHeight: 'calc(85vh - 180px)' }}>
-            <CartItems {...props} isMobile />
-          </div>
-
-          {cart.length > 0 && (
-            <div className="px-4 pb-4 pt-3 space-y-3 flex-shrink-0" style={{ borderTop: `1px solid ${borderColor}` }}>
-              <div className="flex justify-between text-base font-bold" style={{ color: theme.foreground }}>
-                <span>{tTotal}</span>
-                <span>€{cartTotal.toFixed(2)}</span>
-              </div>
-              <button
-                className="w-full h-12 text-base rounded-xl font-semibold transition-all active:scale-[0.98]"
-                style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: `0 4px 16px 0 ${theme.primary}50` }}
-                onClick={onCheckout}
-              >
-                {tPlaceOrder}
-              </button>
-            </div>
-          )}
-        </DrawerContent>
-      </Drawer>
-    </>
+        )}
+      </SheetContent>
+    </Sheet>
   )
 })
 
