@@ -7,6 +7,7 @@ import { useMenus, useCreateMenu, useUpdateMenu } from '@/lib/hooks/use-menu'
 import { useLocations } from '@/lib/hooks/use-tenant'
 import type { Menu, Location } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { findOverlappingMenus, type OverlapInfo } from '@/lib/utils/menu-schedule'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -43,95 +44,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
-type OverlapInfo = {
-  menuName: string
-  overlappingDays: number[]
-  timeRange: string
-}
-
-// ! [IMPORTANT]
-// ! THIS VALIDATION OF OVERLAPPING MENUS COPY FOR BACKEND LOGIC ALSO
-/**
- * Check if two time ranges overlap
- * Handles both normal ranges (09:00-17:00) and overnight ranges (22:00-06:00)
- */
-function timeRangesOverlap(
-  from1: string | null | undefined,
-  until1: string | null | undefined,
-  from2: string | null | undefined,
-  until2: string | null | undefined
-): boolean {
-  // If either menu has no time restriction, they can overlap
-  const noRestriction1 = !from1 && !until1
-  const noRestriction2 = !from2 && !until2
-  
-  if (noRestriction1 || noRestriction2) return true
-
-  // Default values for partial restrictions
-  const start1 = from1 || '00:00'
-  const end1 = until1 || '23:59'
-  const start2 = from2 || '00:00'
-  const end2 = until2 || '23:59'
-
-  // Check if ranges overlap (simple string comparison works for HH:MM format)
-  return start1 < end2 && start2 < end1
-}
-
-/**
- * Find menus that have overlapping schedules with the given menu form
- */
-function findOverlappingMenus(
-  menus: Menu[],
-  form: {
-    is_active: boolean
-    available_days: number[]
-    available_from: string
-    available_until: string
-    location_id: string | null
-  },
-  editingMenuId?: string
-): OverlapInfo[] {
-  // Only check if the new/edited menu is active
-  if (!form.is_active) return []
-
-  const overlaps: OverlapInfo[] = []
-
-  for (const menu of menus) {
-    // Skip the menu being edited
-    if (editingMenuId && menu.id === editingMenuId) continue
-    // Skip inactive menus
-    if (!menu.is_active) continue
-    // Skip menus at different locations (unless one has no location)
-    if (form.location_id && menu.location_id && form.location_id !== menu.location_id) continue
-
-    // Find overlapping days
-    const formDays = form.available_days.length > 0 ? form.available_days : [0, 1, 2, 3, 4, 5, 6]
-    const menuDays = menu.available_days?.length > 0 ? menu.available_days : [0, 1, 2, 3, 4, 5, 6]
-    const overlappingDays = formDays.filter(d => menuDays.includes(d))
-
-    if (overlappingDays.length === 0) continue
-
-    // Check time overlap
-    const hasTimeOverlap = timeRangesOverlap(
-      form.available_from || null,
-      form.available_until || null,
-      menu.available_from,
-      menu.available_until
-    )
-
-    if (hasTimeOverlap) {
-      overlaps.push({
-        menuName: menu.name,
-        overlappingDays,
-        timeRange: menu.available_from || menu.available_until
-          ? `${menu.available_from || '00:00'} - ${menu.available_until || '23:59'}`
-          : 'All day',
-      })
-    }
-  }
-
-  return overlaps
-}
+// Schedule overlap validation moved to @/lib/utils/menu-schedule
 
 /**
  * Check if a menu is currently active based on is_active, available_days, and time range
@@ -184,7 +97,7 @@ export default function MenuListPage() {
   const updateMenu = useUpdateMenu()
   
   const menus = useMemo(() => menusData?.data?.menus || [], [menusData?.data?.menus])
-  const locations = useMemo<Location[]>(() => locationsData?.locations || [], [locationsData?.locations])
+  const locations = useMemo<Location[]>(() => locationsData?.data?.locations || [], [locationsData?.data?.locations])
 
   const resetMenuForm = () => {
     setMenuForm({
@@ -217,7 +130,13 @@ export default function MenuListPage() {
     e.preventDefault()
 
     // Check for overlapping schedules
-    const overlaps = findOverlappingMenus(menus, menuForm, editingMenu?.id)
+    const overlaps = findOverlappingMenus(menus, {
+      is_active: menuForm.is_active,
+      available_days: menuForm.available_days,
+      available_from: menuForm.available_from || null,
+      available_until: menuForm.available_until || null,
+      location_id: menuForm.location_id,
+    }, editingMenu?.id)
     if (overlaps.length > 0) {
       setOverlapAlert(overlaps)
       return
@@ -225,11 +144,11 @@ export default function MenuListPage() {
 
     const menuData = {
       name: menuForm.name,
-      description: menuForm.description || undefined,
-      location_id: menuForm.location_id || undefined,
+      description: menuForm.description || null,
+      location_id: menuForm.location_id || null,
       is_active: menuForm.is_active,
-      available_from: menuForm.available_from || undefined,
-      available_until: menuForm.available_until || undefined,
+      available_from: menuForm.available_from || null,
+      available_until: menuForm.available_until || null,
       available_days: menuForm.available_days,
     }
 

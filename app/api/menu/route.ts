@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server'
 import { queryHandler, mutationHandler, requireTenant, requireRole } from '@/lib/api/route-handlers'
+import { validateMenuSchedule } from '@/lib/utils/menu-schedule'
+import type { Menu } from '@/lib/types'
 
 // GET - List menus for tenant
 export async function GET(request: NextRequest) {
@@ -35,17 +37,27 @@ export async function POST(request: NextRequest) {
 
     const menuData = body as {
       name: string
-      description?: string
-      location_id?: string
+      description?: string | null
+      location_id?: string | null
       is_active?: boolean
-      available_from?: string
-      available_until?: string
+      available_from?: string | null
+      available_until?: string | null
       available_days?: number[]
     }
 
     if (!menuData.name) {
       throw new Error('Menu name is required')
     }
+
+    // Fetch existing menus to check for schedule overlaps
+    const { data: existingMenus } = await supabase
+      .from('menus')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+
+    // Validate schedule doesn't overlap with existing menus
+    validateMenuSchedule(existingMenus as Menu[] || [], menuData)
 
     // Get max sort_order
     const { data: maxOrder } = await supabase
@@ -61,11 +73,11 @@ export async function POST(request: NextRequest) {
       .insert({
         tenant_id: tenantId,
         name: menuData.name,
-        description: menuData.description,
-        location_id: menuData.location_id,
+        description: menuData.description || null,
+        location_id: menuData.location_id || null,
         is_active: menuData.is_active ?? true,
-        available_from: menuData.available_from,
-        available_until: menuData.available_until,
+        available_from: menuData.available_from || null,
+        available_until: menuData.available_until || null,
         available_days: menuData.available_days || [0, 1, 2, 3, 4, 5, 6],
         sort_order: (maxOrder?.sort_order || 0) + 1,
       })

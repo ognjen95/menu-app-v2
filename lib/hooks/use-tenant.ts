@@ -94,7 +94,7 @@ export function useUpdateTenant() {
 export function useLocations() {
   return useQuery({
     queryKey: tenantKeys.locations(),
-    queryFn: () => apiGet<{ locations: Location[] }>('/locations'),
+    queryFn: () => apiGet<{ data:{locations: Location[] } }>('/locations'),
   })
 }
 

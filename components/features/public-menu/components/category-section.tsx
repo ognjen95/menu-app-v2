@@ -38,6 +38,7 @@ interface CategorySectionProps {
   tNew: string
   tSale: string
   tAddToOrder: string
+  getCartQuantity: (itemId: string) => number
   onItemClick: (item: any) => void // eslint-disable-line
   onAddToCart: (item: any) => void // eslint-disable-line
 }
@@ -55,6 +56,7 @@ export const CategorySection = memo(function CategorySection({
   tNew,
   tSale,
   tAddToOrder,
+  getCartQuantity,
   onItemClick,
   onAddToCart,
 }: CategorySectionProps) {
@@ -79,14 +81,15 @@ export const CategorySection = memo(function CategorySection({
         )}
       </div>
 
-      {/* Items grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Items grid - 1 column on mobile, grid on larger screens */}
+      <div className="flex flex-col gap-3 md:grid md:gap-4 md:grid-cols-2 lg:grid-cols-3">
         {category.items.map((item, itemIndex) => (
           <MenuItemCard
             key={item.id}
             item={item}
             itemIndex={itemIndex}
             isAboveFold={categoryIndex === 0 && itemIndex < 6}
+            cartQuantity={getCartQuantity(item.id)}
             theme={theme}
             cardBg={cardBg}
             borderColor={borderColor}

@@ -104,83 +104,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-
-type OverlapInfo = {
-  menuName: string
-  overlappingDays: number[]
-  timeRange: string
-}
-
-/**
- * Check if two time ranges overlap
- */
-function timeRangesOverlap(
-  from1: string | null | undefined,
-  until1: string | null | undefined,
-  from2: string | null | undefined,
-  until2: string | null | undefined
-): boolean {
-  const noRestriction1 = !from1 && !until1
-  const noRestriction2 = !from2 && !until2
-  if (noRestriction1 || noRestriction2) return true
-
-  const start1 = from1 || '00:00'
-  const end1 = until1 || '23:59'
-  const start2 = from2 || '00:00'
-  const end2 = until2 || '23:59'
-
-  return start1 < end2 && start2 < end1
-}
-
-/**
- * Find menus that have overlapping schedules
- */
-function findOverlappingMenus(
-  menus: Menu[],
-  form: {
-    is_active: boolean
-    available_days: number[]
-    available_from: string
-    available_until: string
-    location_id: string | null
-  },
-  editingMenuId?: string
-): OverlapInfo[] {
-  if (!form.is_active) return []
-
-  const overlaps: OverlapInfo[] = []
-
-  for (const menu of menus) {
-    if (editingMenuId && menu.id === editingMenuId) continue
-    if (!menu.is_active) continue
-    if (form.location_id && menu.location_id && form.location_id !== menu.location_id) continue
-
-    const formDays = form.available_days.length > 0 ? form.available_days : [0, 1, 2, 3, 4, 5, 6]
-    const menuDays = menu.available_days?.length > 0 ? menu.available_days : [0, 1, 2, 3, 4, 5, 6]
-    const overlappingDays = formDays.filter(d => menuDays.includes(d))
-
-    if (overlappingDays.length === 0) continue
-
-    const hasTimeOverlap = timeRangesOverlap(
-      form.available_from || null,
-      form.available_until || null,
-      menu.available_from,
-      menu.available_until
-    )
-
-    if (hasTimeOverlap) {
-      overlaps.push({
-        menuName: menu.name,
-        overlappingDays,
-        timeRange: menu.available_from || menu.available_until
-          ? `${menu.available_from || '00:00'} - ${menu.available_until || '23:59'}`
-          : 'All day',
-      })
-    }
-  }
-
-  return overlaps
-}
+import { DIETARY_TAG_OPTIONS } from '@/lib/constants/menu-items'
+import { findOverlappingMenus, type OverlapInfo } from '@/lib/utils/menu-schedule'
 
 // Dietary tag icons mapping
 const dietaryTagIcons: Record<string, LucideIcon> = {
@@ -253,7 +178,7 @@ export default function MenuConfigPage() {
   const [categoryTranslations, setCategoryTranslations] = useState<Record<string, { name: string; description: string }>>({})
 
   // Dietary tag options
-  const dietaryTagOptions = ['vegetarian', 'vegan', 'gluten-free', 'halal', 'kosher', 'dairy-free', 'nut-free']
+  const dietaryTagOptions = DIETARY_TAG_OPTIONS;
 
   const { data: menusData, isLoading: menusLoading } = useMenus()
   const { data: categoriesData, isLoading: categoriesLoading } = useCategories(menuId)
@@ -276,7 +201,7 @@ export default function MenuConfigPage() {
     editingCategory ? `category.${editingCategory.id}` : ''
   )
   
-  const locations = useMemo(() => locationsData?.locations || [], [locationsData?.locations])
+  const locations = useMemo(() => locationsData?.data?.locations || [], [locationsData?.data?.locations])
   
   const updateMenu = useUpdateMenu()
   const createCategory = useCreateCategory()
@@ -362,7 +287,13 @@ export default function MenuConfigPage() {
     e.preventDefault()
 
     // Check for overlapping schedules
-    const overlaps = findOverlappingMenus(menus, menuForm, menuId)
+    const overlaps = findOverlappingMenus(menus, {
+      is_active: menuForm.is_active,
+      available_days: menuForm.available_days,
+      available_from: menuForm.available_from || null,
+      available_until: menuForm.available_until || null,
+      location_id: menuForm.location_id,
+    }, menuId)
     if (overlaps.length > 0) {
       setOverlapAlert(overlaps)
       return
@@ -371,11 +302,11 @@ export default function MenuConfigPage() {
     updateMenu.mutate({
       id: menuId,
       name: menuForm.name,
-      description: menuForm.description || undefined,
-      location_id: menuForm.location_id || undefined,
+      description: menuForm.description || null,
+      location_id: menuForm.location_id || null,
       is_active: menuForm.is_active,
-      available_from: menuForm.available_from || undefined,
-      available_until: menuForm.available_until || undefined,
+      available_from: menuForm.available_from || null,
+      available_until: menuForm.available_until || null,
       available_days: menuForm.available_days,
     }, {
       onSuccess: () => setIsMenuDialogOpen(false)

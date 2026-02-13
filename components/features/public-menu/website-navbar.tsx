@@ -71,13 +71,14 @@ export function WebsiteNavbar({
 
   return (
     <>
-      <nav style={{
+      <nav
+      className='shadow' 
+      style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '1rem',
         backgroundColor: theme.background,
-        borderBottom: `1px solid ${theme.foreground}10`,
         position: 'sticky',
         top: 0,
         zIndex: 100,

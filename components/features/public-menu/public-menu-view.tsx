@@ -4,19 +4,16 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import {
-  Search,
-  ShoppingCart,
   Plus,
-  X,
   Leaf,
-  Globe,
-  ChevronDown,
+  ShoppingCart,
 } from 'lucide-react'
 import type { Tenant, Menu, MenuItem, Allergen, Location, Website, Translation } from '@/lib/types'
-import Image from 'next/image'
 import dynamic from 'next/dynamic'
 // Removed Framer Motion for better performance
 import { CategorySection } from './components/category-section'
+import { PublicMenuHeader } from './public-menu-header'
+import { DIETARY_TAG_OPTIONS } from '@/lib/constants/menu-items'
 
 // Lazy load modals - not needed on initial render
 const CartSidebar = dynamic(() => import('./components/cart-sidebar').then(mod => mod.CartSidebar), { ssr: false })
@@ -134,8 +131,7 @@ export function PublicMenuView({
   const [cartOpen, setCartOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<MenuItemWithRelations | null>(null)
-  const [cartAnimation, setCartAnimation] = useState<number[]>([])
-  const [langMenuOpen, setLangMenuOpen] = useState(false)
+  const [cartAnimation, setCartAnimation] = useState<string[]>([])
   const [currentLanguage, setCurrentLanguage] = useState(initialLanguage)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
 
@@ -175,7 +171,6 @@ export function PublicMenuView({
   // Handle language change - set PUBLIC_LOCALE cookie and refresh to load new translations
   const handleLanguageChange = useCallback((langCode: string) => {
     setCurrentLanguage(langCode) // Immediate state update for menu content translations
-    setLangMenuOpen(false)
 
     // Set PUBLIC_LOCALE cookie (expires in 1 year)
     document.cookie = `PUBLIC_LOCALE=${langCode}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
@@ -320,7 +315,7 @@ export function PublicMenuView({
     })
 
     // Trigger +1 animation
-    const animationId = Date.now()
+    const animationId = String(Date.now())
     setCartAnimation(prev => [...prev, animationId])
     setTimeout(() => {
       setCartAnimation(prev => prev.filter(id => id !== animationId))
@@ -364,7 +359,11 @@ export function PublicMenuView({
     return cart.reduce((total, item) => total + item.quantity, 0)
   }, [cart])
 
-  const haveLogo = website?.logo_url || tenant.logo_url
+  const getCartQuantity = useCallback((itemId: string) => {
+    return cart
+      .filter(cartItem => cartItem.item.id === itemId)
+      .reduce((total, cartItem) => total + cartItem.quantity, 0)
+  }, [cart])
 
   return (
     <div
@@ -376,204 +375,37 @@ export function PublicMenuView({
       }}
     >
       {/* Header */}
-      <header
-        className="sticky top-0 z-40 animate-fade-in-up"
-        style={{
-          backgroundColor: theme.background,
-          borderBottom: `1px solid ${borderColor}`,
+      <PublicMenuHeader
+        theme={theme}
+        tenant={tenant}
+        website={website}
+        tableId={tableId}
+        languages={languages}
+        currentLanguage={currentLanguage}
+        allCategories={allCategories}
+        selectedCategory={selectedCategory}
+        cartItemsCount={cartItemsCount}
+        cartAnimation={cartAnimation}
+        searchQuery={searchQuery}
+        isSearchOpen={isSearchOpen}
+        onLanguageChange={handleLanguageChange}
+        onCategoryChange={setSelectedCategory}
+        onCartOpen={() => setCartOpen(true)}
+        onSearchToggle={() => {
+          setIsSearchOpen(!isSearchOpen)
+          if (isSearchOpen) setSearchQuery('')
         }}
-      >
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {(haveLogo) && (
-                <Image
-                  src={website?.logo_url || tenant.logo_url || ''}
-                  alt={tenant.name}
-                  width={120}
-                  height={40}
-                  className="h-8 w-auto object-contain"
-                />
-              )}
-              <div>
-                {!haveLogo && <h1 className="font-bold text-lg" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>{tenant.name}</h1>}
-                {tableId && (
-                  <p className="text-sm" style={{ color: mutedForeground }}>Table ordering</p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {/* Search button */}
-              <button
-                className="p-2 rounded-md transition-colors"
-                style={{
-                  border: `1px solid ${borderColor}`,
-                  backgroundColor: isSearchOpen ? cardBg : 'transparent',
-                  color: theme.foreground,
-                }}
-                onClick={() => {
-                  setIsSearchOpen(!isSearchOpen)
-                  if (isSearchOpen) setSearchQuery('')
-                }}
-                aria-label={isSearchOpen ? 'Close search' : 'Search'}
-              >
-                {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
-              </button>
-
-              {/* Language selector */}
-              {languages.length > 1 && (
-                <div className="relative">
-                  <button
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium"
-                    style={{
-                      border: `1px solid ${borderColor}`,
-                      backgroundColor: 'transparent',
-                      color: theme.foreground,
-                    }}
-                    onClick={() => setLangMenuOpen(!langMenuOpen)}
-                  >
-                    <span className="text-base">{currentLang?.flagEmoji}</span>
-                    <span className="hidden sm:inline">{currentLang?.nativeName}</span>
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  </button>
-
-                  {/* Language dropdown */}
-                  {langMenuOpen && (
-                    <>
-                      {/* Backdrop */}
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setLangMenuOpen(false)}
-                      />
-                      {/* Dropdown menu */}
-                      <div
-                        className="absolute right-0 top-full mt-1 z-50 min-w-[140px] py-1 rounded-md shadow-lg"
-                        style={{
-                          backgroundColor: theme.background,
-                          border: `1px solid ${borderColor}`,
-                        }}
-                      >
-                        {languages.map((lang) => (
-                          <button
-                            key={lang.code}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors"
-                            style={{
-                              backgroundColor: lang.code === currentLanguage ? cardBg : 'transparent',
-                              color: theme.foreground,
-                            }}
-                            onClick={() => handleLanguageChange(lang.code)}
-                          >
-                            <span>{lang.flagEmoji}</span>
-                            <span>{lang.nativeName}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Cart button */}
-              <button
-                className={`relative p-2 rounded-md ${cartAnimation.length > 0 ? 'animate-cart-shake' : ''}`}
-                style={{
-                  border: `1px solid ${borderColor}`,
-                  backgroundColor: 'transparent',
-                  color: theme.foreground,
-                }}
-                onClick={() => setCartOpen(true)}
-              >
-                <ShoppingCart className="h-5 w-5" />
-                {cartItemsCount > 0 && (
-                  <span
-                    key={cartItemsCount}
-                    className="absolute -top-2 -right-2 h-5 w-5 rounded-full text-xs flex items-center justify-center animate-cart-bounce"
-                    style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
-                  >
-                    {cartItemsCount}
-                  </span>
-                )}
-                {/* +1 confetti animation */}
-                {cartAnimation.map((id) => (
-                  <span
-                    key={id}
-                    className="absolute pointer-events-none font-extrabold text-lg animate-cart-pop"
-                    style={{
-                      color: theme.primary,
-                      top: '-4px',
-                      right: '-4px',
-                      textShadow: `0 1px 2px rgba(0,0,0,0.3), 0 0 8px ${theme.primary}66`,
-                    }}
-                  >
-                    +1
-                  </span>
-                ))}
-              </button>
-            </div>
-          </div>
-
-          {/* Search */}
-          {isSearchOpen && (
-            <div className="mt-4 relative animate-fade-in-up">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: mutedForeground }} />
-              <input
-                type="text"
-                placeholder={t('searchPlaceholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-md"
-                style={{
-                  backgroundColor: cardBg,
-                  border: `1px solid ${borderColor}`,
-                  color: theme.foreground,
-                }}
-                autoFocus
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Category tabs */}
-        <div
-          className="overflow-x-auto scrollbar-hide"
-          style={{ borderTop: `1px solid ${borderColor}` }}
-        >
-          <div className="container mx-auto px-4">
-            <div className="flex gap-2 py-2">
-              <button
-                className="px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors"
-                style={{
-                  backgroundColor: selectedCategory === null ? theme.primary : 'transparent',
-                  color: selectedCategory === null ? getContrastColor(theme.primary) : theme.foreground,
-                }}
-                onClick={() => setSelectedCategory(null)}
-              >
-                {t('all')}
-              </button>
-              {allCategories.map((category) => (
-                <button
-                  key={category.id}
-                  className="px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors"
-                  style={{
-                    backgroundColor: selectedCategory === category.id ? theme.primary : 'transparent',
-                    color: selectedCategory === category.id ? getContrastColor(theme.primary) : theme.foreground,
-                  }}
-                  onClick={() => setSelectedCategory(category.id)}
-                >
-                  {getTranslatedText(category.id, 'name', category.name, 'category')}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </header>
+        onSearchChange={setSearchQuery}
+        getTranslatedText={getTranslatedText}
+        getContrastColor={getContrastColor}
+        t={t}
+      />
 
       {/* Menu items */}
       <main className="container mx-auto px-4 py-6 pb-24">
         {/* Dietary filters */}
         <div className="flex flex-wrap gap-2 mb-6 animate-fade-in-up">
-          {(['vegetarian', 'vegan', 'gluten-free', 'halal'] as const).map((filter) => (
+          {DIETARY_TAG_OPTIONS.map((filter) => (
             <button
               key={filter}
               className="px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 cursor-pointer transition-colors"
@@ -618,6 +450,7 @@ export function PublicMenuView({
                 tNew={t('new')}
                 tSale={t('sale')}
                 tAddToOrder={t('addToOrder')}
+                getCartQuantity={getCartQuantity}
                 onItemClick={setSelectedItem}
                 onAddToCart={addToCart}
               />
@@ -628,7 +461,7 @@ export function PublicMenuView({
 
       {/* Cart floating button (mobile) */}
       {cartItemsCount > 0 && (
-        <div className="fixed bottom-4 left-4 right-4 z-50 lg:hidden">
+        <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden p-4 backdrop-blur-md" style={{ backgroundColor: `${theme.background}80` }}>
           <button
             className="w-full h-14 text-lg rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
             style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: `0 8px 24px 0 ${theme.primary}50` }}
