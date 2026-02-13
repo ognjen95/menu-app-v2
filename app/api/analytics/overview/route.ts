@@ -98,15 +98,26 @@ export async function GET(request: NextRequest) {
   }
 
   // Fetch team members for waiter names
-  const { data: teamMembers } = await supabase
+  const { data: teamMembersRaw } = await supabase
     .from('tenant_users')
-    .select(`
-      user_id,
-      role,
-      profiles:user_id(full_name, avatar_url)
-    `)
+    .select('user_id, role')
     .eq('tenant_id', tenantUser.tenant_id)
     .in('role', ['waiter', 'staff', 'manager', 'owner'])
+
+  // Fetch profiles for team members
+  const userIds = teamMembersRaw?.map(m => m.user_id) || []
+  const { data: profiles } = userIds.length > 0 
+    ? await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', userIds)
+    : { data: [] }
+
+  // Join team members with profiles
+  const teamMembers = teamMembersRaw?.map(member => ({
+    ...member,
+    profiles: profiles?.find(p => p.id === member.user_id) || null
+  })) || []
 
   // Process data
   const completedOrders = orders?.filter(o => 

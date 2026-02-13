@@ -213,6 +213,8 @@ export default function DashboardPage() {
     return null
   }
 
+  console.log(data?.topWaiters)
+
   return (
     <div className="space-y-6">
       {/* Header with timeframe selector - Always visible */}
