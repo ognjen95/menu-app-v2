@@ -165,8 +165,21 @@ export default function OrdersPage() {
     selectedLocationId !== 'all' ? selectedLocationId : undefined
   )
 
-  // Store new order IDs to look up after refetch
-  const [pendingOrderIds, setPendingOrderIds] = useState<string[]>([])
+  // Store new order IDs to look up after refetch (with timestamp for cleanup)
+  const [pendingOrderIds, setPendingOrderIds] = useState<{ id: string; addedAt: number }[]>([])
+
+  // Cleanup stale pending order IDs after 10 seconds (handles replication lag / filter mismatches)
+  useEffect(() => {
+    if (pendingOrderIds.length === 0) return
+    
+    const cleanupInterval = setInterval(() => {
+      const now = Date.now()
+      const staleThreshold = 10000 // 10 seconds
+      setPendingOrderIds(prev => prev.filter(p => now - p.addedAt < staleThreshold))
+    }, 2000)
+    
+    return () => clearInterval(cleanupInterval)
+  }, [pendingOrderIds.length])
 
   // React to new orders from realtime - just store IDs and show notification
   useEffect(() => {
@@ -182,7 +195,7 @@ export default function OrdersPage() {
         toast.success(t('newOrderReceived') || 'New order received!', {
           description: `Order #${order.order_number || order.id?.slice(0, 8)}`,
         })
-        setPendingOrderIds(prev => [...prev, order.id])
+        setPendingOrderIds(prev => [...prev, { id: order.id, addedAt: Date.now() }])
       })
       
       // Show the modal
@@ -211,7 +224,8 @@ export default function OrdersPage() {
   // When orders data updates, find any pending orders and add them to unchecked
   useEffect(() => {
     if (pendingOrderIds.length > 0 && orders.length > 0) {
-      const foundOrders = orders.filter(o => pendingOrderIds.includes(o.id))
+      const pendingIds = pendingOrderIds.map(p => p.id)
+      const foundOrders = orders.filter(o => pendingIds.includes(o.id))
       if (foundOrders.length > 0) {
         console.log('[LIVE] Found full orders in refetched data:', foundOrders)
         setUncheckedOrders(prev => {
@@ -219,7 +233,7 @@ export default function OrdersPage() {
           return [...newOnes, ...prev]
         })
         // Remove found IDs from pending
-        setPendingOrderIds(prev => prev.filter(id => !foundOrders.some(fo => fo.id === id)))
+        setPendingOrderIds(prev => prev.filter(p => !foundOrders.some(fo => fo.id === p.id)))
       }
     }
   }, [orders, pendingOrderIds])
