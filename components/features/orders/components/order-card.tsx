@@ -61,9 +61,11 @@ export function getTimerColor(placedAt: string | null): string {
 interface OrderCardProps {
   order: OrderWithRelations
   onSelect: (order: OrderWithRelations) => void
+  onComplete?: (orderId: string) => void
+  onCancel?: (orderId: string) => void
 }
 
-export function OrderCard({ order, onSelect }: OrderCardProps) {
+export function OrderCard({ order, onSelect, onComplete, onCancel }: OrderCardProps) {
   const t = useTranslations('ordersPage')
   const [isExpanded, setIsExpanded] = useState(false)
   const StatusIcon = statusConfig[order.status]?.icon || Clock
@@ -78,15 +80,28 @@ export function OrderCard({ order, onSelect }: OrderCardProps) {
 
   return (
     <Card
-      className="relative overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+      className={cn(
+        "relative overflow-hidden cursor-pointer hover:scale-95 hover:shadow-lg hover:shadow-primary/50 hover:opacity-90 transition-all",
+        // order.status === 'placed' && 'ring-2 ring-red-500/50'
+      )}
       onClick={() => onSelect(order)}
     >
       {/* Status indicator bar */}
       <div className={cn(
         'absolute top-0 left-0 right-0 h-1',
         statusConfig[order.status]?.color,
-        order.status === 'ready' && 'animate-pulse',
+        (order.status === 'ready' || order.status === 'placed') && 'animate-pulse',
       )} />
+
+      {/* Pulsing urgent indicator for new orders */}
+      {order.status === 'placed' && (
+        <div className="absolute top-2 right-2 z-10">
+          <span className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+          </span>
+        </div>
+      )}
 
       <CardHeader className="pb-2 pt-3">
         <div className="flex items-center justify-between gap-1">
@@ -108,12 +123,7 @@ export function OrderCard({ order, onSelect }: OrderCardProps) {
               {order.table?.zone && `${order.table.zone} - `}{order.table?.name}
             </Badge>
           )}
-          {hasAdditionalInfo && (
-            <Badge variant="outline" className="flex items-center gap-0.5 text-xs px-1.5 text-amber-500 border-amber-500/50">
-              <Info className="h-2.5 w-2.5" />
-              {t('hasNotes')}
-            </Badge>
-          )}
+
         </div>
       </CardHeader>
 
@@ -227,19 +237,24 @@ export function OrderCard({ order, onSelect }: OrderCardProps) {
               e.stopPropagation();
               setIsExpanded(!isExpanded)
             }}
-            className="w-full h-6 text-xs text-muted-foreground hover:text-foreground"
+            className="w-full h-6 text-xs text-muted-foreground hover:text-foreground "
           >
-            {isExpanded ? (
-              <>
-                <ChevronUp className="h-3 w-3 mr-1" />
-                {t('showLess')}
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-3 w-3 mr-1" />
-                {t('showMore')}
-              </>
+            {hasAdditionalInfo && (
+              <Badge variant="outline" className="flex items-center gap-2 text-xs px-1.5 text-amber-500 border-amber-500/50">
+                <Info className="h-2.5 w-2.5" />
+                {t('hasNotes')}
+                {isExpanded ? (
+                  <>
+                    <ChevronUp className="h-3 w-3 mr-1" />
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-3 w-3 mr-1" />
+                  </>
+                )}
+              </Badge>
             )}
+
           </Button>
         )}
 
@@ -255,6 +270,39 @@ export function OrderCard({ order, onSelect }: OrderCardProps) {
             {t(`status.${order.status}`)}
           </Badge>
         </div>
+
+        {/* Action buttons for served orders */}
+        {order.status === 'served' && (onComplete || onCancel) && (
+          <div className="flex gap-2 pt-2">
+            {onComplete && (
+              <Button
+                size="sm"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onComplete(order.id)
+                }}
+              >
+                <CheckCircle className="h-4 w-4 mr-1.5" />
+                {t('actions.complete')}
+              </Button>
+            )}
+            {onCancel && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 border-red-500/50 text-red-500 hover:bg-red-500/10"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onCancel(order.id)
+                }}
+              >
+                <XCircle className="h-4 w-4 mr-1.5" />
+                {t('actions.cancel')}
+              </Button>
+            )}
+          </div>
+        )}
 
       </CardContent>
     </Card>

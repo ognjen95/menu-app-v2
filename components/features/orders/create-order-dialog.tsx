@@ -1047,16 +1047,17 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
           if (!isOpen) setMobileStep(1) // Reset to step 1 when closing
           onOpenChange(isOpen)
         }}>
-          <SheetContent side="bottom" className="max-h-[100dvh] h-[95dvh] p-0 flex flex-col">
+          <SheetContent side="bottom" className="max-h-[100dvh] h-[95dvh] p-0 flex flex-col rounded-3xl" >
             <SheetHeader className="p-4 border-b shrink-0">
               <SheetTitle className="flex items-center gap-2">
                 {mobileStep === 2 && (
-                  <button
+                  <Button
                     onClick={() => setMobileStep(1)}
-                    className="mr-1 hover:bg-muted rounded-md p-1 -ml-1"
+                    variant="ghost"
+                    className="mr-1 hover:bg-muted -ml-1"
                   >
                     <ChevronLeft className="h-5 w-5" />
-                  </button>
+                  </Button>
                 )}
                 <UtensilsCrossed className="h-5 w-5" />
                 {mobileStep === 1 ? t('orderSetup') : t('title')}
@@ -1092,7 +1093,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="min-w-[80vw] max-h-[100vh] h-[90vh] p-0 gap-0 flex flex-col">
+        <DialogContent className="min-w-[80vw] max-h-[100vh] min-h-[90vh] p-0 gap-0 flex flex-col">
           <DialogHeader className="p-4 border-b shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <UtensilsCrossed className="h-5 w-5" />

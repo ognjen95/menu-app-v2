@@ -20,21 +20,48 @@ import {
 import {
   Bell,
   RefreshCw,
-  LayoutGrid,
+  List,
   Columns,
   Volume2,
   VolumeX,
   Plus,
+  Radio,
+  Wifi,
+  WifiOff,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { OrderStatus, OrderWithRelations, Location } from '@/lib/types'
-import { OrderCard, statusConfig } from '@/components/features/orders/components/order-card'
+import { OrderCard, statusConfig, typeIcons, formatTimeElapsed, getTimerColor } from '@/components/features/orders/components/order-card'
+import { OrdersKanban } from '@/components/features/orders/components/orders-kanban'
+import { NewOrdersModal } from '@/components/features/orders/components/new-orders-modal'
+import { useUpdateOrderStatus } from '@/lib/hooks/use-orders'
+import { useRealtimeOrders } from '@/lib/hooks/use-realtime-orders'
+import { playNotificationSound, initNotificationSound } from '@/lib/utils/notification-sound'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { Store, Clock, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+
+type SortColumn = 'type' | 'orderNumber' | 'status' | 'items' | 'total' | 'time'
+type SortDirection = 'asc' | 'desc'
 
 // Lazy load dialogs
 const OrderDetailDialog = dynamic(() => import('@/components/features/orders/OrderDetailDialog').then(mod => ({ default: mod.OrderDetailDialog })), { ssr: false })
 const CreateOrderDialog = dynamic(() => import('@/components/features/orders/create-order-dialog').then(mod => ({ default: mod.CreateOrderDialog })), { ssr: false })
 
-import { motion, staggerContainer, staggerItemScale } from '@/components/ui/animated'
+import { motion } from '@/components/ui/animated'
 import { OrdersGridSkeleton, KanbanLayoutSkeleton } from '@/components/ui/skeletons'
 
 const ACTIVE_STATUSES: OrderStatus[] = ['placed', 'accepted', 'preparing', 'ready', 'served']
@@ -44,53 +71,17 @@ export default function OrdersPage() {
   const [selectedStatuses, setSelectedStatuses] = useState<Set<OrderStatus>>(new Set(ACTIVE_STATUSES))
   const [selectedOrderForDetail, setSelectedOrderForDetail] = useState<OrderWithRelations | null>(null)
   const [selectedLocationId, setSelectedLocationId] = useState<string>('all')
-  const [layout, setLayout] = useState<'grid' | 'kanban'>('grid')
+  const [layout, setLayout] = useState<'list' | 'kanban'>('list')
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false)
+  const [sortColumn, setSortColumn] = useState<SortColumn>('time')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  const [liveEnabled, setLiveEnabled] = useState(false)
+  const [uncheckedOrders, setUncheckedOrders] = useState<OrderWithRelations[]>([])
+  const [showNewOrdersModal, setShowNewOrdersModal] = useState(false)
   const lastOrderCountRef = useRef(0)
-
-  // Drag scroll for kanban view
-  const kanbanRef = useRef<HTMLDivElement>(null)
-  const [isDragging, setIsDragging] = useState(false)
-  const [startX, setStartX] = useState(0)
-  const [scrollLeft, setScrollLeft] = useState(0)
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (!kanbanRef.current) return
-    // Don't start drag if clicking on interactive elements or cards
-    const target = e.target as HTMLElement
-    if (target.closest('button, a, input, [role="button"], [data-no-drag], [data-radix-collection-item], .cursor-pointer')) {
-      return
-    }
-    setIsDragging(true)
-    setStartX(e.pageX - kanbanRef.current.offsetLeft)
-    setScrollLeft(kanbanRef.current.scrollLeft)
-    kanbanRef.current.style.cursor = 'grabbing'
-  }, [])
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false)
-    if (kanbanRef.current) {
-      kanbanRef.current.style.cursor = 'grab'
-    }
-  }, [])
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging || !kanbanRef.current) return
-    e.preventDefault()
-    const x = e.pageX - kanbanRef.current.offsetLeft
-    const walk = (x - startX) * 1.5 // Scroll speed multiplier
-    kanbanRef.current.scrollLeft = scrollLeft - walk
-  }, [isDragging, startX, scrollLeft])
-
-  const handleMouseLeave = useCallback(() => {
-    if (isDragging) {
-      setIsDragging(false)
-      if (kanbanRef.current) {
-        kanbanRef.current.style.cursor = 'grab'
-      }
-    }
-  }, [isDragging])
+  const audioInitializedRef = useRef(false)
+  const updateOrderStatus = useUpdateOrderStatus()
 
   // Track if screen is mobile
   const [isMobile, setIsMobile] = useState(false)
@@ -102,24 +93,110 @@ export default function OrdersPage() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Load layout from localStorage on mount
+  // Load layout and live mode from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('orders-layout') as 'grid' | 'kanban' | null
-    if (saved) {
-      setLayout(saved)
+    const savedLayout = localStorage.getItem('orders-layout') as 'list' | 'kanban' | null
+    if (savedLayout) {
+      setLayout(savedLayout)
+    }
+    const savedLive = localStorage.getItem('orders-live-mode')
+    if (savedLive === 'true') {
+      setLiveEnabled(true)
     }
   }, [])
 
   // Persist layout to localStorage
-  const handleLayoutChange = (newLayout: 'grid' | 'kanban') => {
+  const handleLayoutChange = (newLayout: 'list' | 'kanban') => {
     setLayout(newLayout)
     localStorage.setItem('orders-layout', newLayout)
   }
 
+  // Toggle live mode
+  const handleLiveToggle = useCallback(() => {
+    // Initialize audio on first user interaction
+    if (!audioInitializedRef.current) {
+      initNotificationSound()
+      audioInitializedRef.current = true
+    }
+    
+    setLiveEnabled(prev => {
+      const newValue = !prev
+      localStorage.setItem('orders-live-mode', String(newValue))
+      if (newValue) {
+        toast.success(t('liveEnabled') || 'Live mode enabled', {
+          description: t('liveEnabledDesc') || 'Orders will update in real-time',
+        })
+      } else {
+        toast.info(t('liveDisabled') || 'Live mode disabled')
+      }
+      return newValue
+    })
+  }, [t])
+
+  // Debug: log modal state changes
+  useEffect(() => {
+    console.log('[LIVE] Modal state:', { showNewOrdersModal, uncheckedOrdersCount: uncheckedOrders.length })
+  }, [showNewOrdersModal, uncheckedOrders.length])
+
+  // Handle viewing an order from the new orders modal
+  const handleViewNewOrder = useCallback((order: OrderWithRelations) => {
+    // Remove from unchecked list and check if we should close modal
+    setUncheckedOrders(prev => {
+      const updated = prev.filter(o => o.id !== order.id)
+      // Close modal if no more unchecked orders
+      if (updated.length === 0) {
+        setShowNewOrdersModal(false)
+      }
+      return updated
+    })
+    // Open the order detail
+    setSelectedOrderForDetail(order)
+  }, [])
+
+  // Dismiss all unchecked orders
+  const handleDismissAllNewOrders = useCallback(() => {
+    setUncheckedOrders([])
+    setShowNewOrdersModal(false)
+  }, [])
+
+  // Realtime orders subscription
+  const { status: realtimeStatus, isLive, reconnect, newOrders, clearNewOrders } = useRealtimeOrders(
+    liveEnabled,
+    selectedLocationId !== 'all' ? selectedLocationId : undefined
+  )
+
+  // Store new order IDs to look up after refetch
+  const [pendingOrderIds, setPendingOrderIds] = useState<string[]>([])
+
+  // React to new orders from realtime - just store IDs and show notification
+  useEffect(() => {
+    if (newOrders.length > 0) {
+      console.log('[LIVE] New orders detected:', newOrders.length)
+      
+      // Play sound for new orders
+      if (soundEnabled) {
+        playNotificationSound()
+      }
+      
+      // Show toast and store IDs for lookup after refetch
+      newOrders.forEach(order => {
+        toast.success(t('newOrderReceived') || 'New order received!', {
+          description: `Order #${order.order_number || order.id?.slice(0, 8)}`,
+        })
+        setPendingOrderIds(prev => [...prev, order.id])
+      })
+      
+      // Show the modal
+      setShowNewOrdersModal(true)
+      
+      // Clear the processed orders
+      clearNewOrders()
+    }
+  }, [newOrders, soundEnabled, t, clearNewOrders])
+
   const { data, isLoading, refetch } = useActiveOrders(
     selectedLocationId !== 'all' ? selectedLocationId : undefined
   )
-  // const updateStatus = useUpdateOrderStatus()
 
   // Fetch locations
   const { data: locationsData } = useQuery({
@@ -130,23 +207,166 @@ export default function OrdersPage() {
 
   const orders = useMemo(() => data?.data?.orders || [], [data])
 
-  // Play sound when new orders arrive
+  // When orders data updates, find any pending orders and add them to unchecked
   useEffect(() => {
-    if (soundEnabled && orders.length > lastOrderCountRef.current && lastOrderCountRef.current > 0) {
-      const audio = new Audio('/sounds/notification.mp3')
-      audio.play().catch(() => { })
+    if (pendingOrderIds.length > 0 && orders.length > 0) {
+      const foundOrders = orders.filter(o => pendingOrderIds.includes(o.id))
+      if (foundOrders.length > 0) {
+        console.log('[LIVE] Found full orders in refetched data:', foundOrders)
+        setUncheckedOrders(prev => {
+          const newOnes = foundOrders.filter(fo => !prev.some(p => p.id === fo.id))
+          return [...newOnes, ...prev]
+        })
+        // Remove found IDs from pending
+        setPendingOrderIds(prev => prev.filter(id => !foundOrders.some(fo => fo.id === id)))
+      }
+    }
+  }, [orders, pendingOrderIds])
+
+  // Play sound when new orders arrive (for non-live mode polling)
+  useEffect(() => {
+    if (!liveEnabled && soundEnabled && orders.length > lastOrderCountRef.current && lastOrderCountRef.current > 0) {
+      playNotificationSound()
     }
     lastOrderCountRef.current = orders.length
-  }, [orders.length, soundEnabled])
+  }, [orders.length, soundEnabled, liveEnabled])
 
   // Filter orders by selected statuses
   const filteredOrders = orders.filter(o => selectedStatuses.has(o.status as OrderStatus))
 
-  // Group orders by status for kanban view
-  const ordersByStatus = ACTIVE_STATUSES.reduce((acc, status) => {
-    acc[status] = filteredOrders.filter(o => o.status === status)
-    return acc
-  }, {} as Record<OrderStatus, OrderWithRelations[]>)
+  // Sort orders
+  const sortedOrders = useMemo(() => {
+    const sorted = [...filteredOrders].sort((a, b) => {
+      let comparison = 0
+      
+      switch (sortColumn) {
+        case 'type':
+          comparison = (a.type || '').localeCompare(b.type || '')
+          break
+        case 'orderNumber':
+          comparison = (a.order_number || a.id).localeCompare(b.order_number || b.id)
+          break
+        case 'status':
+          const statusOrder = ['placed', 'accepted', 'preparing', 'ready', 'served', 'completed', 'cancelled']
+          comparison = statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status)
+          break
+        case 'items':
+          comparison = (a.items?.length || 0) - (b.items?.length || 0)
+          break
+        case 'total':
+          comparison = (a.total || 0) - (b.total || 0)
+          break
+        case 'time':
+          comparison = new Date(a.placed_at || 0).getTime() - new Date(b.placed_at || 0).getTime()
+          break
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison
+    })
+    return sorted
+  }, [filteredOrders, sortColumn, sortDirection])
+
+  const handleSort = useCallback((column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortColumn(column)
+      setSortDirection('asc')
+    }
+  }, [sortColumn])
+
+  const SortIcon = ({ column }: { column: SortColumn }) => {
+    if (sortColumn !== column) return <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="ml-1 h-3 w-3" />
+      : <ArrowDown className="ml-1 h-3 w-3" />
+  }
+
+  // Handle status update from kanban drag
+  const handleUpdateStatus = useCallback(async (orderId: string, newStatus: OrderStatus): Promise<void> => {
+    await updateOrderStatus.mutateAsync({ id: orderId, status: newStatus })
+  }, [updateOrderStatus])
+
+  // Handle complete and cancel for served orders
+  const handleCompleteOrder = useCallback((orderId: string) => {
+    updateOrderStatus.mutate({ id: orderId, status: 'completed' })
+  }, [updateOrderStatus])
+
+  const handleCancelOrder = useCallback((orderId: string) => {
+    updateOrderStatus.mutate({ id: orderId, status: 'cancelled' })
+  }, [updateOrderStatus])
+
+  // Handle accept order (from modal - moves from placed to accepted)
+  const handleAcceptOrder = useCallback((orderId: string) => {
+    updateOrderStatus.mutate({ id: orderId, status: 'accepted' })
+    // Remove from unchecked orders
+    setUncheckedOrders(prev => {
+      const updated = prev.filter(o => o.id !== orderId)
+      if (updated.length === 0) {
+        setShowNewOrdersModal(false)
+      }
+      return updated
+    })
+  }, [updateOrderStatus])
+
+  // Handle cancel order from modal
+  const handleCancelOrderFromModal = useCallback((orderId: string) => {
+    updateOrderStatus.mutate({ id: orderId, status: 'cancelled' })
+    // Remove from unchecked orders
+    setUncheckedOrders(prev => {
+      const updated = prev.filter(o => o.id !== orderId)
+      if (updated.length === 0) {
+        setShowNewOrdersModal(false)
+      }
+      return updated
+    })
+  }, [updateOrderStatus])
+
+  // State for accepting all orders
+  const [isAcceptingAll, setIsAcceptingAll] = useState(false)
+
+  // Handle accept all orders from modal
+  const handleAcceptAllOrders = useCallback(async () => {
+    if (uncheckedOrders.length === 0) return
+    
+    setIsAcceptingAll(true)
+    const results: { id: string; success: boolean }[] = []
+    
+    // Process all orders, don't stop on failure
+    for (const order of uncheckedOrders) {
+      try {
+        await updateOrderStatus.mutateAsync({ id: order.id, status: 'accepted' })
+        results.push({ id: order.id, success: true })
+      } catch (error) {
+        console.error(`[LIVE] Failed to accept order ${order.id}:`, error)
+        results.push({ id: order.id, success: false })
+        toast.error(t('acceptFailed') || 'Failed to accept order', {
+          description: `Order #${order.order_number || order.id.slice(0, 8)}`,
+        })
+      }
+    }
+    
+    // Remove successfully accepted orders from unchecked
+    const successfulIds = results.filter(r => r.success).map(r => r.id)
+    setUncheckedOrders(prev => {
+      const updated = prev.filter(o => !successfulIds.includes(o.id))
+      if (updated.length === 0) {
+        setShowNewOrdersModal(false)
+      }
+      return updated
+    })
+    
+    // Show success message for accepted orders
+    const successCount = successfulIds.length
+    const failCount = results.length - successCount
+    if (successCount > 0) {
+      toast.success(t('ordersAccepted') || 'Orders accepted', {
+        description: `${successCount} ${successCount === 1 ? 'order' : 'orders'} accepted${failCount > 0 ? `, ${failCount} failed` : ''}`,
+      })
+    }
+    
+    setIsAcceptingAll(false)
+  }, [uncheckedOrders, updateOrderStatus, t])
 
   const statusCounts = useMemo(() => orders.reduce((acc, order) => {
     acc[order.status] = (acc[order.status] || 0) + 1
@@ -220,21 +440,84 @@ export default function OrdersPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setSoundEnabled(!soundEnabled)}
+            onClick={async () => {
+              // Initialize audio on first interaction
+              if (!audioInitializedRef.current) {
+                initNotificationSound()
+                audioInitializedRef.current = true
+              }
+              
+              const newValue = !soundEnabled
+              setSoundEnabled(newValue)
+              
+              // Play test sound when enabling to confirm it works
+              if (newValue) {
+                const played = await playNotificationSound()
+                if (played) {
+                  toast.success(t('soundEnabled') || 'Sound enabled')
+                } else {
+                  toast.warning(t('soundFailed') || 'Sound may not work', {
+                    description: 'Check browser permissions'
+                  })
+                }
+              }
+            }}
             title={soundEnabled ? t('disableSound') : t('enableSound')}
           >
             {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
           </Button>
 
+          {/* Live mode toggle */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={liveEnabled ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={handleLiveToggle}
+                  className={cn(
+                    "gap-1.5 px-3",
+                    liveEnabled && isLive && "bg-green-600 hover:bg-green-700",
+                    liveEnabled && !isLive && realtimeStatus === 'connecting' && "bg-yellow-600 hover:bg-yellow-700",
+                    liveEnabled && !isLive && realtimeStatus === 'error' && "bg-red-600 hover:bg-red-700"
+                  )}
+                >
+                  {liveEnabled ? (
+                    isLive ? (
+                      <Wifi className="h-4 w-4" />
+                    ) : realtimeStatus === 'connecting' ? (
+                      <Radio className="h-4 w-4 animate-pulse" />
+                    ) : (
+                      <WifiOff className="h-4 w-4" />
+                    )
+                  ) : (
+                    <Radio className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline">LIVE</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {liveEnabled 
+                  ? isLive 
+                    ? t('liveConnected') || 'Connected - Real-time updates active'
+                    : realtimeStatus === 'connecting'
+                    ? t('liveConnecting') || 'Connecting...'
+                    : t('liveError') || 'Connection error - Click to retry'
+                  : t('liveOff') || 'Enable real-time updates'
+                }
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           {/* Layout toggle - hidden on small screens */}
-          <div className="hidden md:flex border rounded-md">
+          <div className="hidden md:flex border rounded-full">
             <Button
-              variant={layout === 'grid' ? 'default' : 'ghost'}
+              variant={layout === 'list' ? 'default' : 'ghost'}
               size="icon"
-              onClick={() => handleLayoutChange('grid')}
+              onClick={() => handleLayoutChange('list')}
               className="rounded-r-none"
             >
-              <LayoutGrid className="h-4 w-4" />
+              <List className="h-4 w-4" />
             </Button>
             <Button
               variant={layout === 'kanban' ? 'default' : 'ghost'}
@@ -304,7 +587,7 @@ export default function OrdersPage() {
 
       {/* Content */}
       {isLoading ? (
-        layout === 'grid' || isMobile ? (
+        layout === 'list' || isMobile ? (
           <OrdersGridSkeleton count={8} />
         ) : (
           <div className="overflow-x-auto -mx-6 px-6">
@@ -318,75 +601,117 @@ export default function OrdersPage() {
             <p className="text-muted-foreground">{t('noOrdersFound')}</p>
           </CardContent>
         </Card>
-      ) : layout === 'grid' || isMobile ? (
-        /* Grid Layout */
-        <motion.div
-          className="grid gap-4 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
-          initial="initial"
-          animate="animate"
-          variants={staggerContainer}
-        >
-          {filteredOrders.map((order, index) => (
-            <motion.div key={order.id} variants={staggerItemScale} custom={index}>
-              <OrderCard order={order} onSelect={setSelectedOrderForDetail} />
-            </motion.div>
-          ))}
-        </motion.div>
+      ) : layout === 'list' || isMobile ? (
+        /* List/Table Layout */
+        <Card>
+          <TooltipProvider>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-16 cursor-pointer hover:bg-muted/50" onClick={() => handleSort('type')}>
+                    <div className="flex items-center">{t('typeColumn')}<SortIcon column="type" /></div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('orderNumber')}>
+                    <div className="flex items-center">{t('orderNumber')}<SortIcon column="orderNumber" /></div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('status')}>
+                    <div className="flex items-center">{t('statusColumn')}<SortIcon column="status" /></div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('items')}>
+                    <div className="flex items-center">{t('items')}<SortIcon column="items" /></div>
+                  </TableHead>
+                  <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort('total')}>
+                    <div className="flex items-center justify-end">{t('total')}<SortIcon column="total" /></div>
+                  </TableHead>
+                  <TableHead className="w-20 cursor-pointer hover:bg-muted/50" onClick={() => handleSort('time')}>
+                    <div className="flex items-center">{t('time')}<SortIcon column="time" /></div>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedOrders.map((order) => {
+                  const TypeIcon = typeIcons[order.type] || Store
+                  const StatusIcon = statusConfig[order.status]?.icon || Clock
+                  const config = statusConfig[order.status]
+                  const timerColor = getTimerColor(order.placed_at)
+                  const itemsList = order.items?.map(item => `${item.quantity}× ${item.menu_item?.name || 'Item'}`).join(', ') || ''
+                  const itemsShort = itemsList.length > 40 ? itemsList.slice(0, 40) + '...' : itemsList
+
+                  return (
+                    <TableRow
+                      key={order.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => setSelectedOrderForDetail(order)}
+                    >
+                      <TableCell>
+                        <div className="flex items-center justify-center rounded-full h-12 w-12 bg-secondary">
+                          <TypeIcon className="h-5 w-5 text-primary" />
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        #{order.order_number || order.id.slice(0, 8)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={cn('gap-1', config?.badgeColor)}>
+                          <StatusIcon className="h-3 w-3" />
+                          {t(`status.${order.status}`)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {itemsList.length > 40 ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-help">{itemsShort}</span>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="max-w-xs">
+                              <p className="text-sm">{itemsList}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <span>{itemsList || '-'}</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        €{order.total?.toFixed(2) || '0.00'}
+                      </TableCell>
+                      <TableCell>
+                        <span className={cn('text-sm font-medium', timerColor)}>
+                          {formatTimeElapsed(order.placed_at)}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </TooltipProvider>
+        </Card>
       ) : (
         /* Kanban Layout */
-        <div
-          ref={kanbanRef}
-          className="overflow-x-auto -mx-6 px-6 cursor-grab select-none"
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-        >
-          <motion.div
-            className="flex gap-4 min-h-[calc(100vh-280px)] pb-4"
-            initial="initial"
-            animate="animate"
-            variants={staggerContainer}
-          >
-            {ACTIVE_STATUSES.filter(s => selectedStatuses.has(s)).map((status, colIndex) => (
-              <motion.div
-                key={status}
-                className="flex-shrink-0 w-[380px] space-y-4"
-                variants={staggerItemScale}
-                custom={colIndex}
-              >
-                <div className="flex items-center gap-2 sticky top-0 bg-background py-2 z-10">
-                  <div className={cn("h-3 w-3 rounded-full", statusConfig[status].color)} />
-                  <h2 className="font-semibold">{t(`status.${status}`)}</h2>
-                  <Badge variant="secondary">{ordersByStatus[status]?.length || 0}</Badge>
-                </div>
-                <motion.div
-                  className="space-y-4"
-                  initial="initial"
-                  animate="animate"
-                  variants={staggerContainer}
-                >
-                  {ordersByStatus[status]?.map((order, orderIndex) => (
-                    <motion.div key={order.id} variants={staggerItemScale} custom={orderIndex}>
-                      <OrderCard order={order} onSelect={setSelectedOrderForDetail} />
-                    </motion.div>
-                  ))}
-                  {(!ordersByStatus[status] || ordersByStatus[status].length === 0) && (
-                    <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
-                      {(() => {
-                        const Icon = statusConfig[status].icon
-                        return <Icon className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      })()}
-                      <p className="text-sm">{t('noOrders')}</p>
-                    </div>
-                  )}
-                </motion.div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
+        <OrdersKanban
+          orders={filteredOrders}
+          selectedStatuses={selectedStatuses}
+          onSelectOrder={setSelectedOrderForDetail}
+          onUpdateStatus={handleUpdateStatus}
+          onCompleteOrder={handleCompleteOrder}
+          onCancelOrder={handleCancelOrder}
+        />
       )}
 
+
+      {/* New Orders Modal (Live only) */}
+      <NewOrdersModal
+        open={showNewOrdersModal}
+        onOpenChange={setShowNewOrdersModal}
+        orders={uncheckedOrders}
+        onViewOrder={handleViewNewOrder}
+        onDismissAll={handleDismissAllNewOrders}
+        onAcceptOrder={handleAcceptOrder}
+        onAcceptAllOrders={handleAcceptAllOrders}
+        onCancelOrder={handleCancelOrderFromModal}
+        pendingCount={pendingOrderIds.length}
+        isAcceptingAll={isAcceptingAll}
+      />
 
       {/* Order Detail Dialog */}
       <OrderDetailDialog
