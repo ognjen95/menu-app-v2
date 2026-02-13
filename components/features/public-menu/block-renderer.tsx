@@ -106,18 +106,20 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
   switch (block.type) {
     case 'hero':
       return (
-        <section style={{
-          backgroundImage: content.image_url ? `url(${content.image_url})` : undefined,
-          backgroundColor: content.image_url ? undefined : theme.secondary,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          minHeight: '60vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center',
-          position: 'relative',
-        }}>
+        <section 
+          className="animate-fade-in"
+          style={{
+            backgroundImage: content.image_url ? `url(${content.image_url})` : undefined,
+            backgroundColor: content.image_url ? undefined : theme.secondary,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            minHeight: '60vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            position: 'relative',
+          }}>
           {Boolean(content.image_url) && (
             <div style={{
               position: 'absolute',
@@ -125,7 +127,7 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
               backgroundColor: 'rgba(0,0,0,0.5)',
             }} />
           )}
-          <div style={{ position: 'relative', zIndex: 1, padding: '2rem' }}>
+          <div className="animate-fade-in-up animate-delay-200" style={{ position: 'relative', zIndex: 1, padding: '2rem' }}>
             <h1 style={{
               fontFamily: theme.fontHeading,
               fontSize: '3rem',
@@ -136,7 +138,7 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
               {getTranslated('headline', String(content.headline || t('welcome')))}
             </h1>
             {Boolean(content.subheadline) && (
-              <p style={{
+              <p className="animate-fade-in-up animate-delay-300" style={{
                 fontSize: '1.25rem',
                 marginBottom: '2rem',
                 color: content.image_url ? '#fff' : theme.foreground,
@@ -147,6 +149,7 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
             )}
             {Boolean(content.button_text) && (
               <a
+                className="animate-scale-in animate-delay-400"
                 href={menuLink}
                 style={{
                   backgroundColor: theme.primary,
@@ -167,10 +170,10 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
 
     case 'about':
       return (
-        <section style={{ padding: sectionPadding }}>
+        <section className="animate-fade-in" style={{ padding: sectionPadding }}>
           <div style={{ ...contentStyle, display: 'flex', gap: '3rem', alignItems: 'center', flexWrap: 'wrap' }}>
             {Boolean(content.image_url) && (
-              <div style={{ flex: '1', minWidth: '300px', position: 'relative', aspectRatio: '16/10' }}>
+              <div className="animate-slide-in-left" style={{ flex: '1', minWidth: '300px', position: 'relative', aspectRatio: '16/10' }}>
                 <Image
                   src={String(content.image_url)}
                   alt={getTranslated('title', String(content.title || t('aboutUs')))}
@@ -181,7 +184,7 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
                 />
               </div>
             )}
-            <div style={{ flex: '1', minWidth: '300px' }}>
+            <div className="animate-slide-in-right animate-delay-200" style={{ flex: '1', minWidth: '300px' }}>
               <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '1rem' }}>
                 {getTranslated('title', String(content.title || t('aboutUs')))}
               </h2>
@@ -198,15 +201,18 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
       const useLocationsForContact = content.use_locations && contactLocations.length > 0
 
       // Single location contact card component
-      const ContactCard = ({ loc, showName = false }: { loc: { name?: string; address?: string | null; phone?: string | null; email?: string | null }; showName?: boolean }) => (
-        <div style={{
-          backgroundColor: theme.background,
-          padding: '1.5rem',
-          borderRadius: '1rem',
-          flex: '1',
-          minWidth: '280px',
-          maxWidth: contactLocations.length === 1 ? '500px' : undefined,
-        }}>
+      const ContactCard = ({ loc, showName = false, index = 0 }: { loc: { name?: string; address?: string | null; phone?: string | null; email?: string | null }; showName?: boolean; index?: number }) => (
+        <div 
+          className="animate-fade-in-up"
+          style={{
+            backgroundColor: theme.background,
+            padding: '1.5rem',
+            borderRadius: '1rem',
+            flex: '1',
+            minWidth: '280px',
+            maxWidth: contactLocations.length === 1 ? '500px' : undefined,
+            animationDelay: `${index * 100}ms`,
+          }}>
           {showName && loc.name && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
               <Building2 size={20} color={theme.primary} />
@@ -239,9 +245,9 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
       )
 
       return (
-        <section style={{ padding: sectionPadding, backgroundColor: theme.secondary }}>
+        <section className="animate-fade-in" style={{ padding: sectionPadding, backgroundColor: theme.secondary }}>
           <div style={contentStyle}>
-            <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
+            <h2 className="animate-fade-in-up" style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
               {getTranslated('title', String(content.title || t('contactUs')))}
             </h2>
 
@@ -253,11 +259,12 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
                 justifyContent: 'center',
                 flexWrap: 'wrap',
               }}>
-                {contactLocations.map(loc => (
+                {contactLocations.map((loc, idx) => (
                   <ContactCard
                     key={loc.id}
                     loc={{ name: loc.name, address: formatAddress(loc), phone: loc.phone, email: loc.email }}
                     showName={contactLocations.length > 1}
+                    index={idx}
                   />
                 ))}
               </div>
@@ -409,9 +416,9 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
     case 'testimonials':
       const testimonials = (content.testimonials as { image?: string; name: string; text: string }[]) || []
       return (
-        <section style={{ padding: sectionPadding, backgroundColor: theme.secondary }}>
+        <section className="animate-fade-in" style={{ padding: sectionPadding, backgroundColor: theme.secondary }}>
           <div style={contentStyle}>
-            <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
+            <h2 className="animate-fade-in-up" style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
               {getTranslated('title', String(content.title || t('whatOurGuestsSay')))}
             </h2>
             <div style={{
@@ -421,13 +428,17 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
               justifyContent: 'center',
             }}>
               {testimonials.map((testimonial, idx) => (
-                <div key={idx} style={{
-                  backgroundColor: theme.background,
-                  padding: '1.5rem',
-                  borderRadius: '1rem',
-                  width: '320px',
-                  flexShrink: 0,
-                }}>
+                <div 
+                  key={idx} 
+                  className="animate-scale-in"
+                  style={{
+                    backgroundColor: theme.background,
+                    padding: '1.5rem',
+                    borderRadius: '1rem',
+                    width: '320px',
+                    flexShrink: 0,
+                    animationDelay: `${idx * 100}ms`,
+                  }}>
                   <p style={{ fontStyle: 'italic', marginBottom: '1rem', lineHeight: 1.6 }}>&ldquo;{getTranslated(`testimonial_${idx}_text`, testimonial.text)}&rdquo;</p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     {testimonial.image && (
@@ -454,9 +465,9 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
       const itemIds = (content.item_ids as string[]) || []
       const selectedItems = itemIds.map(id => menuItems[id]).filter(Boolean)
       return (
-        <section style={{ padding: sectionPadding }}>
+        <section className="animate-fade-in" style={{ padding: sectionPadding }}>
           <div style={contentStyle}>
-            <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
+            <h2 className="animate-fade-in-up" style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
               {getTranslated('title', String(content.title || t('featuredMenuItems')))}
             </h2>
             {selectedItems.length > 0 ? (
@@ -466,7 +477,7 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
                 gap: '1.5rem',
                 justifyContent: 'center',
               }}>
-                {selectedItems.map((item) => {
+                {selectedItems.map((item, idx) => {
                   // Get translated menu item text
                   const getMenuItemTranslated = (field: 'name' | 'description', fallback: string | null): string => {
                     if (!translations.length || !fallback) return fallback || ''
@@ -476,13 +487,17 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
                   }
 
                   return (
-                    <div key={item.id} style={{
-                      backgroundColor: theme.secondary,
-                      borderRadius: '1rem',
-                      overflow: 'hidden',
-                      width: '300px',
-                      flexShrink: 0,
-                    }}>
+                    <div 
+                      key={item.id} 
+                      className="animate-fade-in-up"
+                      style={{
+                        backgroundColor: theme.secondary,
+                        borderRadius: '1rem',
+                        overflow: 'hidden',
+                        width: '300px',
+                        flexShrink: 0,
+                        animationDelay: `${idx * 100}ms`,
+                      }}>
                       {item.image_urls?.[0] && (
                         <div style={{ width: '100%', height: '180px', position: 'relative' }}>
                           <Image
@@ -597,14 +612,14 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
     case 'events':
       const events = (content.events as { title: string; date: string; time?: string; description?: string; image_url?: string }[]) || []
       return (
-        <section style={{ padding: sectionPadding }}>
+        <section className="animate-fade-in" style={{ padding: sectionPadding }}>
           <div style={contentStyle}>
-            <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
+            <h2 className="animate-fade-in-up" style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
               {getTranslated('title', String(content.title || t('upcomingEvents')))}
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
               {events.map((event, idx) => (
-                <div key={idx} style={{ display: 'flex', gap: '1.5rem', backgroundColor: theme.secondary, borderRadius: '1rem', overflow: 'hidden', flexWrap: 'wrap', maxWidth: '700px', width: '100%' }}>
+                <div key={idx} className="animate-slide-in-right" style={{ display: 'flex', gap: '1.5rem', backgroundColor: theme.secondary, borderRadius: '1rem', overflow: 'hidden', flexWrap: 'wrap', maxWidth: '700px', width: '100%', animationDelay: `${idx * 150}ms` }}>
                   {event.image_url && (
                     <div style={{ width: '200px', height: '150px', position: 'relative', flexShrink: 0 }}>
                       <Image src={event.image_url} alt={event.title} fill sizes="200px" className="object-cover" />
@@ -681,16 +696,16 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
     case 'features':
       const features = (content.features as { icon: string; title: string; description?: string }[]) || []
       return (
-        <section style={{ padding: sectionPadding, backgroundColor: theme.secondary }}>
+        <section className="animate-fade-in" style={{ padding: sectionPadding, backgroundColor: theme.secondary }}>
           <div style={contentStyle}>
-            <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
+            <h2 className="animate-fade-in-up" style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
               {getTranslated('title', String(content.title || t('whatWeOffer')))}
             </h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'center' }}>
               {features.map((feature, idx) => {
                 const IconComponent = FEATURE_ICONS[feature.icon] || Sparkles
                 return (
-                  <div key={idx} style={{ textAlign: 'center', padding: '1.5rem', backgroundColor: theme.background, borderRadius: '1rem', width: '180px', flexShrink: 0 }}>
+                  <div key={idx} className="animate-scale-in" style={{ textAlign: 'center', padding: '1.5rem', backgroundColor: theme.background, borderRadius: '1rem', width: '180px', flexShrink: 0, animationDelay: `${idx * 80}ms` }}>
                     <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: `${theme.primary}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
                       <IconComponent size={28} color={theme.primary} />
                     </div>
@@ -752,18 +767,20 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
       const ctaHasImage = Boolean(content.background_image)
       const ctaTextColor = ctaHasImage ? '#fff' : theme.foreground
       return (
-        <section style={{
-          padding: sectionPadding,
-          backgroundColor: content.background_color ? String(content.background_color) : theme.background,
-          backgroundImage: ctaHasImage ? `url(${content.background_image})` : undefined,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          textAlign: 'center',
-          position: 'relative',
-        }}>
+        <section 
+          className="animate-fade-in"
+          style={{
+            padding: sectionPadding,
+            backgroundColor: content.background_color ? String(content.background_color) : theme.background,
+            backgroundImage: ctaHasImage ? `url(${content.background_image})` : undefined,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            textAlign: 'center',
+            position: 'relative',
+          }}>
           {ctaHasImage && <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)' }} />}
           <div style={{ ...contentStyle, position: 'relative', zIndex: 1 }}>
-            <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', color: ctaTextColor, marginBottom: '1rem' }}>
+            <h2 className="animate-fade-in-up" style={{ fontFamily: theme.fontHeading, fontSize: '2rem', color: ctaTextColor, marginBottom: '1rem' }}>
               {getTranslated('title', String(content.title || t('readyToVisit')))}
             </h2>
             {Boolean(content.subtitle) && (
@@ -789,14 +806,14 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
     case 'team':
       const members = (content.members as { name: string; role: string; image_url?: string; bio?: string }[]) || []
       return (
-        <section style={{ padding: sectionPadding }}>
+        <section className="animate-fade-in" style={{ padding: sectionPadding }}>
           <div style={contentStyle}>
-            <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
+            <h2 className="animate-fade-in-up" style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
               {getTranslated('title', String(content.title || t('meetOurTeam')))}
             </h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'center' }}>
               {members.map((member, idx) => (
-                <div key={idx} style={{ textAlign: 'center', width: '220px', flexShrink: 0 }}>
+                <div key={idx} className="animate-fade-in-up" style={{ textAlign: 'center', width: '220px', flexShrink: 0, animationDelay: `${idx * 100}ms` }}>
                   {member.image_url ? (
                     <div style={{ width: '150px', height: '150px', borderRadius: '50%', overflow: 'hidden', margin: '0 auto 1rem', border: `3px solid ${theme.primary}`, position: 'relative' }}>
                       <Image src={member.image_url} alt={member.name} fill sizes="150px" className="object-cover" />
@@ -851,10 +868,10 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
       )
       
       return (
-        <section style={{ padding: sectionPadding, backgroundColor: content.use_secondary_bg ? theme.secondary : 'transparent' }}>
+        <section className="animate-fade-in" style={{ padding: sectionPadding, backgroundColor: content.use_secondary_bg ? theme.secondary : 'transparent' }}>
           <div style={{ ...contentStyle }}>
             {textImagePosition === 'top' && textImageUrl && (
-              <div style={{ marginBottom: '2rem', textAlign: textAlignment }}>
+              <div className="animate-fade-in-up" style={{ marginBottom: '2rem', textAlign: textAlignment }}>
                 <TextImage />
               </div>
             )}
@@ -866,15 +883,15 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
                 alignItems: 'center',
                 flexWrap: 'wrap'
               }}>
-                <div style={{ flex: '1 1 50%', minWidth: '300px' }}>
+                <div className={textImagePosition === 'left' ? 'animate-slide-in-left' : 'animate-slide-in-right'} style={{ flex: '1 1 50%', minWidth: '300px' }}>
                   <TextImage />
                 </div>
-                <div style={{ flex: '1 1 40%', minWidth: '280px' }}>
+                <div className={textImagePosition === 'left' ? 'animate-slide-in-right animate-delay-200' : 'animate-slide-in-left animate-delay-200'} style={{ flex: '1 1 40%', minWidth: '280px' }}>
                   <TextContent />
                 </div>
               </div>
             ) : (
-              <TextContent />
+              <div className="animate-fade-in-up"><TextContent /></div>
             )}
           </div>
         </section>
@@ -891,19 +908,22 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
       const showDirections = content.show_directions !== false
 
       // Single location map card component
-      const LocationMapCard = ({ loc, showName = false, isOnlyOne = false }: { loc: Location; showName?: boolean; isOnlyOne?: boolean }) => {
+      const LocationMapCard = ({ loc, showName = false, isOnlyOne = false, index = 0 }: { loc: Location; showName?: boolean; isOnlyOne?: boolean; index?: number }) => {
         const mapUrl = content.map_embed ? String(content.map_embed) : getMapEmbedUrl(loc)
         const address = formatAddress(loc)
 
         return (
-          <div style={{
-            backgroundColor: theme.background,
-            borderRadius: '1rem',
-            overflow: 'hidden',
-            flex: isOnlyOne ? undefined : '1',
-            minWidth: isOnlyOne ? undefined : '320px',
-            width: isOnlyOne ? '100%' : undefined,
-          }}>
+          <div 
+            className="animate-fade-in-up"
+            style={{
+              backgroundColor: theme.background,
+              borderRadius: '1rem',
+              overflow: 'hidden',
+              flex: isOnlyOne ? undefined : '1',
+              minWidth: isOnlyOne ? undefined : '320px',
+              width: isOnlyOne ? '100%' : undefined,
+              animationDelay: `${index * 150}ms`,
+            }}>
             {/* Map */}
             {showMap && mapUrl && (
               <div style={{ height: isOnlyOne ? '350px' : '220px', width: '100%' }}>
@@ -964,9 +984,9 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
       }
 
       return (
-        <section style={{ padding: sectionPadding, backgroundColor: theme.secondary }}>
+        <section className="animate-fade-in" style={{ padding: sectionPadding, backgroundColor: theme.secondary }}>
           <div style={contentStyle}>
-            <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
+            <h2 className="animate-fade-in-up" style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '2rem', textAlign: 'center' }}>
               {getTranslated('title', String(content.title || t('findUs')))}
             </h2>
 
@@ -974,7 +994,7 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
               // Location-based maps
               mapLocations.length === 1 ? (
                 // Single location - full width layout
-                <LocationMapCard loc={mapLocations[0]} showName={false} isOnlyOne={true} />
+                <LocationMapCard loc={mapLocations[0]} showName={false} isOnlyOne={true} index={0} />
               ) : (
                 // Multiple locations - grid layout
                 <div style={{
@@ -983,8 +1003,8 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
                   flexWrap: 'wrap',
                   justifyContent: 'center',
                 }}>
-                  {mapLocations.map(loc => (
-                    <LocationMapCard key={loc.id} loc={loc} showName={true} isOnlyOne={false} />
+                  {mapLocations.map((loc, idx) => (
+                    <LocationMapCard key={loc.id} loc={loc} showName={true} isOnlyOne={false} index={idx} />
                   ))}
                 </div>
               )

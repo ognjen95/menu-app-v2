@@ -2,12 +2,12 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { cookies } from 'next/headers'
 import dynamic from 'next/dynamic'
-import { FaFacebookF, FaInstagram, FaXTwitter } from 'react-icons/fa6'
 import { unstable_noStore as noStore } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { WebsiteNavbar } from '@/components/features/public-menu/website-navbar'
 import { WebsiteBlocksContent } from './components/website-blocks-content'
 import { WebsiteBlocksSkeleton } from './components/website-blocks-skeleton'
+import { WebsiteFooter } from './components/website-footer'
 import type { Translation } from '@/lib/types'
 import { getWebsiteBySubdomain, supabase } from './utils'
 
@@ -94,7 +94,7 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
   ])
 
   // Get cookies separately (critical for language detection)
-  const cookieStore = await cookies()
+  const cookieStore = cookies()
 
   // Extract results with graceful fallbacks
   const tenantLanguages = tenantLanguagesResult.status === 'fulfilled' ? tenantLanguagesResult.value.data : null
@@ -224,60 +224,12 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
       </Suspense>
 
       {/* Footer */}
-      <footer style={{
-        backgroundColor: theme.secondary,
-        padding: '3rem 2rem',
-      }}>
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          display: 'flex',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '2rem',
-        }}>
-          <div>
-            <h3 style={{ fontFamily: theme.fontHeading, marginBottom: '1rem' }}>
-              {tenantName}
-            </h3>
-            <p style={{ opacity: 0.7, maxWidth: '300px' }}>
-              {website.seo_description || 'Thank you for visiting our website.'}
-            </p>
-          </div>
-
-          {website.social_links && Object.keys(website.social_links).length > 0 && (
-            <div>
-              <h4 style={{ fontFamily: theme.fontHeading, marginBottom: '1rem' }}>Follow Us</h4>
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                {website.social_links.facebook && (
-                  <a href={website.social_links.facebook} target="_blank" rel="noopener noreferrer" style={{ color: theme.foreground }}>
-                    <FaFacebookF size={22} />
-                  </a>
-                )}
-                {website.social_links.instagram && (
-                  <a href={website.social_links.instagram} target="_blank" rel="noopener noreferrer" style={{ color: theme.foreground }}>
-                    <FaInstagram size={22} />
-                  </a>
-                )}
-                {website.social_links.twitter && (
-                  <a href={website.social_links.twitter} target="_blank" rel="noopener noreferrer" style={{ color: theme.foreground }}>
-                    <FaXTwitter size={22} />
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-        <div style={{
-          textAlign: 'center',
-          marginTop: '2rem',
-          paddingTop: '2rem',
-          borderTop: `1px solid ${theme.foreground}20`,
-          opacity: 0.6,
-        }}>
-          <p>© {new Date().getFullYear()} {tenantName}. <Link href={'klopay.app'}>Powered by Klopay.app</Link></p>
-        </div>
-      </footer>
+      <WebsiteFooter
+        tenantName={tenantName}
+        seoDescription={website.seo_description}
+        socialLinks={website.social_links}
+        theme={theme}
+      />
     </>
   )
 }
