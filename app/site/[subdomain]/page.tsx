@@ -1,13 +1,21 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { cookies } from 'next/headers'
+import dynamic from 'next/dynamic'
 import { FaFacebookF, FaInstagram, FaXTwitter } from 'react-icons/fa6'
 import { unstable_noStore as noStore } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
-import { BlockRenderer } from '@/components/features/public-menu/block-renderer'
 import { WebsiteNavbar } from '@/components/features/public-menu/website-navbar'
-import { PreviewSync } from '@/components/features/website-builder/PreviewSync'
+import { WebsiteBlocksContent } from './components/website-blocks-content'
+import { WebsiteBlocksSkeleton } from './components/website-blocks-skeleton'
 import type { Translation } from '@/lib/types'
 import { getWebsiteBySubdomain, supabase } from './utils'
+
+// Lazy load PreviewSync - only needed in preview mode
+const PreviewSync = dynamic(
+  () => import('@/components/features/website-builder/PreviewSync').then(mod => mod.PreviewSync),
+  { ssr: false }
+)
 
 // Language type for public website
 type PublicLanguage = {
@@ -118,38 +126,6 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
   const currentSlug = pageSlug || pages?.[0]?.slug || 'home'
   const currentPage = pages?.find((p: any) => p.slug === currentSlug)
 
-  // Fetch blocks for current page (depends on pages result)
-  const { data: blocks } = currentPage ? await supabase
-    .from('website_blocks')
-    .select('*')
-    .eq('page_id', currentPage.id)
-    .eq('is_visible', true)
-    .order('sort_order') : { data: [] }
-
-  // Extract menu item IDs from menu_preview blocks
-  const menuItemIds: string[] = []
-  blocks?.forEach((block: any) => {
-    if (block.type === 'menu_preview' && block.content?.item_ids) {
-      menuItemIds.push(...(block.content.item_ids as string[]))
-    }
-  })
-
-  // Fetch menu items if needed (depends on blocks result)
-  let menuItemsMap: Record<string, { id: string; name: string; description: string | null; base_price: number; image_urls: string[] | null }> = {}
-  if (menuItemIds.length > 0) {
-    const { data: menuItems } = await supabase
-      .from('menu_items')
-      .select('id, name, description, base_price, image_urls')
-      .in('id', menuItemIds)
-
-    if (menuItems) {
-      menuItemsMap = menuItems.reduce((acc, item) => {
-        acc[item.id] = item
-        return acc
-      }, {} as typeof menuItemsMap)
-    }
-  }
-
   // Theme styles
   const theme = {
     primary: website.primary_color || '#3B82F6',
@@ -198,55 +174,54 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
         viewMenuText={t('viewMenu')}
       />
 
-      {/* Page Content - Render Blocks */}
-      <main>
-        {blocks?.map((block) => (
-          <BlockRenderer
-            key={block.id}
-            block={block}
-            theme={theme}
-            menuItems={menuItemsMap}
-            menuLink={menuLink}
-            locations={locations || []}
-            t={t}
-            translations={translations}
-            currentLanguage={currentLanguage}
-          />
-        ))}
-
-        {(!blocks || blocks.length === 0) && (
-          <div style={{
-            padding: '4rem 2rem',
-            textAlign: 'center',
-            minHeight: '50vh',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <h1 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '1rem' }}>
-              Welcome to {tenantName}
-            </h1>
-            <p style={{ color: theme.foreground, opacity: 0.7 }}>
-              This page is being set up. Check back soon!
-            </p>
-            <Link
-              href={`/m/${tenantSlug}`}
-              style={{
-                marginTop: '2rem',
-                backgroundColor: theme.primary,
-                color: '#fff',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '0.5rem',
-                textDecoration: 'none',
-                fontWeight: 500,
-              }}
-            >
-              View Our Menu
-            </Link>
-          </div>
-        )}
-      </main>
+      {/* Page Content - Stream Blocks with Suspense */}
+      <Suspense fallback={<WebsiteBlocksSkeleton theme={theme} />}>
+        <main>
+          {currentPage ? (
+            <WebsiteBlocksContent
+              pageId={currentPage.id}
+              theme={theme}
+              menuLink={menuLink}
+              locations={locations || []}
+              translations={translations}
+              currentLanguage={currentLanguage}
+              tenantName={tenantName}
+              t={t}
+            />
+          ) : (
+            <div style={{
+              padding: '4rem 2rem',
+              textAlign: 'center',
+              minHeight: '50vh',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <h1 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '1rem' }}>
+                Welcome to {tenantName}
+              </h1>
+              <p style={{ color: theme.foreground, opacity: 0.7 }}>
+                This page is being set up. Check back soon!
+              </p>
+              <Link
+                href={`/m/${tenantSlug}`}
+                style={{
+                  marginTop: '2rem',
+                  backgroundColor: theme.primary,
+                  color: '#fff',
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '0.5rem',
+                  textDecoration: 'none',
+                  fontWeight: 500,
+                }}
+              >
+                View Our Menu
+              </Link>
+            </div>
+          )}
+        </main>
+      </Suspense>
 
       {/* Footer */}
       <footer style={{

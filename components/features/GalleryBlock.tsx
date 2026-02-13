@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import Image from 'next/image'
 
 type GalleryBlockProps = {
   images: string[]
@@ -160,14 +161,13 @@ export function GalleryBlock({ images, title, theme }: GalleryBlockProps) {
                   zIndex: isHovering === idx ? 10 : 1,
                 }}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={img}
                   alt={`Gallery ${idx + 1}`}
+                  fill
+                  sizes="(max-width: 768px) 80vw, 360px"
+                  className="object-cover"
                   style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
                     transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                     transform: isHovering === idx ? 'scale(1.1)' : 'scale(1)',
                   }}
@@ -427,10 +427,12 @@ export function GalleryBlock({ images, title, theme }: GalleryBlockProps) {
               justifyContent: 'center',
               padding: zoom > 1 ? '2rem' : 0,
             }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={images[selectedImage]}
                 alt={`Gallery ${selectedImage + 1}`}
+                width={1920}
+                height={1080}
+                unoptimized
                 style={{
                   maxWidth: zoom === 1 ? '95vw' : 'none',
                   maxHeight: zoom === 1 ? '85vh' : 'none',
@@ -468,7 +470,7 @@ export function GalleryBlock({ images, title, theme }: GalleryBlockProps) {
           </button>
 
           {/* Bottom bar with counter */}
-          <div style={{
+          {/* <div style={{
             position: 'absolute',
             bottom: '1.5rem',
             left: '50%',
@@ -489,7 +491,7 @@ export function GalleryBlock({ images, title, theme }: GalleryBlockProps) {
             <span style={{ opacity: 0.5, fontSize: '0.75rem', fontFamily: theme.fontBody }}>
               {t('navigateHint')}
             </span>
-          </div>
+          </div> */}
         </div>
       )}
 

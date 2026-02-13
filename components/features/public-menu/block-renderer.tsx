@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { MapPin, Phone, Mail, Clock, Calendar, Sparkles, Wifi, ParkingCircle, Music, Dog, Baby, Accessibility, CreditCard, Utensils, Wine, Coffee, Leaf, Play, Building2 } from "lucide-react";
 import { FaFacebookF, FaInstagram, FaXTwitter, FaTiktok, FaYoutube, FaLinkedinIn, FaYelp } from "react-icons/fa6";
 import { SiTripadvisor } from "react-icons/si";
@@ -43,7 +44,7 @@ interface Translation {
   value: string
 }
 
-export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [], t, translations = [], currentLanguage = 'en' }: {
+export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuItems, menuLink, locations = [], t, translations = [], currentLanguage = 'en' }: {
   block: { id?: string; type: string; content: Record<string, unknown>; settings: Record<string, unknown> }
   theme: { primary: string; secondary: string; background: string; foreground: string; accent: string; fontHeading: string; fontBody: string }
   menuItems: Record<string, { id: string; name: string; description: string | null; base_price: number; image_urls: string[] | null }>
@@ -169,12 +170,14 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
         <section style={{ padding: sectionPadding }}>
           <div style={{ ...contentStyle, display: 'flex', gap: '3rem', alignItems: 'center', flexWrap: 'wrap' }}>
             {Boolean(content.image_url) && (
-              <div style={{ flex: '1', minWidth: '300px' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+              <div style={{ flex: '1', minWidth: '300px', position: 'relative', aspectRatio: '16/10' }}>
+                <Image
                   src={String(content.image_url)}
                   alt={getTranslated('title', String(content.title || t('aboutUs')))}
-                  style={{ width: '100%', borderRadius: '1rem' }}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover"
+                  style={{ borderRadius: '1rem' }}
                 />
               </div>
             )}
@@ -428,17 +431,15 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
                   <p style={{ fontStyle: 'italic', marginBottom: '1rem', lineHeight: 1.6 }}>&ldquo;{getTranslated(`testimonial_${idx}_text`, testimonial.text)}&rdquo;</p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     {testimonial.image && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={testimonial.image}
-                        alt={testimonial.name}
-                        style={{
-                          width: '48px',
-                          height: '48px',
-                          borderRadius: '50%',
-                          objectFit: 'cover',
-                        }}
-                      />
+                      <div style={{ width: '48px', height: '48px', position: 'relative', borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
+                        <Image
+                          src={testimonial.image}
+                          alt={testimonial.name}
+                          fill
+                          sizes="48px"
+                          className="object-cover"
+                        />
+                      </div>
                     )}
                     <p style={{ fontWeight: 600, margin: 0 }}>{getTranslated(`testimonial_${idx}_name`, testimonial.name)}</p>
                   </div>
@@ -483,12 +484,15 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
                       flexShrink: 0,
                     }}>
                       {item.image_urls?.[0] && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={item.image_urls[0]}
-                          alt={item.name}
-                          style={{ width: '100%', height: '180px', objectFit: 'cover' }}
-                        />
+                        <div style={{ width: '100%', height: '180px', position: 'relative' }}>
+                          <Image
+                            src={item.image_urls[0]}
+                            alt={item.name}
+                            fill
+                            sizes="300px"
+                            className="object-cover"
+                          />
+                        </div>
                       )}
                       <div style={{ padding: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
@@ -602,8 +606,9 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
               {events.map((event, idx) => (
                 <div key={idx} style={{ display: 'flex', gap: '1.5rem', backgroundColor: theme.secondary, borderRadius: '1rem', overflow: 'hidden', flexWrap: 'wrap', maxWidth: '700px', width: '100%' }}>
                   {event.image_url && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={event.image_url} alt={event.title} style={{ width: '200px', height: '150px', objectFit: 'cover', flexShrink: 0 }} />
+                    <div style={{ width: '200px', height: '150px', position: 'relative', flexShrink: 0 }}>
+                      <Image src={event.image_url} alt={event.title} fill sizes="200px" className="object-cover" />
+                    </div>
                   )}
                   <div style={{ padding: '1.25rem', flex: 1, minWidth: '250px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
@@ -793,8 +798,9 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
               {members.map((member, idx) => (
                 <div key={idx} style={{ textAlign: 'center', width: '220px', flexShrink: 0 }}>
                   {member.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={member.image_url} alt={member.name} style={{ width: '150px', height: '150px', borderRadius: '50%', objectFit: 'cover', margin: '0 auto 1rem', border: `3px solid ${theme.primary}` }} />
+                    <div style={{ width: '150px', height: '150px', borderRadius: '50%', overflow: 'hidden', margin: '0 auto 1rem', border: `3px solid ${theme.primary}`, position: 'relative' }}>
+                      <Image src={member.image_url} alt={member.name} fill sizes="150px" className="object-cover" />
+                    </div>
                   ) : (
                     <div style={{ width: '150px', height: '150px', borderRadius: '50%', backgroundColor: theme.secondary, margin: '0 auto 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <span style={{ fontSize: '3rem', opacity: 0.5 }}>{member.name.charAt(0)}</span>
@@ -831,16 +837,16 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
       
       const TextImage = () => (
         textImageUrl ? (
-          <img 
-            src={textImageUrl} 
-            alt="" 
-            style={{ 
-              width: '100%', 
-              height: 'auto', 
-              borderRadius: '0.5rem',
-              objectFit: 'cover',
-            }} 
-          />
+          <div style={{ width: '100%', position: 'relative', aspectRatio: '16/10' }}>
+            <Image 
+              src={textImageUrl} 
+              alt="" 
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover"
+              style={{ borderRadius: '0.5rem' }}
+            />
+          </div>
         ) : null
       )
       
@@ -987,8 +993,9 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
               <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
                 <div style={{ flex: '1', minWidth: '280px' }}>
                   {Boolean(content.image_url) && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={String(content.image_url)} alt="Location" style={{ width: '100%', borderRadius: '1rem', marginBottom: '1.5rem' }} />
+                    <div style={{ width: '100%', position: 'relative', aspectRatio: '16/10', marginBottom: '1.5rem' }}>
+                      <Image src={String(content.image_url)} alt="Location" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" style={{ borderRadius: '1rem' }} />
+                    </div>
                   )}
                   {showAddress && Boolean(content.address) && (
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '1rem' }}>
@@ -1109,4 +1116,4 @@ export function BlockRenderer({ block, theme, menuItems, menuLink, locations = [
         </section>
       )
   }
-}
+})
