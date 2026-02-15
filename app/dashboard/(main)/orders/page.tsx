@@ -461,7 +461,7 @@ export default function OrdersPage() {
     <div className="space-y-6 h-full">
       {/* Sound activation alert - show when audio not unlocked OR sound is disabled */}
       {!soundAlertDismissed && (!audioUnlocked || !soundEnabled) && (
-        <Alert variant="warning" className="flex items-center justify-between">
+        <Alert variant="warning" className="hidden md:flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BellRing className="h-5 w-5 animate-pulse" />
             <div>
@@ -513,7 +513,7 @@ export default function OrdersPage() {
             : realtimeStatus === 'error' ? 'destructive' 
             : 'muted'
           }
-          className="flex items-center justify-between"
+          className="hidden md:flex items-center justify-between"
         >
           <div className="flex items-center gap-3">
             {!liveEnabled ? (
@@ -623,6 +623,7 @@ export default function OrdersPage() {
             <Button
               variant="ghost"
               size="icon"
+              className='hidden md:block'
               onClick={() => {
                 const newValue = !soundEnabled
                 setSoundEnabled(newValue)
@@ -645,10 +646,9 @@ export default function OrdersPage() {
               <TooltipTrigger asChild>
                 <Button
                   variant={liveEnabled ? 'default' : 'outline'}
-                  size="sm"
                   onClick={handleLiveToggle}
                   className={cn(
-                    "gap-1.5 px-3",
+                    "gap-1.5 px-3 hidden md:flex",
                     liveEnabled && isLive && "bg-green-600 hover:bg-green-700",
                     liveEnabled && !isLive && realtimeStatus === 'connecting' && "bg-yellow-600 hover:bg-yellow-700",
                     liveEnabled && !isLive && realtimeStatus === 'error' && "bg-red-600 hover:bg-red-700"
@@ -718,7 +718,7 @@ export default function OrdersPage() {
           </motion.div>
           {/* Create Order */}
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button onClick={() => setIsCreateOrderOpen(true)} className="px-3 md:px-4">
+            <Button onClick={() => setIsCreateOrderOpen(true)}>
               <Plus className="h-4 w-4 md:mr-2" />
               <span className="hidden md:inline">{t('createOrder')}</span>
             </Button>

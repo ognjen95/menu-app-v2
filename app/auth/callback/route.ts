@@ -37,7 +37,7 @@ export async function GET(request: Request) {
                 }
 
                 // Redirect to onboarding if no tenant, otherwise to dashboard
-                const redirectPath = tenantUser ? '/dashboard' : '/onboarding'
+                const redirectPath = tenantUser ? '/dashboard/orders' : '/onboarding'
                 
                 const forwardedHost = request.headers.get('x-forwarded-host')
                 const isLocalEnv = process.env.NODE_ENV === 'development'

@@ -215,7 +215,7 @@ export function OrderDetailDialog({ order, open, onOpenChange }: OrderDetailDial
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="details" className="flex-1 flex flex-col overflow-hidden">
+        <Tabs defaultValue="actions" className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="details" className="gap-2">
               <ClipboardList className="h-4 w-4" />

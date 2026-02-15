@@ -53,7 +53,7 @@ type WebsiteCache = { data: { website: Website | null } }
 type PagesCache = { data: { pages: WebsitePage[] } }
 type BlocksCache = { data: { blocks: WebsiteBlock[] } }
 
-type PreviewAndEditorFeatureProps = {
+type PreviewAndEditorContainerProps = {
   website: Website | null | undefined
   initialPages?: WebsitePage[]
   sidebarOpen: boolean
@@ -63,7 +63,7 @@ type PreviewAndEditorFeatureProps = {
   setShowTemplateModal: (show: boolean) => void
 }
 
-export function PreviewAndEditorFeature({
+export function PreviewAndEditorContainer({
   website,
   initialPages,
   sidebarOpen,
@@ -71,7 +71,7 @@ export function PreviewAndEditorFeature({
   activePanel,
   setActivePanel,
   setShowTemplateModal,
-}: PreviewAndEditorFeatureProps) {
+}: PreviewAndEditorContainerProps) {
   const queryClient = useQueryClient()
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)

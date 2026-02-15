@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { useQuery } from '@tanstack/react-query'
+import { useForm, useWatch, type Control } from 'react-hook-form'
 import { apiGet } from '@/lib/api'
 import { useCreateOrder } from '@/lib/hooks/use-orders'
 import { useVariantSelection, type SelectedVariantInfo, type MenuItemVariant } from '@/lib/hooks/use-variant-selection'
@@ -13,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { VariantSelector } from '@/components/ui/variant-selector'
+import { ControlledField } from '@/components/forms/controlled-field'
 import {
   Dialog,
   DialogContent,
@@ -56,6 +58,7 @@ import {
   ChevronLeft,
   Settings2,
   Check,
+  AlertTriangle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -81,6 +84,93 @@ type CartItem = {
 
 type OrderType = 'dine_in' | 'takeaway' | 'delivery'
 
+export type CustomerInfoValues = {
+  name: string
+  phone: string
+  notes: string
+}
+
+type CustomerInfoAccordionProps = {
+  t: (key: string) => string
+  isOpen: boolean
+  onToggle: (open: boolean) => void
+  control: Control<CustomerInfoValues>
+}
+
+const CustomerInfoAccordion = React.memo(function CustomerInfoAccordion({
+  t,
+  isOpen,
+  onToggle,
+  control,
+}: CustomerInfoAccordionProps) {
+  const watchedValues = useWatch({ control })
+  const filledCount = [watchedValues?.name, watchedValues?.phone, watchedValues?.notes].filter(Boolean).length
+
+  return (
+    <Accordion
+      type="single"
+      collapsible
+      value={isOpen ? 'customer-info' : undefined}
+      onValueChange={value => onToggle(value === 'customer-info')}
+    >
+      <AccordionItem value="customer-info" className="border rounded-lg">
+        <AccordionTrigger className="px-3 py-2 hover:no-underline">
+          <div className="flex items-center gap-2 text-sm">
+            <User className="h-4 w-4 text-muted-foreground" />
+            <span>{t('customerInfo')}</span>
+            {filledCount > 0 && (
+              <Badge variant="secondary" className="ml-1 text-xs">
+                {filledCount}
+              </Badge>
+            )}
+          </div>
+        </AccordionTrigger>
+        <AccordionContent className="px-3 pb-3 space-y-2">
+          <ControlledField<CustomerInfoValues>
+            name="name"
+            control={control}
+            render={({ value, onChange, ref: fieldRef }) => (
+              <Input
+                ref={fieldRef}
+                value={value ?? ''}
+                onChange={onChange}
+                placeholder={t('customerName')}
+                className="h-9"
+              />
+            )}
+          />
+          <ControlledField<CustomerInfoValues>
+            name="phone"
+            control={control}
+            render={({ value, onChange, ref: fieldRef }) => (
+              <Input
+                ref={fieldRef}
+                value={value ?? ''}
+                onChange={onChange}
+                placeholder={t('customerPhone')}
+                className="h-9"
+              />
+            )}
+          />
+          <ControlledField<CustomerInfoValues>
+            name="notes"
+            control={control}
+            render={({ value, onChange, ref: fieldRef }) => (
+              <Input
+                ref={fieldRef}
+                value={value ?? ''}
+                onChange={onChange}
+                placeholder={t('notes')}
+                className="h-9"
+              />
+            )}
+          />
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  )
+})
+
 interface CreateOrderDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -90,6 +180,10 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
   const t = useTranslations('createOrder')
   const tCommon = useTranslations('common')
 
+  const customerInfoForm = useForm<CustomerInfoValues>({
+    defaultValues: { name: '', phone: '', notes: '' },
+  })
+
   // State
   const [selectedLocationId, setSelectedLocationId] = useState<string>('')
   const [selectedTableId, setSelectedTableId] = useState<string>('')
@@ -98,14 +192,13 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [cart, setCart] = useState<CartItem[]>([])
-  const [customerName, setCustomerName] = useState('')
-  const [customerPhone, setCustomerPhone] = useState('')
-  const [customerNotes, setCustomerNotes] = useState('')
   const [isMobile, setIsMobile] = useState(false)
   const [showCart, setShowCart] = useState(false)
-  const [mobileStep, setMobileStep] = useState<1 | 2>(1) // 1 = setup, 2 = menu
-
-  // Variant selection dialog state
+  const [mobileStep, setMobileStep] = useState<1 | 2>(1)
+  const [isCustomerInfoOpen, setIsCustomerInfoOpen] = useState(false)
+  const [isMobileSearchFocused, setIsMobileSearchFocused] = useState(false)
+  const [isDesktopSearchFocused, setIsDesktopSearchFocused] = useState(false)
+  const mobileSearchInputRef = useRef<HTMLInputElement | null>(null)
   const [itemForVariants, setItemForVariants] = useState<MenuItemWithVariants | null>(null)
 
   // Check for mobile
@@ -209,6 +302,10 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
     })
   }, [menuItems, searchQuery, selectedCategoryId])
 
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+  }, [])
+
   // Add item to cart with optional variants
   const addToCartDirect = useCallback((
     item: MenuItemWithVariants,
@@ -289,7 +386,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
   // Create order mutation
   const createOrder = useCreateOrder()
 
-  const handleSubmit = async () => {
+  const handleCreateOrder = async () => {
     if (!selectedLocationId) {
       toast.error(t('selectLocation'))
       return
@@ -303,15 +400,17 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
       return
     }
 
+    const customerInfoValues = customerInfoForm.getValues()
+
     try {
       await createOrder.mutateAsync({
         location_id: selectedLocationId,
         table_id: orderType === 'dine_in' ? selectedTableId : undefined,
         type: orderType,
         status: 'accepted',
-        customer_name: customerName || undefined,
-        customer_phone: customerPhone || undefined,
-        customer_notes: customerNotes || undefined,
+        customer_name: customerInfoValues.name || undefined,
+        customer_phone: customerInfoValues.phone || undefined,
+        customer_notes: customerInfoValues.notes || undefined,
         items: cart.map(c => ({
           menu_item_id: c.menuItem.id,
           quantity: c.quantity,
@@ -326,9 +425,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
       // Reset form
       setCart([])
       setSelectedTableId('')
-      setCustomerName('')
-      setCustomerPhone('')
-      setCustomerNotes('')
+      customerInfoForm.reset({ name: '', phone: '', notes: '' })
       onOpenChange(false)
     } catch (error: any) {
       toast.error(t('orderFailed'), {
@@ -341,14 +438,29 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
     onOpenChange(false)
   }
 
+  useEffect(() => {
+    if (
+      isMobile &&
+      mobileStep === 2 &&
+      isMobileSearchFocused &&
+      mobileSearchInputRef.current
+    ) {
+      const input = mobileSearchInputRef.current
+      const length = input.value.length
+      input.focus()
+      input.setSelectionRange(length, length)
+    }
+  }, [isMobile, mobileStep, isMobileSearchFocused, searchQuery])
+
   // Reset on close
   useEffect(() => {
     if (!open) {
       setSearchQuery('')
       setSelectedCategoryId(null)
       setShowCart(false)
+      customerInfoForm.reset({ name: '', phone: '', notes: '' })
     }
-  }, [open])
+  }, [open, customerInfoForm])
 
   // Menu items grid component
   const MenuItemsGrid = () => {
@@ -420,7 +532,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
   const CartSidebar = ({ className }: { className?: string }) => (
     <div className={cn("flex flex-col h-full bg-muted/30", className)}>
       {/* Cart header */}
-      <div className="p-4 border-b flex items-center">
+      <div className="p-4 border-b flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ShoppingCart className="h-5 w-5" />
           <span className="font-semibold">{t('cart')}</span>
@@ -428,6 +540,14 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
             <Badge variant="secondary">{cartItemsCount}</Badge>
           )}
         </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setShowCart(false)}
+          className="h-8 w-8 block md:hidden"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Cart items */}
@@ -493,43 +613,14 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
 
       {/* Order details */}
       {cart.length > 0 && (
-        <div className="p-4 pb-8 border-t space-y-3 safe-area-pb">
+        <div className="p-4 border-t space-y-3 safe-area-pb">
           {/* Customer info (optional) */}
-          <Accordion type="single" collapsible>
-            <AccordionItem value="customer-info" className="border rounded-lg">
-              <AccordionTrigger className="px-3 py-2 hover:no-underline">
-                <div className="flex items-center gap-2 text-sm">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span>{t('customerInfo')}</span>
-                  {(customerName || customerPhone || customerNotes) && (
-                    <Badge variant="secondary" className="ml-1 text-xs">
-                      {[customerName, customerPhone, customerNotes].filter(Boolean).length}
-                    </Badge>
-                  )}
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-3 pb-3 space-y-2">
-                <Input
-                  placeholder={t('customerName')}
-                  value={customerName}
-                  onChange={e => setCustomerName(e.target.value)}
-                  className="h-9"
-                />
-                <Input
-                  placeholder={t('customerPhone')}
-                  value={customerPhone}
-                  onChange={e => setCustomerPhone(e.target.value)}
-                  className="h-9"
-                />
-                <Input
-                  placeholder={t('notes')}
-                  value={customerNotes}
-                  onChange={e => setCustomerNotes(e.target.value)}
-                  className="h-9"
-                />
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          <CustomerInfoAccordion
+            t={t}
+            isOpen={isCustomerInfoOpen}
+            onToggle={setIsCustomerInfoOpen}
+            control={customerInfoForm.control}
+          />
 
           {/* Total */}
           <div className="flex items-center justify-between text-lg font-semibold pt-2 border-t">
@@ -539,8 +630,8 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
 
           {/* Submit */}
           <Button
-            className="w-full h-12 text-lg font-semibold"
-            onClick={handleSubmit}
+            className="w-full p-4 text-lg font-semibold"
+            onClick={handleCreateOrder}
             disabled={createOrder.isPending || cart.length === 0}
           >
             {createOrder.isPending ? t('creating') : t('placeOrder')}
@@ -551,14 +642,14 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
   )
 
   // Main content
-  const MainContent = () => (
+  const renderMainContent = () => (
     <div className="flex flex-col h-full">
       {/* Top bar - Location, Table, Staff, Order Type */}
       <div className="p-4 border-b space-y-3">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {/* Location */}
           <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
-            <SelectTrigger className="h-10">
+            <SelectTrigger className="w-full">
               <MapPin className="h-4 w-4 mr-2 shrink-0" />
               <SelectValue placeholder={t('selectLocation')} />
             </SelectTrigger>
@@ -572,25 +663,35 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
           </Select>
 
           {/* Table (only for dine_in) */}
-          {orderType === 'dine_in' && (
-            <Select value={selectedTableId} onValueChange={setSelectedTableId}>
-              <SelectTrigger className="h-10">
-                <UtensilsCrossed className="h-4 w-4 mr-2 shrink-0" />
-                <SelectValue placeholder={t('selectTable')} />
-              </SelectTrigger>
-              <SelectContent>
-                {tables.map(table => (
-                  <SelectItem key={table.id} value={table.id}>
-                    {table.name} {table.zone && `(${table.zone})`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {orderType === 'dine_in' ? (
+            <div className="relative w-full">
+              <Select value={selectedTableId} onValueChange={setSelectedTableId}>
+                <SelectTrigger className={cn(
+                  "w-full",
+                  !selectedTableId && "border-destructive focus:border-destructive"
+                )}>
+                  <UtensilsCrossed className="h-4 w-4 mr-2 shrink-0" />
+                  <SelectValue placeholder={t('selectTable')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {tables.map(table => (
+                    <SelectItem key={table.id} value={table.id}>
+                      {table.name} {table.zone && `(${table.zone})`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {!selectedTableId && (
+                <AlertTriangle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />
+              )}
+            </div>
+          ) : (
+            <div className="w-full" />
           )}
 
           {/* Staff */}
           <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
-            <SelectTrigger className="h-10">
+            <SelectTrigger className="w-full">
               <User className="h-4 w-4 mr-2 shrink-0" />
               <SelectValue placeholder={t('selectStaff')} />
             </SelectTrigger>
@@ -704,7 +805,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
   )
 
   // Mobile Setup Step (Step 1 - Location, Staff, Order Type, Table)
-  const MobileSetupStep = () => {
+  const renderMobileSetupStep = () => {
     const selectedLocation = locations.find(l => l.id === selectedLocationId)
     const selectedStaff = teamMembers.find(m => m.user_id === selectedStaffId)
 
@@ -886,7 +987,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
         </ScrollArea>
 
         {/* Continue button - fixed at bottom */}
-        <div className="shrink-0 p-4 pb-10 bg-background border-t">
+        <div className="shrink-0 p-4 bg-background border-t">
           <Button
             className="w-full h-12 text-lg"
             onClick={() => setMobileStep(2)}
@@ -901,63 +1002,67 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
   }
 
   // Mobile Menu Step (Step 2 - Menu items)
-  const MobileMenuStep = () => (
-    <div className="flex flex-col h-full">
-      {/* Search and filters */}
-      <div className="p-4 border-b space-y-3">
-        {/* Order info badge */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="px-2 py-1 bg-muted rounded-md flex items-center gap-1">
-            <MapPin className="h-3 w-3" />
-            {locations.find(l => l.id === selectedLocationId)?.name}
-          </span>
-          {orderType === 'dine_in' && selectedTableId && (
+  const renderMobileMenuStep = () => {
+    return (
+      <div className="flex flex-col h-full">
+        {/* Search and filters */}
+        <div className="p-4 border-b space-y-3">
+          {/* Order info badge */}
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span className="px-2 py-1 bg-muted rounded-md flex items-center gap-1">
-              <UtensilsCrossed className="h-3 w-3" />
-              {tables.find(t => t.id === selectedTableId)?.name}
+              <MapPin className="h-3 w-3" />
+              {locations.find(l => l.id === selectedLocationId)?.name}
             </span>
-          )}
-          <span className="px-2 py-1 bg-muted rounded-md">
-            {orderType === 'dine_in' ? t('dineIn') : orderType === 'takeaway' ? t('takeaway') : t('delivery')}
-          </span>
-        </div>
+            {orderType === 'dine_in' && selectedTableId && (
+              <span className="px-2 py-1 bg-muted rounded-md flex items-center gap-1">
+                <UtensilsCrossed className="h-3 w-3" />
+                {tables.find(t => t.id === selectedTableId)?.name}
+              </span>
+            )}
+            <span className="px-2 py-1 bg-muted rounded-md">
+              {orderType === 'dine_in' ? t('dineIn') : orderType === 'takeaway' ? t('takeaway') : t('delivery')}
+            </span>
+          </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={t('searchItems')}
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="pl-10 h-10"
-          />
-        </div>
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t('searchItems')}
+              value={searchQuery}
+              onChange={handleSearchChange}
+              ref={mobileSearchInputRef}
+              onFocus={() => setIsMobileSearchFocused(true)}
+              onBlur={() => setIsMobileSearchFocused(false)}
+              className="pl-10 h-10"
+            />
+          </div>
 
-        {/* Category filter */}
-        <ScrollArea className="w-full whitespace-nowrap">
-          {isLoadingItems ? (
-            <CategoryButtonsRowSkeleton count={6} />
-          ) : (
-            <div className="flex gap-2 pb-2">
-              <Button
-                variant={selectedCategoryId === null ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedCategoryId(null)}
-              >
-                {t('allCategories')}
-              </Button>
-              {categories.map(cat => (
+          {/* Category filter */}
+          <ScrollArea className="w-full whitespace-nowrap">
+            {isLoadingItems ? (
+              <CategoryButtonsRowSkeleton count={6} />
+            ) : (
+              <div className="flex gap-2 pb-2">
                 <Button
-                  key={cat.id}
-                  variant={selectedCategoryId === cat.id ? 'default' : 'outline'}
+                  variant={selectedCategoryId === null ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setSelectedCategoryId(cat.id)}
+                  onClick={() => setSelectedCategoryId(null)}
                 >
-                  {cat.name}
+                  {t('allCategories')}
                 </Button>
-              ))}
-            </div>
-          )}
+                {categories.map(cat => (
+                  <Button
+                    key={cat.id}
+                    variant={selectedCategoryId === cat.id ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedCategoryId(cat.id)}
+                  >
+                    {cat.name}
+                  </Button>
+                ))}
+              </div>
+            )}
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
       </div>
@@ -969,7 +1074,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
 
       {/* Mobile cart button */}
       {cartItemsCount > 0 && (
-        <div className="p-4 pb-8 border-t safe-area-pb">
+        <div className="p-4 border-t safe-area-pb">
           <Button
             className="w-full h-12"
             onClick={() => setShowCart(true)}
@@ -980,7 +1085,8 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
         </div>
       )}
     </div>
-  )
+    )
+  }
 
   // Variant Selection Dialog Component (defined before views)
   const VariantSelectionContent = () => {
@@ -1010,11 +1116,11 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
       <>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Settings2 className="h-5 w-5" />
+            <Settings2 className="h-5 w-5 text-primary" />
             {itemForVariants.name}
           </DialogTitle>
         </DialogHeader>
-        <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+        <div className="px-6 py-4 max-h-[50vh] overflow-y-auto">
           <VariantSelector
             variantsByCategory={variantsByCategory}
             selectedVariants={selectedVariants}
@@ -1024,19 +1130,21 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
             }}
           />
         </div>
-        <DialogFooter className="p-4 border-t">
-          <div className="flex items-center justify-between w-full">
-            <span className="text-lg font-bold">€{totalPrice.toFixed(2)}</span>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setItemForVariants(null)}>
-                {tCommon('cancel')}
-              </Button>
-              <Button onClick={handleAddToCartWithVariants} disabled={!isValid()}>
-                <Plus className="h-4 w-4 mr-1" />
-                {t('addToCart')}
-              </Button>
-            </div>
-          </div>
+        <div className="text-right text-lg font-bold shrink-0">€{totalPrice.toFixed(2)}</div>
+        <DialogFooter className="flex-row items-center justify-end gap-3  py-4 border-t">
+            <Button 
+              variant="outline" 
+              onClick={() => setItemForVariants(null)}
+            >
+              {tCommon('cancel')}
+            </Button>
+            <Button 
+              onClick={handleAddToCartWithVariants} 
+              disabled={!isValid()}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              {t('addToCart')}
+            </Button>
         </DialogFooter>
       </>
     )
@@ -1050,14 +1158,23 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
           if (!isOpen) setMobileStep(1) // Reset to step 1 when closing
           onOpenChange(isOpen)
         }}>
-          <SheetContent side="bottom" className="max-h-[100dvh] h-[95dvh] p-0 flex flex-col rounded-3xl" >
+          <SheetContent side="bottom" className="max-h-[100dvh] h-[100dvh] p-0 flex flex-col rounded-3xl" >
             <SheetHeader className="p-4 border-b shrink-0">
               <SheetTitle className="flex items-center gap-2">
+                {mobileStep === 1 && (
+                  <Button
+                    onClick={() => onOpenChange(false)}
+                    variant="ghost"
+                    className="mr-1 hover:bg-muted -ml-1 h-9 w-9 p-0"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                )}
                 {mobileStep === 2 && (
                   <Button
                     onClick={() => setMobileStep(1)}
                     variant="ghost"
-                    className="mr-1 hover:bg-muted -ml-1"
+                    className="mr-1 hover:bg-muted -ml-1 h-9 w-9 p-0"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
@@ -1070,21 +1187,21 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
               </p>
             </SheetHeader>
             <div className="flex-1 min-h-0 overflow-hidden">
-              {mobileStep === 1 ? <MobileSetupStep /> : <MobileMenuStep />}
+              {mobileStep === 1 ? renderMobileSetupStep() : renderMobileMenuStep()}
             </div>
           </SheetContent>
         </Sheet>
 
         {/* Cart sheet for mobile */}
         <Sheet open={showCart} onOpenChange={setShowCart}>
-          <SheetContent side="right" className="w-full sm:max-w-md p-0 max-h-[100dvh] flex flex-col">
+          <SheetContent side="right" className="w-full sm:max-w-md p-0 max-h-[100dvh] h-[100dvh] flex flex-col">
             <CartSidebar />
           </SheetContent>
         </Sheet>
 
         {/* Variant Selection Dialog for mobile */}
         <Dialog open={!!itemForVariants} onOpenChange={(open) => !open && setItemForVariants(null)}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md h-auto max-h-[90vh]">
             <VariantSelectionContent />
           </DialogContent>
         </Dialog>
@@ -1106,7 +1223,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
           <div className="flex flex-1 min-h-0 overflow-hidden">
             {/* Menu section */}
             <div className="flex-1 border-r">
-              <MainContent />
+              {renderMainContent()}
             </div>
 
             {/* Cart sidebar */}
@@ -1119,7 +1236,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
 
       {/* Variant Selection Dialog */}
       <Dialog open={!!itemForVariants} onOpenChange={(open) => !open && setItemForVariants(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md h-auto max-h-[90vh]">
           <VariantSelectionContent />
         </DialogContent>
       </Dialog>

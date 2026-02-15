@@ -50,7 +50,7 @@ export function TopBar({
     >
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild className="gap-1">
-          <a href="/dashboard">
+          <a href="/dashboard/orders">
             <ChevronLeft className="h-4 w-4" />
             {t('exit')}
           </a>

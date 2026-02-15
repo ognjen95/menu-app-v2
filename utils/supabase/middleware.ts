@@ -88,7 +88,7 @@ export async function updateSession(request: NextRequest) {
 
     // Redirect authenticated users from landing page to dashboard
     if (user && pathname === '/') {
-        url.pathname = '/dashboard'
+        url.pathname = '/dashboard/orders'
         // IMPORTANT: Copy cookies to redirect response to preserve any session updates
         const redirectResponse = NextResponse.redirect(url)
         supabaseResponse.cookies.getAll().forEach(cookie => {

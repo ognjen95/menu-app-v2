@@ -23,6 +23,7 @@
     "or": "Or",
     "and": "And",
     "items": "items",
+    "total": "Total",
     "fromYesterday": "from yesterday",
     "takeaway": "Takeaway",
     "orderStatus": {
@@ -657,7 +658,9 @@
     "tableNameRequired": "Table Name *",
     "tableNamePlaceholder": "Table 1",
     "zone": "Zone",
-    "zonePlaceholder": "Outdoor, Terrace, etc.",
+    "zonePlaceholder": "Select a zone",
+    "newZone": "Create New Zone",
+    "newZonePlaceholder": "Enter zone name...",
     "capacity": "Capacity",
     "seats": "seats",
     "tables": "tables",
@@ -686,6 +689,7 @@
     "saveStyle": "Save Style",
     "cancel": "Cancel",
     "deleteTable": "Delete this table?",
+    "duplicateTableName": "A table with this name already exists in this zone",
     "addTableDesc": "Add a new table to this location",
     "status": {
       "available": "Available",

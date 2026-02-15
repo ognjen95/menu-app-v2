@@ -99,6 +99,29 @@ const [isOpen, setIsOpen] = useState(false)
 **LocalStorage:**
 - `pos-selected-location`: Persists the selected location ID
 
+#### Customer Info Accordion
+
+Customer name/phone/note fields live inside a memoized `CustomerInfoAccordion` that owns its own local state to prevent focus loss while typing. The dialog interacts with it via a `ref` exposing `getValues` / `resetValues`, so we can read data when submitting and clear it after placing an order:
+
+```tsx
+const customerInfoRef = useRef<CustomerInfoAccordionHandle | null>(null)
+
+<CustomerInfoAccordion
+  ref={customerInfoRef}
+  t={t}
+  isOpen={isCustomerInfoOpen}
+  onToggle={setIsCustomerInfoOpen}
+  initialValues={{ name: '', phone: '', notes: '' }}
+/>
+
+// Later during submission
+const { name, phone, notes } = customerInfoRef.current?.getValues() ?? {
+  name: '',
+  phone: '',
+  notes: '',
+}
+```
+
 ### `OrderLogsDialog.tsx`
 
 Dialog for viewing order status change logs.

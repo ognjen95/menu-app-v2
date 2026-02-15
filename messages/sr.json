@@ -23,6 +23,7 @@
     "or": "Ili",
     "and": "I",
     "items": "stavki",
+    "total": "Ukupno",
     "fromYesterday": "od juče",
     "takeaway": "Ponesi",
     "orderStatus": {
@@ -657,7 +658,9 @@
     "tableNameRequired": "Naziv stola *",
     "tableNamePlaceholder": "Sto 1",
     "zone": "Zona",
-    "zonePlaceholder": "Bašta, Terasa, itd.",
+    "zonePlaceholder": "Izaberite zonu",
+    "newZone": "Kreiraj novu zonu",
+    "newZonePlaceholder": "Unesite naziv zone...",
     "capacity": "Kapacitet",
     "seats": "mesta",
     "tables": "stolova",
@@ -686,6 +689,7 @@
     "saveStyle": "Sačuvaj stil",
     "cancel": "Otkaži",
     "deleteTable": "Obrisati ovaj sto?",
+    "duplicateTableName": "Sto sa ovim imenom već postoji u ovoj zoni",
     "addTableDesc": "Dodajte novi sto na ovu lokaciju",
     "status": {
       "available": "Dostupan",

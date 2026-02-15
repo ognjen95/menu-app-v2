@@ -23,6 +23,7 @@
     "or": "O",
     "and": "Y",
     "items": "artículos",
+    "total": "Total",
     "fromYesterday": "respecto a ayer",
     "takeaway": "Para Llevar",
     "orderStatus": {
@@ -657,7 +658,9 @@
     "tableNameRequired": "Nombre de Mesa *",
     "tableNamePlaceholder": "Mesa 1",
     "zone": "Zona",
-    "zonePlaceholder": "Exterior, Terraza, etc.",
+    "zonePlaceholder": "Seleccionar zona",
+    "newZone": "Crear nueva zona",
+    "newZonePlaceholder": "Ingrese nombre de zona...",
     "capacity": "Capacidad",
     "seats": "asientos",
     "tables": "mesas",
@@ -686,6 +689,7 @@
     "saveStyle": "Guardar Estilo",
     "cancel": "Cancelar",
     "deleteTable": "¿Eliminar esta mesa?",
+    "duplicateTableName": "Ya existe una mesa con este nombre en esta zona",
     "addTableDesc": "Añadir una nueva mesa a esta ubicación",
     "status": {
       "available": "Disponible",

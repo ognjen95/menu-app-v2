@@ -1,7 +1,8 @@
+'use client'
+
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { motion } from 'framer-motion'
-import { staggerContainer, staggerItemScale } from './animated'
+import { motion, staggerContainer, staggerItemScale } from './animated'
 
 // Order Card Skeleton
 export function OrderCardSkeleton() {
