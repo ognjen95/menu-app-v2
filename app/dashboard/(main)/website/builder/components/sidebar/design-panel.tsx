@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,6 +32,28 @@ type DesignPanelProps = {
 export default function DesignPanel({ website, updateWebsite }: DesignPanelProps) {
   const t = useTranslations('websiteBuilder')
   const [showAllThemes, setShowAllThemes] = useState(false)
+  const [colorForm, setColorForm] = useState({
+    primary_color: website?.primary_color || '#000000',
+    secondary_color: website?.secondary_color || '#000000',
+    background_color: website?.background_color || '#000000',
+    foreground_color: website?.foreground_color || '#000000',
+    accent_color: website?.accent_color || '#000000',
+  })
+
+  useEffect(() => {
+    setColorForm({
+      primary_color: website?.primary_color || '#000000',
+      secondary_color: website?.secondary_color || '#000000',
+      background_color: website?.background_color || '#000000',
+      foreground_color: website?.foreground_color || '#000000',
+      accent_color: website?.accent_color || '#000000',
+    })
+  }, [website?.primary_color, website?.secondary_color, website?.background_color, website?.foreground_color, website?.accent_color])
+
+  const updateColors = (data: Partial<typeof colorForm>) => {
+    setColorForm(prev => ({ ...prev, ...data }))
+    updateWebsite.mutate(data)
+  }
 
   return (
     <>
@@ -44,18 +66,18 @@ export default function DesignPanel({ website, updateWebsite }: DesignPanelProps
           variants={staggerContainer}
         >
           {THEME_PRESETS.filter(p => p.isDark).slice(0, showAllThemes ? undefined : 4).map((preset, index) => {
-            const isSelected = website?.primary_color === preset.primary &&
-              website?.background_color === preset.background &&
-              website?.accent_color === preset.accent
+            const isSelected = colorForm?.primary_color === preset.primary &&
+              colorForm?.background_color === preset.background &&
+              colorForm?.accent_color === preset.accent
             return (
               <motion.div key={preset.name} variants={staggerItemScale} custom={index}>
                 <button
-                  onClick={() => updateWebsite.mutate({ 
-                    primary_color: preset.primary, 
-                    secondary_color: preset.secondary, 
-                    background_color: preset.background, 
-                    foreground_color: preset.foreground, 
-                    accent_color: preset.accent 
+                  onClick={() => updateColors({
+                    primary_color: preset.primary,
+                    secondary_color: preset.secondary,
+                    background_color: preset.background,
+                    foreground_color: preset.foreground,
+                    accent_color: preset.accent,
                   })}
                   className={cn(
                     "p-2.5 rounded-lg border-2 text-left relative transition-all w-full",
@@ -90,12 +112,12 @@ export default function DesignPanel({ website, updateWebsite }: DesignPanelProps
             return (
               <button
                 key={preset.name}
-                onClick={() => updateWebsite.mutate({ 
-                  primary_color: preset.primary, 
-                  secondary_color: preset.secondary, 
-                  background_color: preset.background, 
-                  foreground_color: preset.foreground, 
-                  accent_color: preset.accent 
+                onClick={() => updateColors({
+                  primary_color: preset.primary,
+                  secondary_color: preset.secondary,
+                  background_color: preset.background,
+                  foreground_color: preset.foreground,
+                  accent_color: preset.accent,
                 })}
                 className={cn(
                   "p-2.5 rounded-lg border-2 text-left relative transition-all",
@@ -142,13 +164,15 @@ export default function DesignPanel({ website, updateWebsite }: DesignPanelProps
               <div className="flex gap-2">
                 <input 
                   type="color" 
-                  value={website?.[field as keyof Website] as string || '#000'} 
-                  onChange={(e) => updateWebsite.mutate({ [field]: e.target.value })} 
+                  value={colorForm[field as keyof typeof colorForm]} 
+                  onChange={(e) => setColorForm(prev => ({ ...prev, [field]: e.target.value }))}
+                  onBlur={(e) => updateColors({ [field]: e.target.value })} 
                   className="h-9 w-9 rounded border border-input cursor-pointer bg-transparent" 
                 />
                 <Input 
-                  value={website?.[field as keyof Website] as string || ''} 
-                  onChange={(e) => updateWebsite.mutate({ [field]: e.target.value })} 
+                  value={colorForm[field as keyof typeof colorForm]} 
+                  onChange={(e) => setColorForm(prev => ({ ...prev, [field]: e.target.value }))}
+                  onBlur={(e) => updateColors({ [field]: e.target.value })} 
                   className="flex-1 h-9 text-xs font-mono" 
                 />
               </div>

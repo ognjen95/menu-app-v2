@@ -215,7 +215,7 @@ export default function MenuConfigPage() {
 
   // DnD sensors
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(PointerSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
@@ -501,13 +501,13 @@ export default function MenuConfigPage() {
         ref={setNodeRef}
         style={style}
         className={cn(
-          'flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer group touch-none',
+          'flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer group',
           selectedCategoryId === category.id ? 'bg-primary text-primary-foreground' : 'hover:bg-accent',
           isDragging && 'opacity-80 shadow-lg'
         )}
         onClick={() => setSelectedCategoryId(category.id)}
       >
-        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+        <div {...attributes} {...listeners} className="cursor-grab touch-none active:cursor-grabbing">
           <GripVertical className="h-4 w-4 opacity-50 hover:opacity-100" />
         </div>
         <span className="flex-1 truncate">{category.name}</span>
@@ -537,14 +537,14 @@ export default function MenuConfigPage() {
     }
 
     return (
-      <Card ref={setNodeRef} style={style} className={cn("overflow-hidden group touch-none select-none", isDragging && "opacity-90 shadow-2xl ring-2 ring-primary scale-[1.02]")}>
+      <Card ref={setNodeRef} style={style} className={cn("overflow-hidden group select-none", isDragging && "opacity-90 shadow-2xl ring-2 ring-primary scale-[1.02]")}>
         <div className="relative h-36 bg-muted">
           {item.image_urls && item.image_urls.length > 0 ? (
             <Image src={item.image_urls[0]} alt={item.name} fill className="object-cover" />
           ) : (
             <div className="flex items-center justify-center h-full"><ImageIcon className="h-10 w-10 text-muted-foreground" /></div>
           )}
-          <div {...attributes} {...listeners} className="absolute top-2 left-2 p-1.5 rounded-md bg-background/90 backdrop-blur-sm cursor-grab active:cursor-grabbing shadow-sm">
+          <div {...attributes} {...listeners} className="absolute top-2 left-2 p-1.5 rounded-md bg-background/90 backdrop-blur-sm cursor-grab touch-none active:cursor-grabbing shadow-sm">
             <GripVertical className="h-4 w-4 text-muted-foreground" />
           </div>
           <div className="absolute top-2 left-12 flex gap-1">

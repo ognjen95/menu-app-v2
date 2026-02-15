@@ -102,10 +102,10 @@ export function NavbarActions() {
       </Button>
 
       {/* Notifications */}
-      <Button variant="ghost" size="icon">
+      {/* <Button variant="ghost" size="icon">
         <Bell className="h-4 w-4" />
         <span className="sr-only">Notifications</span>
-      </Button>
+      </Button> */}
 
       {/* Profile */}
       <Link href="/dashboard/settings/profile">
