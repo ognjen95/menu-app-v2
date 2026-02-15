@@ -622,7 +622,6 @@ export default function OrdersPage() {
           {audioUnlocked && (
             <Button
               variant="ghost"
-              size="icon"
               className='hidden md:block'
               onClick={() => {
                 const newValue = !soundEnabled

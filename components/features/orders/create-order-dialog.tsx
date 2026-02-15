@@ -73,13 +73,21 @@ type MenuItemWithVariants = MenuItem & {
   menu_item_variants?: MenuItemVariant[]
 }
 
-type CartItem = {
+export type CartItem = {
   id: string
   menuItem: MenuItemWithVariants
   quantity: number
   notes?: string
   selectedVariants?: SelectedVariantInfo[]
   calculatedPrice: number
+}
+
+export const getItemQuantities = (cart: CartItem[]) => {
+  return cart.reduce<Record<string, number>>((acc, item) => {
+    const id = item.menuItem.id
+    acc[id] = (acc[id] || 0) + item.quantity
+    return acc
+  }, {})
 }
 
 type OrderType = 'dine_in' | 'takeaway' | 'delivery'
@@ -192,12 +200,14 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [cart, setCart] = useState<CartItem[]>([])
+  const [recentlyAddedId, setRecentlyAddedId] = useState<string | null>(null)
   const [isMobile, setIsMobile] = useState(false)
   const [showCart, setShowCart] = useState(false)
   const [mobileStep, setMobileStep] = useState<1 | 2>(1)
   const [isCustomerInfoOpen, setIsCustomerInfoOpen] = useState(false)
   const [isMobileSearchFocused, setIsMobileSearchFocused] = useState(false)
   const [isDesktopSearchFocused, setIsDesktopSearchFocused] = useState(false)
+  const addFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const mobileSearchInputRef = useRef<HTMLInputElement | null>(null)
   const [itemForVariants, setItemForVariants] = useState<MenuItemWithVariants | null>(null)
 
@@ -293,6 +303,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
 
   // Filter items by search and category
   const filteredItems = useMemo(() => {
+    if (!menuItems) return []
     return menuItems.filter(item => {
       const matchesSearch = !searchQuery ||
         item.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -301,6 +312,19 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
       return matchesSearch && matchesCategory
     })
   }, [menuItems, searchQuery, selectedCategoryId])
+
+  const itemQuantities = useMemo(() => getItemQuantities(cart), [cart])
+
+  const triggerAddFeedback = useCallback((itemId: string) => {
+    setRecentlyAddedId(itemId)
+    if (addFeedbackTimeoutRef.current) {
+      clearTimeout(addFeedbackTimeoutRef.current)
+    }
+    addFeedbackTimeoutRef.current = setTimeout(() => {
+      setRecentlyAddedId(null)
+      addFeedbackTimeoutRef.current = null
+    }, 600)
+  }, [])
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value)
@@ -335,7 +359,8 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
         calculatedPrice,
       }]
     })
-  }, [])
+    triggerAddFeedback(item.id)
+  }, [triggerAddFeedback])
 
   // Handle item click (check for variants)
   const handleItemClick = useCallback((item: MenuItemWithVariants) => {
@@ -378,6 +403,14 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
   const cartTotal = useMemo(() => {
     return cart.reduce((sum, item) => sum + (item.calculatedPrice * item.quantity), 0)
   }, [cart])
+
+  useEffect(() => {
+    return () => {
+      if (addFeedbackTimeoutRef.current) {
+        clearTimeout(addFeedbackTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const cartItemsCount = useMemo(() => {
     return cart.reduce((sum, item) => sum + item.quantity, 0)
@@ -470,55 +503,67 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
 
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-        {filteredItems.map(item => (
-          <button
-            key={item.id}
-            onClick={() => handleItemClick(item)}
-            disabled={item.is_sold_out}
-            className={cn(
-              "relative flex gap-3 p-3 rounded-lg border text-left transition-all",
-              "hover:border-primary hover:shadow-sm active:scale-[0.98]",
-              item.is_sold_out && "opacity-50 cursor-not-allowed"
-            )}
-          >
-            {/* Product image */}
-            <div className="w-14 h-14 rounded-lg bg-muted overflow-hidden shrink-0">
-              {item.image_urls && item.image_urls[0] ? (
-                <Image
-                  src={item.image_urls[0]}
-                  alt={item.name}
-                  width={56}
-                  height={56}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                  <UtensilsCrossed className="h-6 w-6" />
+        {filteredItems.map(item => {
+          const quantity = itemQuantities[item.id] || 0
+          const isHighlighted = recentlyAddedId === item.id
+
+          return (
+            <button
+              key={item.id}
+              onClick={() => handleItemClick(item)}
+              disabled={item.is_sold_out}
+              className={cn(
+                "relative flex gap-3 p-3 rounded-lg border text-left transition-all",
+                "hover:border-primary hover:shadow-sm active:scale-[0.98]",
+                quantity > 0 && "border-primary/40 bg-primary/5",
+                isHighlighted && "ring-2 ring-primary/50",
+                item.is_sold_out && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              {isHighlighted && (
+                <span className="absolute inset-0 rounded-lg border-2 border-primary/30 animate-ping pointer-events-none" />
+              )}
+              <div className="w-14 h-14 rounded-lg bg-muted overflow-hidden shrink-0">
+                {item.image_urls && item.image_urls[0] ? (
+                  <Image
+                    src={item.image_urls[0]}
+                    alt={item.name}
+                    width={56}
+                    height={56}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                    <UtensilsCrossed className="h-6 w-6" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="font-medium text-sm line-clamp-2">{item.name}</span>
+                <span className="text-xs text-muted-foreground block">
+                  {item.category?.name}
+                </span>
+                <span className="font-semibold text-sm">€{item.base_price.toFixed(2)}</span>
+              </div>
+              {item.is_sold_out && (
+                <Badge variant="destructive" className="absolute top-1 right-1 text-xs">
+                  {t('soldOut')}
+                </Badge>
+              )}
+              {!item.is_sold_out && item.menu_item_variants && item.menu_item_variants.length > 0 && (
+                <Badge variant="secondary" className="absolute top-1 right-1 text-xs">
+                  <Settings2 className="h-3 w-3 mr-0.5" />
+                  {t('hasVariants')}
+                </Badge>
+              )}
+              {quantity > 0 && (
+                <div className="absolute bottom-1 right-1 flex items-center gap-1 rounded-full bg-primary text-primary-foreground px-2 py-0.5 text-xs font-semibold shadow">
+                  <Check className="h-3 w-3" />x{quantity}
                 </div>
               )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <span className="font-medium text-sm line-clamp-2">{item.name}</span>
-              <span className="text-xs text-muted-foreground block">
-                {item.category?.name}
-              </span>
-              <span className="font-semibold text-sm">
-                €{item.base_price.toFixed(2)}
-              </span>
-            </div>
-            {item.is_sold_out && (
-              <Badge variant="destructive" className="absolute top-1 right-1 text-xs">
-                {t('soldOut')}
-              </Badge>
-            )}
-            {!item.is_sold_out && item.menu_item_variants && item.menu_item_variants.length > 0 && (
-              <Badge variant="secondary" className="absolute top-1 right-1 text-xs">
-                <Settings2 className="h-3 w-3 mr-0.5" />
-                {t('hasVariants')}
-              </Badge>
-            )}
-          </button>
-        ))}
+            </button>
+          )
+        })}
         {filteredItems.length === 0 && (
           <div className="col-span-full text-center py-8 text-muted-foreground">
             {t('noItemsFound')}
@@ -551,7 +596,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
       </div>
 
       {/* Cart items */}
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 p-4 transition-all">
         {cart.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <ShoppingCart className="h-12 w-12 mx-auto mb-2 opacity-50" />
@@ -559,8 +604,10 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
           </div>
         ) : (
           <div className="space-y-3">
-            {cart.map(item => (
-              <div key={item.id} className="flex items-center gap-3 bg-background p-3 rounded-lg">
+            {cart.map((item, index, arr) => (
+              <div key={item.id} className={cn("flex items-center gap-3 bg-background p-3 rounded-lg", {
+                // "animate-slide-in-right": index === arr.length - 1
+              })}>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{item.menuItem.name}</p>
                   {item.selectedVariants && item.selectedVariants.length > 0 && (
@@ -602,7 +649,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
               </div>
             ))}
             <div className="flex justify-center pt-3 border-t">
-              <Button className='w-full' variant='secondary' size="lg" onClick={clearCart}>
+              <Button className='w-full' variant='ghost' onClick={clearCart}>
                 <Trash2 className="h-4 w-4 mr-1" />
                 {t('clear')}
               </Button>
@@ -640,7 +687,6 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
       )}
     </div>
   )
-
   // Main content
   const renderMainContent = () => (
     <div className="flex flex-col h-full">
@@ -670,7 +716,9 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
                   "w-full",
                   !selectedTableId && "border-destructive focus:border-destructive"
                 )}>
-                  <UtensilsCrossed className="h-4 w-4 mr-2 shrink-0" />
+                  {selectedTableId ?
+                    <UtensilsCrossed className="h-4 w-4 mr-2 shrink-0" /> :
+                    <AlertTriangle className="h-4 w-4 text-destructive" />}
                   <SelectValue placeholder={t('selectTable')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -681,9 +729,6 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
                   ))}
                 </SelectContent>
               </Select>
-              {!selectedTableId && (
-                <AlertTriangle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />
-              )}
             </div>
           ) : (
             <div className="w-full" />
@@ -1063,28 +1108,28 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
                 ))}
               </div>
             )}
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-      </div>
-
-      {/* Menu items */}
-      <ScrollArea className="flex-1 p-4">
-        <MenuItemsGrid />
-      </ScrollArea>
-
-      {/* Mobile cart button */}
-      {cartItemsCount > 0 && (
-        <div className="p-4 border-t safe-area-pb">
-          <Button
-            className="w-full h-12"
-            onClick={() => setShowCart(true)}
-          >
-            <ShoppingCart className="h-5 w-5 mr-2" />
-            {t('viewCart')} ({cartItemsCount}) - €{cartTotal.toFixed(2)}
-          </Button>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
         </div>
-      )}
-    </div>
+
+        {/* Menu items */}
+        <ScrollArea className="flex-1 p-4">
+          <MenuItemsGrid />
+        </ScrollArea>
+
+        {/* Mobile cart button */}
+        {cartItemsCount > 0 && (
+          <div className="p-4 border-t safe-area-pb">
+            <Button
+              className="w-full h-12"
+              onClick={() => setShowCart(true)}
+            >
+              <ShoppingCart className="h-5 w-5 mr-2" />
+              {t('viewCart')} ({cartItemsCount}) - €{cartTotal.toFixed(2)}
+            </Button>
+          </div>
+        )}
+      </div>
     )
   }
 
@@ -1132,19 +1177,19 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
         </div>
         <div className="text-right text-lg font-bold shrink-0">€{totalPrice.toFixed(2)}</div>
         <DialogFooter className="flex-row items-center justify-end gap-3  py-4 border-t">
-            <Button 
-              variant="outline" 
-              onClick={() => setItemForVariants(null)}
-            >
-              {tCommon('cancel')}
-            </Button>
-            <Button 
-              onClick={handleAddToCartWithVariants} 
-              disabled={!isValid()}
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              {t('addToCart')}
-            </Button>
+          <Button
+            variant="outline"
+            onClick={() => setItemForVariants(null)}
+          >
+            {tCommon('cancel')}
+          </Button>
+          <Button
+            onClick={handleAddToCartWithVariants}
+            disabled={!isValid()}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            {t('addToCart')}
+          </Button>
         </DialogFooter>
       </>
     )
@@ -1213,7 +1258,7 @@ export function CreateOrderDialog({ open, onOpenChange }: CreateOrderDialogProps
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="min-w-[80vw] max-h-[100vh] min-h-[90vh] p-0 gap-0 flex flex-col">
+        <DialogContent className="min-w-[90vw] max-h-[100vh] min-h-[90vh] p-0 gap-0 flex flex-col">
           <DialogHeader className="p-4 border-b shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <UtensilsCrossed className="h-5 w-5" />
