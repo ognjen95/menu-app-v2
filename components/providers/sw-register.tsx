@@ -59,22 +59,37 @@ export function SwRegister({ children }: { children?: React.ReactNode }) {
 
   // Service worker registration
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'production') return
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return
+    // Allow registration in production and Vercel preview deployments
+    const isProduction = process.env.NODE_ENV === 'production'
+    const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')
+    
+    if (!isProduction && !isVercel) {
+      console.log('[PWA] Service worker disabled in local development')
+      return
+    }
+    
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+      console.log('[PWA] Service workers not supported')
+      return
+    }
 
     let mounted = true
 
     const register = async () => {
       try {
+        console.log('[PWA] Attempting to register service worker at', SW_PATH)
         const scope = '/'
         const existing = await navigator.serviceWorker.getRegistration(scope)
         if (existing) {
+          console.log('[PWA] Existing service worker found, updating...')
           await existing.update()
           setIsServiceWorkerReady(true)
           return
         }
-        const registration = await navigator.serviceWorker.register(SW_PATH)
+        console.log('[PWA] Registering new service worker...')
+        const registration = await navigator.serviceWorker.register(SW_PATH, { scope })
         if (mounted) {
+          console.log('[PWA] Service worker registered successfully')
           setIsServiceWorkerReady(true)
           // Listen for updates
           registration.addEventListener('updatefound', () => {
@@ -90,7 +105,15 @@ export function SwRegister({ children }: { children?: React.ReactNode }) {
         }
       } catch (error) {
         if (mounted) {
-          console.error('[PWA] Failed to register service worker', error)
+          console.error('[PWA] Failed to register service worker:', error)
+          // Check if sw.js exists
+          fetch(SW_PATH).then(res => {
+            if (!res.ok) {
+              console.error('[PWA] Service worker file not found at', SW_PATH)
+            }
+          }).catch(() => {
+            console.error('[PWA] Could not fetch service worker file')
+          })
         }
       }
     }

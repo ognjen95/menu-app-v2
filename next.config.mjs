@@ -5,7 +5,8 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 const withPWA = withPWAInit({
   dest: 'public',
-  disable: process.env.NODE_ENV === 'development', // Disable in development
+  // Only disable in local development, enable for Vercel preview and production
+  disable: process.env.NODE_ENV === 'development' && !process.env.VERCEL,
   register: true,
   skipWaiting: true,
   // Exclude app-build-manifest.json from precaching (known App Router issue)
