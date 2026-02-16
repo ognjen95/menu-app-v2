@@ -3,11 +3,17 @@ import withPWAInit from '@ducanh2912/next-pwa';
 
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
+// Log environment for debugging Vercel builds
+console.log('[PWA Config] NODE_ENV:', process.env.NODE_ENV)
+console.log('[PWA Config] Disabling PWA:', process.env.NODE_ENV === 'development')
+
 const withPWA = withPWAInit({
   dest: 'public',
   disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
+  // Enable caching on client-side navigation
+  cacheOnFrontEndNav: true,
   // Workbox options for @ducanh2912/next-pwa
   workboxOptions: {
     disableDevLogs: true,
