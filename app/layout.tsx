@@ -60,15 +60,13 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png' },
-      { url: '/logo.png', sizes: 'any' },
+      { url: '/icon1.png', sizes: '96x96', type: 'image/png' },
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
     ],
     apple: [
-      { url: '/icons/icon-152x152.png', sizes: '152x152' },
-      { url: '/icons/icon-192x192.png', sizes: '192x192' },
+      { url: '/apple-icon.png', sizes: '180x180' },
     ],
-    shortcut: ['/icons/icon-192x192.png'],
+    shortcut: ['/logo.png'],
   },
   manifest: '/manifest.json',
   // PWA theme color (should match manifest.json)
