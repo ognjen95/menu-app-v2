@@ -126,6 +126,10 @@ const { name, phone, notes } = customerInfoRef.current?.getValues() ?? {
 
 Dialog for viewing order status change logs.
 
+### `components/orders-kanban.tsx`
+
+Animated kanban board for active orders. Each status column now uses a CSS grid layout with matching widths, powered by the exported `getKanbanGridTemplate` helper (see `components/orders-kanban.test.ts`).
+
 ## Translations
 
 Uses the following translation namespaces:

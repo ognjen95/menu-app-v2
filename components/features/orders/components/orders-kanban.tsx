@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils'
 import type { OrderStatus, OrderWithRelations } from '@/lib/types'
 import { OrderCard, statusConfig } from './order-card'
 import { motion, staggerContainer, staggerItemScale } from '@/components/ui/animated'
+import { getKanbanGridTemplate } from './orders-kanban-grid'
 
 const ACTIVE_STATUSES: OrderStatus[] = ['placed', 'accepted', 'preparing', 'ready', 'served']
 
@@ -94,7 +95,7 @@ function KanbanColumn({
   const { setNodeRef, isOver } = useDroppable({ id: status })
 
   return (
-    <div className="flex-shrink-0 w-[380px] flex flex-col h-full">
+    <div className="flex flex-col h-full min-w-0">
       <div className="flex items-center gap-2 sticky top-0 bg-background py-2 z-10">
         <div className={cn("h-3 w-3 rounded-full", statusConfig[status].color)} />
         <h2 className="font-semibold">{t(`status.${status}`)}</h2>
@@ -193,6 +194,9 @@ export const OrdersKanban = memo(function OrdersKanban({
       return acc
     }, {} as Record<OrderStatus, OrderWithRelations[]>)
   }, [ordersWithOptimistic])
+
+  const visibleStatuses = useMemo(() => ACTIVE_STATUSES.filter(status => selectedStatuses.has(status)), [selectedStatuses])
+  const gridTemplate = useMemo(() => getKanbanGridTemplate(visibleStatuses.length), [visibleStatuses.length])
 
   // Drag scroll handlers - disabled when dragging a card
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -301,12 +305,13 @@ export const OrdersKanban = memo(function OrdersKanban({
         onMouseLeave={handleMouseLeave}
       >
         <motion.div
-          className="flex gap-4 min-h-[calc(100vh-280px)] pb-4 items-stretch"
+          className="grid gap-4 min-h-[calc(100vh-280px)] pb-4 items-stretch"
+          style={{ gridTemplateColumns: gridTemplate }}
           initial="initial"
           animate="animate"
           variants={staggerContainer}
         >
-          {ACTIVE_STATUSES.filter(s => selectedStatuses.has(s)).map((status, colIndex) => (
+          {visibleStatuses.map((status, colIndex) => (
             <motion.div
               key={status}
               variants={staggerItemScale}

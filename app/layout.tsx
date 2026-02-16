@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     template: "%s | Klopay.app"
   },
   description: "Modern point-of-sale system designed for restaurants. Manage orders, inventory, and payments with ease.",
-  keywords: ["POS", "restaurant", "point of sale", "menu management", "order management", "inventory"],
+  keywords: ["POS", 'qr code menu', 'qr menu', "restaurant", "point of sale", "menu management", "order management", "inventory"],
   authors: [{ name: "Klopay.app" }],
   creator: "Klopay.app",
   publisher: "Klopay.app",
@@ -74,7 +74,7 @@ export const metadata: Metadata = {
   // PWA theme color (should match manifest.json)
   other: {
     'mobile-web-app-capable': 'yes',
-    'msapplication-TileColor': '#3b82f6',
+    'msapplication-TileColor': '#0a0a0a',
     'msapplication-tap-highlight': 'no',
   },
   robots: {
@@ -113,8 +113,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getLocale();
-  const messages = await getMessages();
+  const [locale, messages] = await Promise.all([
+    getLocale(),
+    getMessages()
+  ]);
 
   return (
     <html lang={locale} suppressHydrationWarning>
