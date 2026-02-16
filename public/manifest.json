@@ -3,6 +3,7 @@
   "short_name": "KloPay",
   "description": "Restaurant order management and POS system",
   "start_url": "/dashboard/orders",
+  "id": "/dashboard/orders",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#3b82f6",
@@ -23,7 +24,7 @@
       "purpose": "any"
     },
     {
-      "src": "/icon0.svg",
+      "src": "/icon1.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "maskable any"
