@@ -231,7 +231,7 @@ export function OrderCard({ order, onSelect, onComplete, onCancel }: OrderCardPr
         {/* Expand/Collapse button */}
         {(hasAdditionalInfo || (order.items?.length || 0) > 3) && (
           <Button
-            variant="ghost"
+            variant="secondary"
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
@@ -240,19 +240,24 @@ export function OrderCard({ order, onSelect, onComplete, onCancel }: OrderCardPr
             className="w-full h-6 text-xs text-muted-foreground hover:text-foreground "
           >
             {hasAdditionalInfo && (
-              <Badge variant="outline" className="flex items-center gap-2 text-xs px-1.5 text-amber-500 border-amber-500/50">
+              <Badge variant="outline" className="flex items-center gap-2 text-xs px-1.5 text-amber-500 border-none">
                 <Info className="h-2.5 w-2.5" />
                 {t('hasNotes')}
-                {isExpanded ? (
-                  <>
-                    <ChevronUp className="h-3 w-3 mr-1" />
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="h-3 w-3 mr-1" />
-                  </>
-                )}
               </Badge>
+            )}
+
+
+            {/* <span className="text-xs">
+              {isExpanded ? t('collapse') : t('expand')}
+            </span> */}
+            {isExpanded ? (
+              <>
+                <ChevronUp className="h-4 w-4 font-bold" />
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4 font-bold" />
+              </>
             )}
 
           </Button>
