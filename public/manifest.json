@@ -37,7 +37,7 @@
       "form_factor": "wide"
     },
     {
-      "src": "/hero.png",
+      "src": "/hero-vertical.png",
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow"
