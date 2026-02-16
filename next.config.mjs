@@ -1,17 +1,21 @@
 import createNextIntlPlugin from 'next-intl/plugin';
-import withPWAInit from 'next-pwa';
+import withPWAInit from '@ducanh2912/next-pwa';
 
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 const withPWA = withPWAInit({
   dest: 'public',
-  // Only disable in local development, enable for Vercel preview and production
-  disable: process.env.NODE_ENV === 'development' && !process.env.VERCEL,
+  disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
-  // Exclude app-build-manifest.json from precaching (known App Router issue)
-  buildExcludes: [/app-build-manifest\.json$/],
+  // Workbox options for @ducanh2912/next-pwa
+  workboxOptions: {
+    disableDevLogs: true,
+    // Exclude app-build-manifest.json from precaching
+    exclude: [/app-build-manifest\.json$/],
+  },
   // Cache strategies for different routes
+  extendDefaultRuntimeCaching: true,
   runtimeCaching: [
     // Cache tenant/user info for offline auth (network first with longer cache)
     {
