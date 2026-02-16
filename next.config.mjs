@@ -8,8 +8,42 @@ const withPWA = withPWAInit({
   disable: process.env.NODE_ENV === 'development', // Disable in development
   register: true,
   skipWaiting: true,
+  // Exclude app-build-manifest.json from precaching (known App Router issue)
+  buildExcludes: [/app-build-manifest\.json$/],
   // Cache strategies for different routes
   runtimeCaching: [
+    // Cache tenant/user info for offline auth (network first with longer cache)
+    {
+      urlPattern: /^https?:\/\/.*\/api\/tenant\/.*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'tenant-api-cache',
+        expiration: {
+          maxEntries: 10,
+          maxAgeSeconds: 60 * 60 * 24, // 24 hours
+        },
+        networkTimeoutSeconds: 5,
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
+    // Cache profile/user data for offline access
+    {
+      urlPattern: /^https?:\/\/.*\/api\/profile.*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'profile-api-cache',
+        expiration: {
+          maxEntries: 5,
+          maxAgeSeconds: 60 * 60 * 24, // 24 hours
+        },
+        networkTimeoutSeconds: 5,
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
     // Cache API calls for orders (network first, fallback to cache)
     {
       urlPattern: /^https?:\/\/.*\/api\/orders\/.*/i,

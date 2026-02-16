@@ -4,7 +4,7 @@ import { updateSession } from '@/lib/supabase-middleware'
 // Main domain and allowed subdomains that should NOT be treated as tenant subdomains
 const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'klopay.app'
 const RESERVED_SUBDOMAINS = ['www', 'app', 'api', 'admin', 'dashboard', 'staging', 'dev']
-
+console.log("NODE_ENV", process.env.NODE_ENV)
 /**
  * Extract subdomain from hostname
  * Examples:
@@ -64,6 +64,20 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone()
     const hostname = request.headers.get('host') || ''
     const pathname = url.pathname
+
+    // Allow service worker + manifest + workbox files to bypass middleware
+    if (
+        pathname === '/sw.js' ||
+        pathname === '/manifest.json' ||
+        /^\/workbox-\w+\.js$/.test(pathname)
+    ) {
+        return NextResponse.next()
+    }
+
+    // Allow Next.js internal assets to bypass middleware entirely
+    if (pathname.startsWith('/_next')) {
+        return NextResponse.next()
+    }
     
     // Debug logging (check Vercel Runtime Logs)
     console.log('[Middleware] Host:', hostname, '| Path:', pathname, '| ROOT_DOMAIN:', ROOT_DOMAIN)
@@ -129,7 +143,7 @@ export const config = {
          * - favicon.ico (favicon file)
          * Feel free to modify this pattern to include more paths.
          */
-        '/((?!_next/static|_next/image|favicon.ico|sounds/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp3|wav|ogg)$).*)',
+        '/((?!_next/|favicon.ico|sw\\.js|manifest\.json|workbox-.*\.js|sounds/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp3|wav|ogg)$).*)',
     ],
 }
 

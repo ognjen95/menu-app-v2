@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { redirect } from "next/navigation"
+import { headers } from 'next/headers'
+import { DashboardAuthWrapper } from './dashboard-auth-wrapper'
 
 export const metadata: Metadata = {
     title: "Klopay.app - Dashboard",
@@ -34,5 +36,10 @@ export default async function DashboardLayout({
         return redirect('/onboarding')
     }
 
-    return children;
+    // Wrap with client-side wrapper for offline indicator
+    return (
+        <DashboardAuthWrapper>
+            {children}
+        </DashboardAuthWrapper>
+    )
 }

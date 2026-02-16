@@ -5,6 +5,7 @@ import { Providers } from "@/lib/providers";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getLocale } from 'next-intl/server';
 import { Toaster } from 'sonner';
+import { SwRegister } from '@/components/providers/sw-register'
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -62,18 +63,29 @@ export const metadata: Metadata = {
     icon: [
       { url: '/icon1.png', sizes: '96x96', type: 'image/png' },
       { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: '/favicon.ico', sizes: 'any', type: 'image/x-icon' },
     ],
     apple: [
       { url: '/apple-icon.png', sizes: '180x180' },
+      { url: '/icon1.png', sizes: '96x96' },
     ],
-    shortcut: ['/logo.png'],
+    shortcut: [
+      '/logo.png',
+      '/favicon.ico',
+    ],
+    other: [
+      { rel: 'mask-icon', url: '/icon0.svg', color: '#0a0a0a' },
+    ],
   },
   manifest: '/manifest.json',
+  themeColor: '#0a0a0a',
   // PWA theme color (should match manifest.json)
   other: {
     'mobile-web-app-capable': 'yes',
     'msapplication-TileColor': '#0a0a0a',
     'msapplication-tap-highlight': 'no',
+    'msapplication-config': '/icons/browserconfig.xml',
+    'apple-mobile-web-app-title': 'KloPay',
   },
   robots: {
     index: true,
@@ -120,8 +132,10 @@ export default async function RootLayout({
     <html lang={locale} suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
         <NextIntlClientProvider messages={messages}>
-          <Providers>{children}</Providers>
-          <Toaster position="top-right" richColors />
+          <SwRegister>
+            <Providers>{children}</Providers>
+            <Toaster position="top-right" richColors />
+          </SwRegister>
         </NextIntlClientProvider>
       </body>
     </html>

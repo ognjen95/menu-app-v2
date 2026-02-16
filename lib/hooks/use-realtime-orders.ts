@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase-client'
 import { RealtimeChannel } from '@supabase/supabase-js'
+import { useOfflineStatus } from '@/components/providers/sw-register'
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
 
@@ -32,6 +33,7 @@ export function useRealtimeOrders(
   locationId?: string
 ): UseRealtimeOrdersReturn {
   const queryClient = useQueryClient()
+  const { isOffline } = useOfflineStatus()
   const [status, setStatus] = useState<ConnectionStatus>('disconnected')
   const [newOrders, setNewOrders] = useState<any[]>([])
   const channelRef = useRef<RealtimeChannel | null>(null)
@@ -57,6 +59,12 @@ export function useRealtimeOrders(
   const connect = useCallback(() => {
     
     if (!enabledRef.current) {
+      setStatus('disconnected')
+      return
+    }
+
+    // Don't try to connect if offline
+    if (isOffline) {
       setStatus('disconnected')
       return
     }
@@ -131,7 +139,7 @@ export function useRealtimeOrders(
     })
 
     channelRef.current = channel
-  }, [cleanup, queryClient])
+  }, [cleanup, queryClient, isOffline])
 
   const reconnect = useCallback(() => {
     connect()
@@ -160,6 +168,11 @@ export function useRealtimeOrders(
   const maxReconnectAttempts = 5
   
   useEffect(() => {
+    // Don't try to reconnect if offline
+    if (isOffline) {
+      return
+    }
+
     if (status === 'error' && enabledRef.current) {
       const attempt = reconnectAttemptRef.current
       if (attempt < maxReconnectAttempts) {
@@ -180,13 +193,16 @@ export function useRealtimeOrders(
       // Reset attempt counter on successful connection
       reconnectAttemptRef.current = 0
     }
-  }, [status, connect])
+  }, [status, connect, isOffline])
 
   // Periodic health check - verify connection every 30 seconds
   useEffect(() => {
-    if (!enabled) return
+    if (!enabled || isOffline) return
     
     const healthCheckInterval = setInterval(() => {
+      // Skip health check if offline
+      if (isOffline) return
+
       const channel = channelRef.current
       if (channel) {
         // Check if channel is still subscribed
@@ -205,7 +221,24 @@ export function useRealtimeOrders(
     }, 30000) // Check every 30 seconds
     
     return () => clearInterval(healthCheckInterval)
-  }, [enabled, connect, status])
+  }, [enabled, connect, status, isOffline])
+
+  // Handle offline/online transitions
+  useEffect(() => {
+    if (isOffline) {
+      // Going offline - disconnect and cleanup
+      if (channelRef.current) {
+        console.log('[Realtime] Going offline - disconnecting')
+        cleanup()
+        setStatus('disconnected')
+      }
+    } else if (enabled && status === 'disconnected') {
+      // Coming back online - reconnect if enabled
+      console.log('[Realtime] Back online - reconnecting')
+      reconnectAttemptRef.current = 0 // Reset attempts
+      connect()
+    }
+  }, [isOffline, enabled, status, cleanup, connect])
 
   // Cleanup on unmount
   useEffect(() => {
