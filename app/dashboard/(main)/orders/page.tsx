@@ -35,9 +35,9 @@ import {
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { OrderStatus, OrderWithRelations, Location } from '@/lib/types'
-import { OrderCard, statusConfig, typeIcons, formatTimeElapsed, getTimerColor } from '@/features/orders/components/order-card'
-import { OrdersKanban } from '@/features/orders/components/orders-kanban'
-import { NewOrdersModal } from '@/features/orders/components/new-orders-modal'
+import { statusConfig, typeIcons, formatTimeElapsed, getTimerColor } from '@/features/orders/orders-list/components/order-card'
+import { OrdersKanban } from '@/features/orders/orders-list/components/orders-kanban'
+import { NewOrdersModal } from '@/features/orders/orders-list/components/new-orders-modal'
 import { useUpdateOrderStatus } from '@/lib/hooks/use-orders'
 import { useRealtimeOrders } from '@/lib/hooks/use-realtime-orders'
 import { playNotificationSound, unlockAudio } from '@/lib/utils/notification-sound'
@@ -61,8 +61,8 @@ type SortColumn = 'type' | 'orderNumber' | 'status' | 'items' | 'total' | 'time'
 type SortDirection = 'asc' | 'desc'
 
 // Lazy load dialogs
-const OrderDetailDialog = dynamic(() => import('@/features/orders/OrderDetailDialog').then(mod => ({ default: mod.OrderDetailDialog })), { ssr: false })
-const CreateOrderDialog = dynamic(() => import('@/features/orders/create-order-dialog').then(mod => ({ default: mod.CreateOrderDialog })), { ssr: false })
+const OrderDetailDialog = dynamic(() => import('@/features/orders/orders-list/components/OrderDetailDialog').then(mod => ({ default: mod.OrderDetailDialog })), { ssr: false })
+const CreateOrderDialog = dynamic(() => import('@/features/orders/create-order/containers/create-order-container').then(mod => ({ default: mod.CreateOrderContainer })), { ssr: false })
 
 import { motion } from '@/components/ui/animated'
 import { OrdersGridSkeleton, KanbanLayoutSkeleton } from '@/components/ui/skeletons'
@@ -145,7 +145,7 @@ export default function OrdersPage() {
     })
   }, [t])
 
-  
+
   // Handle viewing an order from the new orders modal
   const handleViewNewOrder = useCallback((order: OrderWithRelations) => {
     // Remove from unchecked list and check if we should close modal
@@ -177,21 +177,21 @@ export default function OrdersPage() {
   const [reconnectAttempts, setReconnectAttempts] = useState(0)
   const [isReconnecting, setIsReconnecting] = useState(false)
   const maxReconnectAttempts = 3
-  
+
   useEffect(() => {
     if (!liveEnabled) {
       setReconnectAttempts(0)
       setIsReconnecting(false)
       return
     }
-    
+
     // Reset attempts when successfully connected
     if (isLive) {
       setReconnectAttempts(0)
       setIsReconnecting(false)
       return
     }
-    
+
     // Auto-reconnect on error or disconnected (up to max attempts)
     if ((realtimeStatus === 'error' || realtimeStatus === 'disconnected') && reconnectAttempts < maxReconnectAttempts) {
       setIsReconnecting(true)
@@ -200,7 +200,7 @@ export default function OrdersPage() {
         setReconnectAttempts(prev => prev + 1)
         reconnect()
       }, 2000 * (reconnectAttempts + 1)) // Exponential backoff: 2s, 4s, 6s
-      
+
       return () => clearTimeout(timeout)
     } else if (reconnectAttempts >= maxReconnectAttempts) {
       setIsReconnecting(false)
@@ -214,13 +214,13 @@ export default function OrdersPage() {
   // Cleanup stale pending order IDs after 10 seconds (handles replication lag / filter mismatches)
   useEffect(() => {
     if (pendingOrderIds.length === 0) return
-    
+
     const cleanupInterval = setInterval(() => {
       const now = Date.now()
       const staleThreshold = 10000 // 10 seconds
       setPendingOrderIds(prev => prev.filter(p => now - p.addedAt < staleThreshold))
     }, 2000)
-    
+
     return () => clearInterval(cleanupInterval)
   }, [pendingOrderIds.length])
 
@@ -234,10 +234,10 @@ export default function OrdersPage() {
         })
         setPendingOrderIds(prev => [...prev, { id: order.id, addedAt: Date.now() }])
       })
-      
+
       // Show the modal (sound loop is handled by modal)
       setShowNewOrdersModal(true)
-      
+
       // Clear the processed orders
       clearNewOrders()
     }
@@ -290,7 +290,7 @@ export default function OrdersPage() {
   const sortedOrders = useMemo(() => {
     const sorted = [...filteredOrders].sort((a, b) => {
       let comparison = 0
-      
+
       switch (sortColumn) {
         case 'type':
           comparison = (a.type || '').localeCompare(b.type || '')
@@ -312,7 +312,7 @@ export default function OrdersPage() {
           comparison = new Date(a.placed_at || 0).getTime() - new Date(b.placed_at || 0).getTime()
           break
       }
-      
+
       return sortDirection === 'asc' ? comparison : -comparison
     })
     return sorted
@@ -329,7 +329,7 @@ export default function OrdersPage() {
 
   const SortIcon = ({ column }: { column: SortColumn }) => {
     if (sortColumn !== column) return <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />
-    return sortDirection === 'asc' 
+    return sortDirection === 'asc'
       ? <ArrowUp className="ml-1 h-3 w-3" />
       : <ArrowDown className="ml-1 h-3 w-3" />
   }
@@ -380,10 +380,10 @@ export default function OrdersPage() {
   // Handle accept all orders from modal
   const handleAcceptAllOrders = useCallback(async () => {
     if (uncheckedOrders.length === 0) return
-    
+
     setIsAcceptingAll(true)
     const results: { id: string; success: boolean }[] = []
-    
+
     // Process all orders, don't stop on failure
     for (const order of uncheckedOrders) {
       try {
@@ -397,7 +397,7 @@ export default function OrdersPage() {
         })
       }
     }
-    
+
     // Remove successfully accepted orders from unchecked
     const successfulIds = results.filter(r => r.success).map(r => r.id)
     setUncheckedOrders(prev => {
@@ -407,7 +407,7 @@ export default function OrdersPage() {
       }
       return updated
     })
-    
+
     // Show success message for accepted orders
     const successCount = successfulIds.length
     const failCount = results.length - successCount
@@ -416,7 +416,7 @@ export default function OrdersPage() {
         description: `${successCount} ${successCount === 1 ? 'order' : 'orders'} accepted${failCount > 0 ? `, ${failCount} failed` : ''}`,
       })
     }
-    
+
     setIsAcceptingAll(false)
   }, [uncheckedOrders, updateOrderStatus, t])
 
@@ -466,7 +466,7 @@ export default function OrdersPage() {
             <BellRing className="h-5 w-5 animate-pulse" />
             <div>
               <AlertTitle>
-                {!audioUnlocked 
+                {!audioUnlocked
                   ? t('enableSoundNotifications') || 'Enable Sound Notifications'
                   : t('soundDisabledTitle') || 'Sound Notifications Disabled'
                 }
@@ -491,9 +491,9 @@ export default function OrdersPage() {
                 {t('turnOnSound') || 'Turn On'}
               </Button>
             )}
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setSoundAlertDismissed(true)}
               className="shrink-0"
             >
@@ -505,13 +505,13 @@ export default function OrdersPage() {
 
       {/* Live connection status alert - hide when successfully connected */}
       {!liveAlertDismissed && !(liveEnabled && isLive) && (
-        <Alert 
+        <Alert
           variant={
-            !liveEnabled ? 'muted' 
-            : isLive ? 'success' 
-            : (realtimeStatus === 'connecting' || isReconnecting) ? 'warning' 
-            : realtimeStatus === 'error' ? 'destructive' 
-            : 'muted'
+            !liveEnabled ? 'muted'
+              : isLive ? 'success'
+                : (realtimeStatus === 'connecting' || isReconnecting) ? 'warning'
+                  : realtimeStatus === 'error' ? 'destructive'
+                    : 'muted'
           }
           className="hidden md:flex items-center justify-between"
         >
@@ -531,17 +531,17 @@ export default function OrdersPage() {
               <AlertTitle>
                 {!liveEnabled
                   ? t('liveOff') || 'Real-time updates disabled'
-                  : isLive 
+                  : isLive
                     ? t('liveConnected') || 'Connected - Real-time updates active'
                     : isReconnecting
-                    ? `${t('reconnecting') || 'Reconnecting'}... (${reconnectAttempts}/${maxReconnectAttempts})`
-                    : realtimeStatus === 'connecting'
-                    ? t('liveConnecting') || 'Connecting...'
-                    : realtimeStatus === 'error' && reconnectAttempts >= maxReconnectAttempts
-                    ? t('liveErrorMaxRetries') || 'Connection failed - Manual retry required'
-                    : realtimeStatus === 'error'
-                    ? t('liveError') || 'Connection error'
-                    : t('liveDisconnected') || 'Disconnected'
+                      ? `${t('reconnecting') || 'Reconnecting'}... (${reconnectAttempts}/${maxReconnectAttempts})`
+                      : realtimeStatus === 'connecting'
+                        ? t('liveConnecting') || 'Connecting...'
+                        : realtimeStatus === 'error' && reconnectAttempts >= maxReconnectAttempts
+                          ? t('liveErrorMaxRetries') || 'Connection failed - Manual retry required'
+                          : realtimeStatus === 'error'
+                            ? t('liveError') || 'Connection error'
+                            : t('liveDisconnected') || 'Disconnected'
                 }
               </AlertTitle>
               {liveEnabled && (!audioUnlocked || !soundEnabled) && isLive && (
@@ -558,13 +558,13 @@ export default function OrdersPage() {
           </div>
           <div className="flex items-center gap-2 ml-4">
             {liveEnabled && realtimeStatus === 'error' && !isReconnecting && (
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   setReconnectAttempts(0)
                   reconnect()
-                }} 
+                }}
                 className="gap-1.5"
               >
                 <RefreshCw className="h-3 w-3" />
@@ -577,9 +577,9 @@ export default function OrdersPage() {
                 {t('enableLive') || 'Enable'}
               </Button>
             )}
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setLiveAlertDismissed(true)}
               className="shrink-0"
             >
@@ -668,12 +668,12 @@ export default function OrdersPage() {
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                {liveEnabled 
-                  ? isLive 
+                {liveEnabled
+                  ? isLive
                     ? t('liveConnected') || 'Connected - Real-time updates active'
                     : realtimeStatus === 'connecting'
-                    ? t('liveConnecting') || 'Connecting...'
-                    : t('liveError') || 'Connection error - Click to retry'
+                      ? t('liveConnecting') || 'Connecting...'
+                      : t('liveError') || 'Connection error - Click to retry'
                   : t('liveOff') || 'Enable real-time updates'
                 }
               </TooltipContent>

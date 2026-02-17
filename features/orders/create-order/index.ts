@@ -24,3 +24,6 @@ export { OrderTypeSelector, OrderTypeSelectorMobile } from './components/order-t
 export { CategoryFilter } from './components/category-filter'
 export { VariantSelectionDialog } from './components/variant-selection-dialog'
 export { LocationSelect, TableSelect, StaffSelect } from './components/order-setup-selects'
+export { DesktopMenuContent } from './components/desktop-menu-content'
+export { MobileSetupStep } from './components/mobile-setup-step'
+export { MobileMenuStep } from './components/mobile-menu-step'

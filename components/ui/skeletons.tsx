@@ -206,7 +206,7 @@ export function CategoriesSidebarSkeleton({ count = 5 }: { count?: number }) {
 // Kanban Column Skeleton
 export function KanbanColumnSkeleton() {
   return (
-    <div className="flex-shrink-0 w-[380px] space-y-4">
+    <div className="flex-shrink-0 space-y-4">
       <div className="flex items-center gap-2 sticky top-0 bg-background py-2 z-10">
         <Skeleton className="h-3 w-3 rounded-full" />
         <Skeleton className="h-5 w-24" />
@@ -222,10 +222,10 @@ export function KanbanColumnSkeleton() {
 }
 
 // Kanban Layout Skeleton
-export function KanbanLayoutSkeleton({ columns = 4 }: { columns?: number }) {
+export function KanbanLayoutSkeleton({ columns = 5 }: { columns?: number }) {
   return (
     <motion.div
-      className="flex gap-4 min-h-[calc(100vh-280px)] pb-4"
+      className="grid grid-cols-5 gap-4 min-h-[calc(100vh-280px)] pb-4"
       initial="initial"
       animate="animate"
       variants={staggerContainer}
