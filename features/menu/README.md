@@ -30,7 +30,7 @@ interface VariantManagerProps {
 #### Usage
 
 ```tsx
-import { VariantManager } from '@/components/features/menu/VariantManager'
+import { VariantManager } from '@/features/menu/VariantManager'
 
 // Inside the item edit dialog
 {editingItem && (

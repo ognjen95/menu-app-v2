@@ -139,7 +139,7 @@ All features MUST follow these requirements:
 
 #### 1. Feature Documentation
 - **Every feature folder** must have a `README.md` file
-- Location: `/components/features/[feature-name]/README.md`
+- Location: `/features/[feature-name]/README.md`
 - **Must be updated** every time the feature is modified
 - Includes: Purpose, components, usage examples, props/API, dependencies
 
@@ -160,7 +160,7 @@ When working on features:
 
 **📚 See `/FEATURE_GUIDELINES.md` for comprehensive documentation and testing guidelines.**
 
-**Example:** `/components/features/auth/README.md`
+**Example:** `/features/auth/README.md`
 
 ## 🎨 Modern UI & Theme System
 

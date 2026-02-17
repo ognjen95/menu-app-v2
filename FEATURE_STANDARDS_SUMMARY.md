@@ -6,9 +6,17 @@ New **MANDATORY requirements** for all feature development to ensure code qualit
 
 ---
 
-## 🎯 Two Critical Rules
+## 🎯 Three Critical Rules
 
-### Rule 1: Feature Documentation (README.md)
+### Rule 1: DDD Architecture (REQUIRED)
+Every feature MUST follow Domain-Driven Design structure:
+- **`types.ts`** - Domain types and entities
+- **`services/`** - hooks.ts, actions.ts, queries.ts
+- **`domain/`** - Business logic (when applicable)
+- **`containers/`** - Smart components with logic
+- **`components/`** - Dumb/presentational components
+
+### Rule 2: Feature Documentation (README.md)
 Every feature folder MUST have a `README.md` that:
 - Explains what the feature does
 - Lists all components
@@ -16,7 +24,7 @@ Every feature folder MUST have a `README.md` that:
 - Documents props/API
 - **MUST be updated** every time the feature is modified
 
-### Rule 2: Unit Tests
+### Rule 3: Unit Tests
 Every feature component MUST have unit tests that:
 - Test rendering, interactions, edge cases
 - Are located adjacent to component files (`.test.tsx`)
@@ -34,7 +42,7 @@ Every feature component MUST have unit tests that:
   - Testing guidelines
   - Workflow instructions
 
-- **`/components/features/auth/README.md`** - Example feature documentation
+- **`/features/auth/README.md`** - Example feature documentation
   - Shows proper documentation format
   - Real example for the auth feature
 
@@ -113,18 +121,39 @@ When creating or modifying features:
 
 ---
 
-## 📊 Feature Structure Example
+## 📊 Feature Structure Example (DDD)
 
 ```
-/components/features/your-feature/
+/features/your-feature/
 ├── README.md                      ✅ REQUIRED - Feature documentation
-├── containers/
-│   ├── container.tsx              Feature container
+├── types.ts                       ✅ REQUIRED - Domain types
+│
+├── domain/                        🔶 Business logic (when applicable)
+│   ├── validators.ts              Pure validation functions
+│   └── rules.ts                   Business rules
+│
+├── services/                      🔷 Application layer
+│   ├── hooks.ts                   React Query hooks ('use client')
+│   ├── actions.ts                 Server actions ('use server')
+│   └── queries.ts                 Server-side queries (RSC)
+│
+├── containers/                    🟢 Smart components
+│   ├── container.tsx              Orchestrates logic + state
 │   └── container.test.tsx         ✅ REQUIRED - Container tests
-└── components/
-    ├── component.tsx              UI component
+│
+└── components/                    🟢 Dumb components
+    ├── component.tsx              Pure UI, props only
     └── component.test.tsx         ✅ REQUIRED - Component tests
 ```
+
+### Layer Responsibilities
+
+| Layer | Folder | Responsibility |
+|-------|--------|----------------|
+| **Domain** | `domain/` | Pure business logic, validation, rules |
+| **Application** | `services/` | Data fetching, mutations, orchestration |
+| **Presentation** | `containers/` | State management, passes props |
+| **Presentation** | `components/` | Pure rendering, no logic |
 
 ---
 
@@ -132,6 +161,9 @@ When creating or modifying features:
 
 Before marking work as complete:
 
+- [ ] **DDD Structure** - types.ts, services/, containers/, components/
+- [ ] **Domain layer** - Business logic extracted (when applicable)
+- [ ] **Services layer** - hooks.ts, actions.ts, queries.ts organized
 - [ ] Feature code implemented/modified
 - [ ] `README.md` exists in feature folder
 - [ ] `README.md` is up to date
@@ -153,19 +185,22 @@ These rules are now embedded in:
 4. **README** - Visible in project overview
 
 AI agents MUST:
+- ✅ Follow DDD architecture (types, services, containers, components)
+- ✅ Extract business logic to `domain/` when applicable
+- ✅ Organize data fetching in `services/` (hooks, actions, queries)
 - ✅ Create README.md for every feature
 - ✅ Update README.md when modifying features
 - ✅ Create tests for every component
 - ✅ Update tests when modifying components
 - ✅ Never skip documentation or tests
-- ✅ Never claim work is complete without docs and tests
+- ✅ Never claim work is complete without proper architecture, docs and tests
 
 ---
 
 ## 📚 Documentation References
 
 - **`/FEATURE_GUIDELINES.md`** - Full guidelines
-- **`/components/features/auth/README.md`** - Example
+- **`/features/auth/README.md`** - Example
 - **`/README.md`** - Project overview with standards
 - **`.agents/skills/feature-documentation-testing/SKILL.md`** - AI agent skill
 

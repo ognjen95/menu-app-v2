@@ -14,7 +14,7 @@ Every feature subfolder MUST have a `README.md` file.
 
 **Location:**
 ```
-/components/features/[feature-name]/README.md
+/features/[feature-name]/README.md
 ```
 
 **Required Content:**
@@ -38,7 +38,7 @@ Every feature component MUST have unit tests.
 
 **Location:**
 ```
-/components/features/[feature-name]/containers/component-name.test.tsx
+/features/[feature-name]/containers/component-name.test.tsx
 ```
 
 **Required Test Coverage:**
@@ -91,18 +91,156 @@ Every feature component MUST have unit tests.
 
 ---
 
-## 📁 Feature Structure Template
+## 📁 Feature Structure Template (DDD Architecture)
 
 ```
-/components/features/[feature-name]/
+/features/[feature-name]/
 ├── README.md                      # ✅ REQUIRED - Feature documentation
-├── containers/
-│   ├── feature-container.tsx      # Container component
+├── types.ts                       # ✅ REQUIRED - Domain types & entities
+│
+├── domain/                        # 🔶 DOMAIN LAYER (when applicable)
+│   ├── validators.ts              # Business validation rules
+│   └── rules.ts                   # Domain business logic
+│
+├── services/                      # 🔷 APPLICATION LAYER
+│   ├── queries.ts                 # Server-side data fetching (RSC)
+│   ├── actions.ts                 # Server actions ('use server')
+│   └── hooks.ts                   # Client hooks (React Query)
+│
+├── containers/                    # 🟢 PRESENTATION LAYER - Smart components
+│   ├── feature-container.tsx
 │   └── feature-container.test.tsx # ✅ REQUIRED - Unit tests
-└── components/
+│
+└── components/                    # 🟢 PRESENTATION LAYER - Dumb components
     ├── sub-component.tsx
     └── sub-component.test.tsx     # ✅ REQUIRED - Unit tests
 ```
+
+---
+
+## 🏗️ Domain-Driven Design (DDD) Architecture
+
+### Layer Responsibilities
+
+| Layer | Folder | Responsibility | Framework |
+|-------|--------|----------------|----------|
+| **Domain** | `domain/` | Business rules, validation, pure logic | None (pure TS) |
+| **Application** | `services/` | Orchestrates domain + infrastructure | React Query, Server Actions |
+| **Presentation** | `containers/` | State coordination, passes props | React |
+| **Presentation** | `components/` | Pure UI, receives props only | React |
+
+### Domain Layer (`domain/`) - When Applicable
+
+Use for features with complex business logic.
+
+**Rules:**
+- ✅ Pure functions, no side effects
+- ✅ Framework agnostic (no React, no Next.js imports)
+- ✅ Can be unit tested without mocking
+- ✅ Contains validation, calculations, business rules
+
+**Example - `domain/validators.ts`:**
+```typescript
+// Pure validation - no external dependencies
+export function validateOrderTotal(items: OrderItem[]): ValidationResult {
+  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  if (total <= 0) return { valid: false, error: 'Order must have positive total' }
+  if (total > 10000) return { valid: false, error: 'Order exceeds maximum amount' }
+  return { valid: true }
+}
+
+export function canCancelOrder(order: Order): boolean {
+  return order.status !== 'completed' && order.status !== 'cancelled'
+}
+```
+
+### Services Layer (`services/`)
+
+Orchestrates data fetching and mutations.
+
+**`services/queries.ts`** - Server-side data fetching for RSC:
+```typescript
+// Server Component queries
+import { createServerSupabaseClient } from '@/lib/supabase-server'
+
+export async function getOrders(locationId: string) {
+  const supabase = await createServerSupabaseClient()
+  const { data } = await supabase.from('orders').select('*').eq('location_id', locationId)
+  return data
+}
+```
+
+**`services/actions.ts`** - Server Actions:
+```typescript
+'use server'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { validateOrderTotal } from '../domain/validators'
+
+export async function createOrder(input: CreateOrderInput) {
+  const validation = validateOrderTotal(input.items)
+  if (!validation.valid) throw new Error(validation.error)
+  
+  const supabase = await createServerSupabaseClient()
+  // ... create order
+}
+```
+
+**`services/hooks.ts`** - Client-side React Query hooks:
+```typescript
+'use client'
+import { useQuery, useMutation } from '@tanstack/react-query'
+import { apiGet, apiPost } from '@/lib/api'
+
+export function useOrders(locationId: string) {
+  return useQuery({
+    queryKey: ['orders', locationId],
+    queryFn: () => apiGet('/orders', { location_id: locationId }),
+  })
+}
+
+export function useCreateOrder() {
+  return useMutation({
+    mutationFn: (input) => apiPost('/orders', input),
+  })
+}
+```
+
+### Containers vs Components
+
+**Containers (`containers/`)** - Smart components:
+- Use hooks from `services/hooks.ts`
+- Manage local UI state
+- Pass data to components
+- Handle user action callbacks
+
+**Components (`components/`)** - Dumb/Presentational:
+- Receive ALL data via props
+- No data fetching
+- No business logic
+- Pure rendering
+- Easy to test and reuse
+
+### When to Use Domain Layer
+
+✅ **Use `domain/` when:**
+- Feature has complex validation rules
+- Business logic that could change independently
+- Calculations that need unit testing
+- Rules shared across multiple components
+
+❌ **Skip `domain/` when:**
+- Simple CRUD without business rules
+- Validation is trivial (e.g., required fields only)
+- No complex calculations
+
+### Migration for Existing Features
+
+When modifying existing features:
+1. Keep backward compatibility
+2. Extract logic incrementally
+3. Add `services/` folder for new code
+4. Gradually move logic from containers to services
+5. Document changes in README.md
 
 ---
 
@@ -118,18 +256,18 @@ Brief description of what this feature does and why it exists.
 
 ### Container Components
 - **`ComponentName`** - Description and responsibility
-  - Location: `/components/features/[feature]/containers/component-name.tsx`
+  - Location: `/features/[feature]/containers/component-name.tsx`
   - Purpose: What it handles
 
 ### UI Components
 - **`UIComponentName`** - Description
-  - Location: `/components/features/[feature]/components/component-name.tsx`
+  - Location: `/features/[feature]/components/component-name.tsx`
   - Purpose: What it displays
 
 ## Usage
 
 \`\`\`tsx
-import { ComponentName } from '@/components/features/[feature]/containers/component-name'
+import { ComponentName } from '@/features/[feature]/containers/component-name'
 
 function Page() {
   return <ComponentName prop1="value" />
@@ -146,6 +284,17 @@ interface ComponentNameProps {
   onAction: () => void   // Callback description
 }
 \`\`\`
+
+## Architecture
+
+### Domain Layer
+- `domain/validators.ts` - Business validation rules
+- `domain/rules.ts` - Business logic functions
+
+### Services Layer
+- `services/hooks.ts` - React Query hooks
+- `services/actions.ts` - Server actions
+- `services/queries.ts` - Server-side queries
 
 ## Dependencies
 - `@tanstack/react-query` - For data fetching
@@ -255,7 +404,7 @@ describe('ComponentName', () => {
 ### Example 1: Auth Feature
 
 ```
-/components/features/auth/
+/features/auth/
 ├── README.md                              # Explains auth feature
 ├── containers/
 │   ├── login-form.tsx                     # Login container
@@ -272,7 +421,7 @@ describe('ComponentName', () => {
 ### Example 2: Dashboard Feature
 
 ```
-/components/features/dashboard/
+/features/dashboard/
 ├── README.md                              # Explains dashboard feature
 ├── containers/
 │   ├── dashboard-stats.tsx
@@ -335,6 +484,9 @@ import '@testing-library/jest-dom'
 Before marking feature work as complete:
 
 - [ ] Feature code is implemented
+- [ ] **DDD Structure** - types.ts, services/, containers/, components/
+- [ ] **Domain layer** - Extracted business logic (when applicable)
+- [ ] **Services layer** - hooks.ts, actions.ts, queries.ts organized
 - [ ] `README.md` exists in feature folder
 - [ ] Documentation includes all required sections
 - [ ] Usage examples are provided

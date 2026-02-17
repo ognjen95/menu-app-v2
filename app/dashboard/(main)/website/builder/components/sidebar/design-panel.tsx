@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { motion, staggerContainer, staggerItemScale } from '@/components/ui/animated'
-import { ImageUpload } from '@/components/features/website-builder/BlockEditorComponents'
+import { ImageUpload } from '@/features/website-builder/BlockEditorComponents'
 import { THEME_PRESETS, FONT_OPTIONS } from '@/lib/constants/website'
 
 type Website = {

@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 import dynamic from 'next/dynamic'
 import { unstable_noStore as noStore } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
-import { WebsiteNavbar } from '@/components/features/public-menu/website-navbar'
+import { WebsiteNavbar } from '@/features/public-menu/website-navbar'
 import { WebsiteBlocksContent } from './components/website-blocks-content'
 import { WebsiteBlocksSkeleton } from './components/website-blocks-skeleton'
 import { WebsiteFooter } from './components/website-footer'
@@ -13,7 +13,7 @@ import { getWebsiteBySubdomain, supabase } from './utils'
 
 // Lazy load PreviewSync - only needed in preview mode
 const PreviewSync = dynamic(
-  () => import('@/components/features/website-builder/PreviewSync').then(mod => mod.PreviewSync),
+  () => import('@/features/website-builder/PreviewSync').then(mod => mod.PreviewSync),
   { ssr: false }
 )
 

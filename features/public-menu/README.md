@@ -17,7 +17,7 @@ The main public menu component that displays:
 ## Usage
 
 ```tsx
-import { PublicMenuView } from '@/components/features/public-menu/public-menu-view'
+import { PublicMenuView } from '@/features/public-menu/public-menu-view'
 
 <PublicMenuView
   tenant={tenant}
@@ -100,7 +100,7 @@ Renders website builder blocks for the public site. Supports multiple block type
 ### Usage
 
 ```tsx
-import { BlockRenderer, Location } from '@/components/features/public-menu/block-renderer'
+import { BlockRenderer, Location } from '@/features/public-menu/block-renderer'
 
 <BlockRenderer
   block={block}

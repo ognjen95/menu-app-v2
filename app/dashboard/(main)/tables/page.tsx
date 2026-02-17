@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { getTablesPageData, TablesPageContainer } from '@/components/features/tables'
+import { getTablesPageData, TablesPageContainer } from '@/features/tables'
 import { TablesGridSkeleton } from '@/components/ui/skeletons'
 
 export default async function TablesPage() {

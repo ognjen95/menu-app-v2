@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { BlockRenderer } from '@/components/features/public-menu/block-renderer'
+import { BlockRenderer } from '@/features/public-menu/block-renderer'
 import type { Translation } from '@/lib/types'
 import { supabase } from '../utils'
 

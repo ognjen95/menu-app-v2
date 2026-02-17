@@ -34,7 +34,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
-import { TranslationEditor } from '@/components/features/translations/translation-editor'
+import { TranslationEditor } from '@/features/translations/translation-editor'
 import { Plus, Trash2, Edit, Loader2, Tag, Settings, Languages } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'

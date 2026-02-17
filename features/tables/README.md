@@ -29,7 +29,7 @@ tables/
 ### Server Page (SSR + Streaming)
 ```tsx
 // app/dashboard/tables/page.tsx
-import { getTablesPageData, TablesPageContainer } from '@/components/features/tables'
+import { getTablesPageData, TablesPageContainer } from '@/features/tables'
 
 export default async function TablesPage() {
   const initialData = await getTablesPageData()
@@ -44,7 +44,7 @@ import {
   useTables,
   useQrCodes,
   useGenerateQrCode,
-} from '@/components/features/tables'
+} from '@/features/tables'
 ```
 
 ## Services

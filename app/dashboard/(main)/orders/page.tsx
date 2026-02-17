@@ -35,9 +35,9 @@ import {
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { OrderStatus, OrderWithRelations, Location } from '@/lib/types'
-import { OrderCard, statusConfig, typeIcons, formatTimeElapsed, getTimerColor } from '@/components/features/orders/components/order-card'
-import { OrdersKanban } from '@/components/features/orders/components/orders-kanban'
-import { NewOrdersModal } from '@/components/features/orders/components/new-orders-modal'
+import { OrderCard, statusConfig, typeIcons, formatTimeElapsed, getTimerColor } from '@/features/orders/components/order-card'
+import { OrdersKanban } from '@/features/orders/components/orders-kanban'
+import { NewOrdersModal } from '@/features/orders/components/new-orders-modal'
 import { useUpdateOrderStatus } from '@/lib/hooks/use-orders'
 import { useRealtimeOrders } from '@/lib/hooks/use-realtime-orders'
 import { playNotificationSound, unlockAudio } from '@/lib/utils/notification-sound'
@@ -61,8 +61,8 @@ type SortColumn = 'type' | 'orderNumber' | 'status' | 'items' | 'total' | 'time'
 type SortDirection = 'asc' | 'desc'
 
 // Lazy load dialogs
-const OrderDetailDialog = dynamic(() => import('@/components/features/orders/OrderDetailDialog').then(mod => ({ default: mod.OrderDetailDialog })), { ssr: false })
-const CreateOrderDialog = dynamic(() => import('@/components/features/orders/create-order-dialog').then(mod => ({ default: mod.CreateOrderDialog })), { ssr: false })
+const OrderDetailDialog = dynamic(() => import('@/features/orders/OrderDetailDialog').then(mod => ({ default: mod.OrderDetailDialog })), { ssr: false })
+const CreateOrderDialog = dynamic(() => import('@/features/orders/create-order-dialog').then(mod => ({ default: mod.CreateOrderDialog })), { ssr: false })
 
 import { motion } from '@/components/ui/animated'
 import { OrdersGridSkeleton, KanbanLayoutSkeleton } from '@/components/ui/skeletons'

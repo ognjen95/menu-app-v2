@@ -1,4 +1,4 @@
-import type { TranslationField } from '@/components/features/translations/translation-editor'
+import type { TranslationField } from '@/features/translations/translation-editor'
 
 /**
  * Defines which fields are translatable for each website block type.

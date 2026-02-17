@@ -60,7 +60,7 @@ interface OrderCardProps {
 
 **Usage:**
 ```tsx
-import { OrderCard, statusConfig } from '@/components/features/orders/components/order-card'
+import { OrderCard, statusConfig } from '@/features/orders/components/order-card'
 
 <OrderCard order={order} onSelect={(order) => setSelectedOrder(order)} />
 ```
@@ -89,7 +89,7 @@ interface CreateOrderDialogProps {
 
 **Usage:**
 ```tsx
-import { CreateOrderDialog } from '@/components/features/orders/create-order-dialog'
+import { CreateOrderDialog } from '@/features/orders/create-order-dialog'
 
 const [isOpen, setIsOpen] = useState(false)
 

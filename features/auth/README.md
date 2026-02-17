@@ -8,7 +8,7 @@ Handles user authentication including login, signup, password reset, and OAuth p
 ### Container Components
 
 - **`LoginFormContainer`** - Login form with email/password authentication
-  - Location: `/components/features/auth/containers/login-form.tsx`
+  - Location: `/features/auth/containers/login-form.tsx`
   - Purpose: Manages login state, form validation, and submission to server action
   - Uses: react-hook-form for form management
 
@@ -20,7 +20,7 @@ Handles user authentication including login, signup, password reset, and OAuth p
 ### Login Form
 
 ```tsx
-import { LoginFormContainer } from '@/components/features/auth/containers/login-form'
+import { LoginFormContainer } from '@/features/auth/containers/login-form'
 
 function LoginPage() {
   return (
