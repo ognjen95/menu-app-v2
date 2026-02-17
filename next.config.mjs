@@ -1,11 +1,7 @@
 import createNextIntlPlugin from 'next-intl/plugin';
-import withPWAInit from '@ducanh2912/next-pwa';
+import withPWAInit from '@ducanh2912/next-pwa'; // TODO: Change with https://serwist.pages.dev/docs/next/config
 
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
-
-// Log environment for debugging Vercel builds
-console.log('[PWA Config] NODE_ENV:', process.env.NODE_ENV)
-console.log('[PWA Config] Disabling PWA:', process.env.NODE_ENV === 'development')
 
 const withPWA = withPWAInit({
   dest: 'public',
@@ -122,30 +118,20 @@ const withPWA = withPWAInit({
         },
       },
     },
-    // Cache dashboard pages (network first for fresh data)
+    // Cache Next.js data requests (_next/data) for client-side navigation
     {
-      urlPattern: /^https?:\/\/.*\/dashboard\/.*/i,
+      urlPattern: /\/_next\/data\/.+\/.+\.json$/i,
       handler: 'NetworkFirst',
       options: {
-        cacheName: 'dashboard-pages-cache',
+        cacheName: 'next-data-cache',
         expiration: {
-          maxEntries: 50,
+          maxEntries: 100,
           maxAgeSeconds: 60 * 60, // 1 hour
         },
         networkTimeoutSeconds: 5,
-      },
-    },
-    // Default: cache everything else with network first
-    {
-      urlPattern: /.*/i,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'others-cache',
-        expiration: {
-          maxEntries: 200,
-          maxAgeSeconds: 60 * 60 * 24, // 24 hours
+        cacheableResponse: {
+          statuses: [0, 200],
         },
-        networkTimeoutSeconds: 10,
       },
     },
   ],
