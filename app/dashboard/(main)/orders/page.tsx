@@ -38,7 +38,6 @@ import type { OrderStatus, OrderWithRelations, Location } from '@/lib/types'
 import { statusConfig, typeIcons, formatTimeElapsed, getTimerColor } from '@/features/orders/orders-list/components/order-card'
 import { OrdersKanban } from '@/features/orders/orders-list/components/orders-kanban'
 import { NewOrdersModal } from '@/features/orders/orders-list/components/new-orders-modal'
-import { useUpdateOrderStatus } from '@/lib/hooks/use-orders'
 import { useRealtimeOrders } from '@/lib/hooks/use-realtime-orders'
 import { playNotificationSound, unlockAudio } from '@/lib/utils/notification-sound'
 import {
@@ -66,11 +65,17 @@ const CreateOrderDialog = dynamic(() => import('@/features/orders/create-order/c
 
 import { motion } from '@/components/ui/animated'
 import { OrdersGridSkeleton, KanbanLayoutSkeleton } from '@/components/ui/skeletons'
+import { OfflineSyncIndicator } from '@/components/ui/offline-sync-indicator'
+import { useInitOfflineSync, useOfflineUpdateOrderStatus } from '@/lib/hooks/use-offline-orders'
 
 const ACTIVE_STATUSES: OrderStatus[] = ['placed', 'accepted', 'preparing', 'ready', 'served']
 
 export default function OrdersPage() {
   const t = useTranslations('ordersPage')
+  
+  // Initialize offline sync manager
+  useInitOfflineSync()
+  
   const [selectedStatuses, setSelectedStatuses] = useState<Set<OrderStatus>>(new Set(ACTIVE_STATUSES))
   const [selectedOrderForDetail, setSelectedOrderForDetail] = useState<OrderWithRelations | null>(null)
   const [selectedLocationId, setSelectedLocationId] = useState<string>('all')
@@ -86,7 +91,7 @@ export default function OrdersPage() {
   const [soundAlertDismissed, setSoundAlertDismissed] = useState(false)
   const [liveAlertDismissed, setLiveAlertDismissed] = useState(false)
   const lastOrderCountRef = useRef(0)
-  const updateOrderStatus = useUpdateOrderStatus()
+  const updateOrderStatus = useOfflineUpdateOrderStatus()
 
   // Track if screen is mobile
   const [isMobile, setIsMobile] = useState(false)
@@ -336,21 +341,26 @@ export default function OrdersPage() {
 
   // Handle status update from kanban drag
   const handleUpdateStatus = useCallback(async (orderId: string, newStatus: OrderStatus): Promise<void> => {
-    await updateOrderStatus.mutateAsync({ id: orderId, status: newStatus })
-  }, [updateOrderStatus])
+    const result = await updateOrderStatus.mutateAsync({ orderId, status: newStatus })
+    if (result.isOffline) {
+      toast.info(t('statusUpdated') || 'Status updated', {
+        description: 'Saved offline. Will sync when connected.',
+      })
+    }
+  }, [updateOrderStatus, t])
 
   // Handle complete and cancel for served orders
   const handleCompleteOrder = useCallback((orderId: string) => {
-    updateOrderStatus.mutate({ id: orderId, status: 'completed' })
+    updateOrderStatus.mutate({ orderId, status: 'completed' })
   }, [updateOrderStatus])
 
   const handleCancelOrder = useCallback((orderId: string) => {
-    updateOrderStatus.mutate({ id: orderId, status: 'cancelled' })
+    updateOrderStatus.mutate({ orderId, status: 'cancelled' })
   }, [updateOrderStatus])
 
   // Handle accept order (from modal - moves from placed to accepted)
   const handleAcceptOrder = useCallback((orderId: string) => {
-    updateOrderStatus.mutate({ id: orderId, status: 'accepted' })
+    updateOrderStatus.mutate({ orderId, status: 'accepted' })
     // Remove from unchecked orders
     setUncheckedOrders(prev => {
       const updated = prev.filter(o => o.id !== orderId)
@@ -363,7 +373,7 @@ export default function OrdersPage() {
 
   // Handle cancel order from modal
   const handleCancelOrderFromModal = useCallback((orderId: string) => {
-    updateOrderStatus.mutate({ id: orderId, status: 'cancelled' })
+    updateOrderStatus.mutate({ orderId, status: 'cancelled' })
     // Remove from unchecked orders
     setUncheckedOrders(prev => {
       const updated = prev.filter(o => o.id !== orderId)
@@ -387,7 +397,7 @@ export default function OrdersPage() {
     // Process all orders, don't stop on failure
     for (const order of uncheckedOrders) {
       try {
-        await updateOrderStatus.mutateAsync({ id: order.id, status: 'accepted' })
+        await updateOrderStatus.mutateAsync({ orderId: order.id, status: 'accepted' })
         results.push({ id: order.id, success: true })
       } catch (error) {
         console.error(`[LIVE] Failed to accept order ${order.id}:`, error)
@@ -896,6 +906,9 @@ export default function OrdersPage() {
         open={isCreateOrderOpen}
         onOpenChange={setIsCreateOrderOpen}
       />
+
+      {/* Offline Sync Indicator */}
+      <OfflineSyncIndicator />
     </div>
   )
 }

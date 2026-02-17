@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { apiGet } from '@/lib/api'
-import { useCreateOrder } from '@/lib/hooks/use-orders'
+import { useOfflineCreateOrder } from '@/lib/hooks/use-offline-orders'
 import { toast } from 'sonner'
 import type { Location, Table } from '@/lib/types'
 import type {
@@ -259,8 +259,8 @@ export function useCreateOrderState({ open, onOpenChange, t }: UseCreateOrderSta
     }
   }, [])
 
-  // Create order mutation
-  const createOrder = useCreateOrder()
+  // Create order mutation (offline-aware)
+  const createOrder = useOfflineCreateOrder()
 
   const handleCreateOrder = async () => {
     if (!selectedLocationId) {
@@ -278,8 +278,12 @@ export function useCreateOrderState({ open, onOpenChange, t }: UseCreateOrderSta
 
     const customerInfoValues = customerInfoForm.getValues()
 
+    // Find location and table names for local metadata
+    const location = locations.find(l => l.id === selectedLocationId)
+    const table = tables.find(t => t.id === selectedTableId)
+
     try {
-      await createOrder.mutateAsync({
+      const result = await createOrder.mutateAsync({
         location_id: selectedLocationId,
         table_id: orderType === 'dine_in' ? selectedTableId : undefined,
         type: orderType,
@@ -294,9 +298,24 @@ export function useCreateOrderState({ open, onOpenChange, t }: UseCreateOrderSta
           selected_variants: c.selectedVariants,
           unit_price: c.calculatedPrice,
         })),
+        // Add local metadata for offline display
+        _localMetadata: {
+          locationName: location?.name,
+          tableName: table?.name,
+          itemsCount: cart.reduce((sum, c) => sum + c.quantity, 0),
+          total: cartTotal,
+          createdAt: new Date().toISOString(),
+        },
       })
 
-      toast.success(t('orderCreated'))
+      // Show appropriate toast based on online/offline status
+      if (result.isOffline) {
+        toast.info(t('orderCreated'), {
+          description: 'Order saved offline. Will sync when connected.',
+        })
+      } else {
+        toast.success(t('orderCreated'))
+      }
 
       // Reset form
       setCart([])

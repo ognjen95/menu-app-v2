@@ -21,6 +21,7 @@ import type { OrderStatus, OrderWithRelations } from '@/lib/types'
 import { OrderCard, statusConfig } from './order-card'
 import { motion, staggerContainer, staggerItemScale } from '@/components/ui/animated'
 import { getKanbanGridTemplate } from './orders-kanban-grid'
+import { useOfflineOrders } from '@/lib/hooks/use-offline-orders'
 
 const ACTIVE_STATUSES: OrderStatus[] = ['placed', 'accepted', 'preparing', 'ready', 'served']
 
@@ -39,11 +40,15 @@ function DraggableOrderCard({
   onSelect,
   onComplete,
   onCancel,
+  isOfflineOrder,
+  hasPendingSync,
 }: { 
   order: OrderWithRelations
   onSelect: (order: OrderWithRelations) => void
   onComplete?: (orderId: string) => void
   onCancel?: (orderId: string) => void
+  isOfflineOrder?: boolean
+  hasPendingSync?: boolean
 }) {
   const {
     attributes,
@@ -72,6 +77,8 @@ function DraggableOrderCard({
         onSelect={onSelect}
         onComplete={onComplete}
         onCancel={onCancel}
+        isOfflineOrder={isOfflineOrder}
+        hasPendingSync={hasPendingSync}
       />
     </div>
   )
@@ -84,12 +91,14 @@ function KanbanColumn({
   onSelectOrder,
   onCompleteOrder,
   onCancelOrder,
+  pendingStatusOrderIds,
 }: {
   status: OrderStatus
   orders: OrderWithRelations[]
   onSelectOrder: (order: OrderWithRelations) => void
   onCompleteOrder?: (orderId: string) => void
   onCancelOrder?: (orderId: string) => void
+  pendingStatusOrderIds: Set<string>
 }) {
   const t = useTranslations('ordersPage')
   const { setNodeRef, isOver } = useDroppable({ id: status })
@@ -108,15 +117,23 @@ function KanbanColumn({
           isOver && "bg-primary/10 ring-2 ring-primary/30"
         )}
       >
-        {orders.map((order) => (
-          <DraggableOrderCard
-            key={order.id}
-            order={order}
-            onSelect={onSelectOrder}
-            onComplete={onCompleteOrder}
-            onCancel={onCancelOrder}
-          />
-        ))}
+        {orders.map((order) => {
+          // Check if this order is offline or has pending status update
+          const isOfflineOrder = order.id.startsWith('local_') || (order as any)._isOffline
+          const hasPendingSync = pendingStatusOrderIds.has(order.id)
+          
+          return (
+            <DraggableOrderCard
+              key={order.id}
+              order={order}
+              onSelect={onSelectOrder}
+              onComplete={onCompleteOrder}
+              onCancel={onCancelOrder}
+              isOfflineOrder={isOfflineOrder}
+              hasPendingSync={hasPendingSync}
+            />
+          )
+        })}
         {orders.length === 0 && (
           <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
             {(() => {
@@ -148,6 +165,13 @@ export const OrdersKanban = memo(function OrdersKanban({
   
   // Optimistic state - tracks pending status changes
   const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, OrderStatus>>({})
+
+  // Get offline orders with pending status updates
+  const { pendingStatusUpdates } = useOfflineOrders()
+  const pendingStatusOrderIds = useMemo(
+    () => new Set(pendingStatusUpdates.map(u => u.orderId)),
+    [pendingStatusUpdates]
+  )
 
   // DnD sensors - pointer only with distance constraint
   const sensors = useSensors(
@@ -324,6 +348,7 @@ export const OrdersKanban = memo(function OrdersKanban({
                 onSelectOrder={onSelectOrder}
                 onCompleteOrder={onCompleteOrder}
                 onCancelOrder={onCancelOrder}
+                pendingStatusOrderIds={pendingStatusOrderIds}
               />
             </motion.div>
           ))}

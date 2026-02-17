@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { OrderStatus, OrderWithRelations } from '@/lib/types'
+import { OfflineBadge, PendingSyncBadge } from '@/components/ui/offline-sync-indicator'
 
 export const statusConfig: Record<OrderStatus, { label: string; color: string; badgeColor: string; buttonColor: string; icon: React.ElementType }> = {
   draft: { label: 'Draft', color: 'bg-gray-500', badgeColor: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300', buttonColor: 'bg-gray-500 hover:bg-gray-600 text-white', icon: Clock },
@@ -63,9 +64,11 @@ interface OrderCardProps {
   onSelect: (order: OrderWithRelations) => void
   onComplete?: (orderId: string) => void
   onCancel?: (orderId: string) => void
+  isOfflineOrder?: boolean
+  hasPendingSync?: boolean
 }
 
-export function OrderCard({ order, onSelect, onComplete, onCancel }: OrderCardProps) {
+export function OrderCard({ order, onSelect, onComplete, onCancel, isOfflineOrder, hasPendingSync }: OrderCardProps) {
   const t = useTranslations('ordersPage')
   const [isExpanded, setIsExpanded] = useState(false)
   const StatusIcon = statusConfig[order.status]?.icon || Clock
@@ -111,6 +114,9 @@ export function OrderCard({ order, onSelect, onComplete, onCancel }: OrderCardPr
               <TypeIcon className="h-3 w-3" />
               {t(`type.${order.type}`)}
             </Badge>
+            {/* Offline badges */}
+            {isOfflineOrder && <OfflineBadge />}
+            {hasPendingSync && !isOfflineOrder && <PendingSyncBadge />}
           </div>
           <span className={cn("font-mono text-xs shrink-0", timerColor)}>
             {formatTimeElapsed(order.placed_at)}

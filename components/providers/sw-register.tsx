@@ -1,16 +1,19 @@
 'use client'
 
 import { useEffect, useState, createContext, useContext, useCallback, useMemo } from 'react'
+import { syncManager } from '@/lib/offline'
 
 // Offline context for app-wide offline state
 interface OfflineContextValue {
   isOffline: boolean
   isServiceWorkerReady: boolean
+  triggerSync: () => Promise<void>
 }
 
 const OfflineContext = createContext<OfflineContextValue>({
   isOffline: false,
   isServiceWorkerReady: false,
+  triggerSync: async () => {},
 })
 
 export const useOfflineStatus = () => useContext(OfflineContext)
@@ -84,10 +87,24 @@ export function SwRegister({ children }: { children?: React.ReactNode }) {
     checkSWStatus()
   }, [])
 
+  // Trigger sync manually
+  const triggerSync = useCallback(async () => {
+    if (!isOffline && navigator.onLine) {
+      await syncManager.startSync()
+    }
+  }, [isOffline])
+
+  // Initialize sync manager
+  useEffect(() => {
+    const cleanup = syncManager.init()
+    return cleanup
+  }, [])
+
   const contextValue = useMemo(() => ({
     isOffline,
     isServiceWorkerReady,
-  }), [isOffline, isServiceWorkerReady])
+    triggerSync,
+  }), [isOffline, isServiceWorkerReady, triggerSync])
 
   return (
     <OfflineContext.Provider value={contextValue}>

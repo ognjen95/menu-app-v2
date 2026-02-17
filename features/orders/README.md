@@ -148,4 +148,47 @@ Uses the following translation namespaces:
 ## Hooks Used
 
 - `useCreateOrder` from `@/lib/hooks/use-orders`
+- `useOfflineCreateOrder` from `@/lib/hooks/use-offline-orders`
 - `useQuery` from `@tanstack/react-query`
+
+---
+
+## Offline Functionality
+
+The orders feature fully supports offline mode. When the device loses connectivity:
+
+### Order Creation
+- Orders are queued in IndexedDB when created offline
+- Optimistic UI shows the order immediately with an "Offline" badge
+- Orders sync automatically when connectivity returns
+- Toast notification informs user: "Order saved offline. Will sync when connected."
+
+### Status Updates
+- Status changes (via kanban drag-drop) work offline
+- Changes are queued and synced when online
+- "Pending Sync" badge shows on orders with unsynced status updates
+
+### Sync Indicator
+A floating sync indicator appears in the bottom-right when:
+- Device is offline
+- There are pending operations
+- Sync is in progress
+
+Users can:
+- Manually trigger sync when online
+- Retry failed operations
+- Discard failed operations (with confirmation)
+
+### Visual Indicators
+- **OfflineBadge**: Amber badge shown on orders created offline
+- **PendingSyncBadge**: Blue badge shown on orders with pending status updates
+
+### Configuration
+Queue size and retry settings are configurable in `/lib/offline/types.ts`:
+```typescript
+maxQueueSize: 100,  // Max pending operations
+maxRetries: 3,      // Retry attempts
+```
+
+### Documentation
+See `/lib/offline/README.md` for comprehensive offline module documentation.
