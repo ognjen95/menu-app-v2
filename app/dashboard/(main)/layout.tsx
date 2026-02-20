@@ -151,7 +151,10 @@ export default function DashboardLayout({
                       collapsed ? 'h-5 w-5' : 'h-5 w-5',
                       !isActive && 'group-hover:scale-110'
                     )} />
-                    {!collapsed && <span>{name}</span>}
+                    {<span className={cn({
+                      'md:hidden': collapsed
+                    })}
+                    >{name}</span>}
                   </Link>
                 </li>
               )
@@ -188,8 +191,10 @@ export default function DashboardLayout({
                         collapsed ? 'h-5 w-5' : 'h-5 w-5',
                         !isActive && 'group-hover:scale-110'
                       )} />
-                      {!collapsed && <span>{name}</span>}
-                    </Link>
+                      {<span className={cn({
+                        'md:hidden': collapsed
+                      })}
+                      >{name}</span>}                    </Link>
                   </li>
                 )
               })}

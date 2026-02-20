@@ -31,8 +31,6 @@ export default async function DashboardLayout({
         .eq('user_id', user.id)
         .single()
 
-        console.log('tenantUser', tenantUser)
-
     if (!tenantUser) {
         // User hasn't created a business yet
         return redirect('/onboarding')

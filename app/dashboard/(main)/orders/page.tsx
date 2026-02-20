@@ -538,18 +538,18 @@ export default function OrdersPage() {
         transition={{ duration: 0.3 }}
       >
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
+          <p className="text-muted-foreground hidden md:block">
             {t('description')}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2">
           {/* Location selector */}
           <Select value={selectedLocationId} onValueChange={(value) => {
             setSelectedLocationId(value)
             localStorage.setItem('orders-selected-location', value)
           }}>
-            <SelectTrigger className="w-[180px] md:w-[180px]">
+            <SelectTrigger className="w-[120px] md:w-[180px] text-xs md:text-sm">
               <SelectValue placeholder={t('allLocations')} />
             </SelectTrigger>
             <SelectContent>
@@ -565,7 +565,7 @@ export default function OrdersPage() {
           {/* Table selector */}
           {availableTables.length > 0 && (
             <Select value={selectedTableId} onValueChange={setSelectedTableId}>
-              <SelectTrigger className="w-[140px] md:w-[160px]">
+              <SelectTrigger className="w-[100px] md:w-[160px] text-xs md:text-sm">
                 <SelectValue placeholder={t('allTables')} />
               </SelectTrigger>
               <SelectContent>
@@ -584,10 +584,10 @@ export default function OrdersPage() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant="outline"
+                  variant={(!audioUnlocked || !soundEnabled) ? "outline": 'default'}
                   size="icon"
                   className={cn('hidden md:flex', {
-                    'border-red-500 hover:bg-red-500/20': !audioUnlocked || !soundEnabled,
+                    'border-yellow-600 hover:bg-yellow-600/20': !audioUnlocked || !soundEnabled,
                   })}
                   onClick={() => {
                     const newValue = !soundEnabled || !audioUnlocked
@@ -604,7 +604,7 @@ export default function OrdersPage() {
                     }
                   }}
                 >
-                  {soundEnabled && audioUnlocked ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4 text-red-500" />}
+                  {soundEnabled && audioUnlocked ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4 text-yellow-600" />}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -621,9 +621,12 @@ export default function OrdersPage() {
                   onClick={handleLiveToggle}
                   className={cn(
                     "hidden md:flex",
-                    liveEnabled && isLive && "bg-green-600 hover:bg-green-700",
-                    liveEnabled && !isLive && realtimeStatus === 'connecting' && "bg-yellow-600 hover:bg-yellow-700",
-                    liveEnabled && !isLive && realtimeStatus === 'error' && "bg-red-600 hover:bg-red-700"
+                    {
+                      'bg-green-600 hover:bg-green-700': liveEnabled && isLive,
+                      'bg-yellow-600 hover:bg-yellow-700': liveEnabled && !isLive && realtimeStatus === 'connecting',
+                      'bg-red-600 hover:bg-red-700': liveEnabled && !isLive && realtimeStatus === 'error',
+                      "border border-yellow-600 hover:bg-yellow-600/20" : !liveEnabled,
+                    }
                   )}
                 >
                   {liveEnabled ? (
@@ -635,7 +638,7 @@ export default function OrdersPage() {
                       <WifiOff className="h-4 w-4" />
                     )
                   ) : (
-                    <Radio className="h-4 w-4" />
+                    <Radio className="h-4 w-4 text-yellow-600" />
                   )}
                 </Button>
               </TooltipTrigger>
