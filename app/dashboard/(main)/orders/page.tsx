@@ -904,6 +904,7 @@ export default function OrdersPage() {
       {/* Create Order Dialog */}
       <CreateOrderDialog
         open={isCreateOrderOpen}
+        locations={locations}
         onOpenChange={setIsCreateOrderOpen}
       />
 

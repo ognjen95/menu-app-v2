@@ -31,9 +31,10 @@ type UseCreateOrderStateProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   t: (key: string) => string
+  locations: Location[]
 }
 
-export function useCreateOrderState({ open, onOpenChange, t }: UseCreateOrderStateProps) {
+export function useCreateOrderState({ open, onOpenChange, t, locations }: UseCreateOrderStateProps) {
   const customerInfoForm = useForm<CustomerInfoValues>({
     defaultValues: { name: '', phone: '', notes: '' },
   })
@@ -81,12 +82,12 @@ export function useCreateOrderState({ open, onOpenChange, t }: UseCreateOrderSta
   }, [selectedLocationId])
 
   // Fetch locations
-  const { data: locationsData } = useQuery({
-    queryKey: ['locations'],
-    queryFn: () => apiGet<{ data: { locations: Location[] } }>('/locations'),
-    enabled: open,
-  })
-  const locations = useMemo(() => locationsData?.data?.locations || [], [locationsData])
+  // const { data: locationsData } = useQuery({
+  //   queryKey: ['locations'],
+  //   queryFn: () => apiGet<{ data: { locations: Location[] } }>('/locations'),
+  //   enabled: open,
+  // })
+  // const locations = useMemo(() => locationsData?.data?.locations || [], [locationsData])
 
   // Set first location if none selected
   useEffect(() => {

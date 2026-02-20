@@ -224,11 +224,13 @@ export function useOfflineCreateOrder() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    networkMode: 'always',
     mutationFn: async (data: CreateOrderPayload) => {
       // Try online request first if we appear to be online
+      console.log('useOfflineCreateOrder', { navigatorOnLine: navigator.onLine })
       if (navigator.onLine) {
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 8000) // 8 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
 
         try {
           const response = await fetch('/api/orders', {
@@ -236,6 +238,7 @@ export function useOfflineCreateOrder() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),
             signal: controller.signal,
+            cache: 'no-store', // ! [CHECK IF CORRECT] Bypass SW cache for mutations
           })
 
           clearTimeout(timeoutId)
@@ -247,6 +250,7 @@ export function useOfflineCreateOrder() {
           }
 
           const result = await response.json()
+          console.log('[useOfflineCreateOrder] Server response:', result)
           // Success! Return the server response
           return { order: result.data.order as OrderWithRelations, isOffline: false }
         } catch (error) {
@@ -257,6 +261,7 @@ export function useOfflineCreateOrder() {
             console.log('[useOfflineCreateOrder] Network error, queuing offline:', error)
             // Continue to offline queue below
           } else {
+            console.log('[useOfflineCreateOrder] Server error, re-throwing:', error)
             // Server error or validation error - re-throw
             throw error
           }
@@ -266,10 +271,22 @@ export function useOfflineCreateOrder() {
       // Offline or network failed: Queue the operation
       console.log('[useOfflineCreateOrder] Queueing to offline queue...')
       const localId = `local_order_${Date.now()}`
+      const idempotencyKey = `order_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+      
+      // Add idempotency key to payload to prevent duplicate creation on sync
+      const payloadWithIdempotency = {
+        ...data,
+        _idempotencyKey: idempotencyKey,
+      }
       
       let operation
       try {
-        operation = await offlineQueue.addOperation('CREATE_ORDER', data, localId)
+        // Add timeout to prevent hanging
+        const queuePromise = offlineQueue.addOperation('CREATE_ORDER', payloadWithIdempotency, localId)
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Queue operation timed out')), 10000)
+        )
+        operation = await Promise.race([queuePromise, timeoutPromise])
         console.log('[useOfflineCreateOrder] Operation queued successfully:', operation.id)
       } catch (queueError) {
         console.error('[useOfflineCreateOrder] Failed to queue operation:', queueError)
@@ -346,6 +363,7 @@ export function useOfflineUpdateOrderStatus() {
   const queryClient = useQueryClient()
 
   return useMutation({
+    networkMode: 'always',
     mutationFn: async ({ 
       orderId, 
       status, 
@@ -359,10 +377,12 @@ export function useOfflineUpdateOrderStatus() {
       previousStatus?: OrderStatus
       orderNumber?: string
     }) => {
+      console.log('[useOfflineUpdateOrderStatus] Mutation called, navigator.onLine =', navigator.onLine)
+      
       // Try online request first if we appear to be online
       if (navigator.onLine) {
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 8000) // 8 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout (reduced for testing)
 
         try {
           const response = await fetch(`/api/orders/${orderId}/status`, {
@@ -370,6 +390,7 @@ export function useOfflineUpdateOrderStatus() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status, cancellation_reason }),
             signal: controller.signal,
+            cache: 'no-store', // Bypass SW cache for mutations
           })
 
           clearTimeout(timeoutId)
@@ -411,11 +432,16 @@ export function useOfflineUpdateOrderStatus() {
       }
 
       try {
-        const operation = await offlineQueue.addOperation(
+        // Add timeout to prevent hanging
+        const queuePromise = offlineQueue.addOperation(
           'UPDATE_ORDER_STATUS',
           payload,
           `status_${orderId}_${Date.now()}`
         )
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Queue operation timed out')), 10000)
+        )
+        const operation = await Promise.race([queuePromise, timeoutPromise])
         console.log('[useOfflineUpdateOrderStatus] Operation queued successfully:', operation.id)
 
         return { 

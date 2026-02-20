@@ -7,7 +7,6 @@
  */
 
 import { offlineQueue } from './offline-queue'
-import { apiPost, apiPatch } from '@/lib/api'
 import type {
   OfflineOperation,
   CreateOrderPayload,
@@ -104,55 +103,75 @@ class SyncManager {
     let successCount = 0
     let failCount = 0
 
-    // Process operations in FIFO order
-    for (const operation of pendingOps) {
-      // Check if we're still online before each operation
-      if (typeof navigator !== 'undefined' && !navigator.onLine) {
-        console.log('[SyncManager] Went offline during sync, stopping')
-        break
-      }
-
-      // Skip if max retries exceeded
-      if (!offlineQueue.canRetry(operation)) {
-        console.log(`[SyncManager] Operation ${operation.id} exceeded max retries, marking as failed`)
-        await offlineQueue.updateOperationStatus(
-          operation.id,
-          'failed',
-          'Max retries exceeded'
-        )
-        failCount++
-        continue
-      }
-
-      try {
-        // Add 30 second timeout to prevent stuck operations
-        await this.withTimeout(
-          this.processOperation(operation),
-          30000,
-          operation.id
-        )
-        successCount++
-      } catch (error) {
-        failCount++
-        console.error(`[SyncManager] Operation ${operation.id} failed:`, error)
-        
-        // If timeout, reset to pending so it can be retried
-        if (error instanceof Error && error.message.includes('timed out')) {
-          await offlineQueue.updateOperationStatus(
-            operation.id,
-            'pending',
-            'Request timed out'
-          )
+    try {
+      // PHASE 1: Process all CREATE_ORDER operations first
+      const createOps = pendingOps.filter(op => op.type === 'CREATE_ORDER')
+      console.log(`[SyncManager] Phase 1: Processing ${createOps.length} CREATE_ORDER operations`)
+      
+      for (const operation of createOps) {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          console.log('[SyncManager] Went offline during sync, stopping')
+          break
         }
+
+        if (!offlineQueue.canRetry(operation)) {
+          console.log(`[SyncManager] Operation ${operation.id} exceeded max retries, marking as failed`)
+          await offlineQueue.updateOperationStatus(operation.id, 'failed', 'Max retries exceeded')
+          failCount++
+          continue
+        }
+
+        try {
+          await this.withTimeout(this.processOperation(operation), 30000, operation.id)
+          successCount++
+        } catch (error) {
+          failCount++
+          console.error(`[SyncManager] CREATE_ORDER ${operation.id} failed:`, error)
+          if (error instanceof Error && (error.message.includes('timed out') || error.name === 'AbortError')) {
+            await offlineQueue.updateOperationStatus(operation.id, 'pending', 'Request timed out')
+          }
+        }
+        await this.delay(100)
       }
 
-      // Small delay between operations to avoid overwhelming the server
-      await this.delay(100)
-    }
+      // PHASE 2: Re-fetch operations to get updated payloads (local IDs replaced with server IDs)
+      // Then process UPDATE_ORDER_STATUS operations
+      const freshOperations = await offlineQueue.getOperations()
+      const statusOps = freshOperations.filter(
+        op => op.type === 'UPDATE_ORDER_STATUS' && (op.status === 'pending' || op.status === 'failed')
+      )
+      console.log(`[SyncManager] Phase 2: Processing ${statusOps.length} UPDATE_ORDER_STATUS operations`)
 
-    this.isSyncing = false
-    console.log(`[SyncManager] Sync completed: ${successCount} success, ${failCount} failed`)
-    this.emit('sync:completed')
+      for (const operation of statusOps) {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          console.log('[SyncManager] Went offline during sync, stopping')
+          break
+        }
+
+        if (!offlineQueue.canRetry(operation)) {
+          console.log(`[SyncManager] Operation ${operation.id} exceeded max retries, marking as failed`)
+          await offlineQueue.updateOperationStatus(operation.id, 'failed', 'Max retries exceeded')
+          failCount++
+          continue
+        }
+
+        try {
+          await this.withTimeout(this.processOperation(operation), 30000, operation.id)
+          successCount++
+        } catch (error) {
+          failCount++
+          console.error(`[SyncManager] UPDATE_ORDER_STATUS ${operation.id} failed:`, error)
+          if (error instanceof Error && (error.message.includes('timed out') || error.name === 'AbortError')) {
+            await offlineQueue.updateOperationStatus(operation.id, 'pending', 'Request timed out')
+          }
+        }
+        await this.delay(100)
+      }
+    } finally {
+      this.isSyncing = false
+      console.log(`[SyncManager] Sync completed: ${successCount} success, ${failCount} failed`)
+      this.emit('sync:completed')
+    }
   }
 
   /**
@@ -170,7 +189,13 @@ class SyncManager {
           await this.syncCreateOrder(operation as OfflineOperation<CreateOrderPayload>)
           break
         case 'UPDATE_ORDER_STATUS':
-          await this.syncUpdateStatus(operation as OfflineOperation<UpdateOrderStatusPayload>)
+          // Re-fetch the operation to get potentially updated payload
+          // (local order ID may have been replaced with server ID)
+          const freshOperation = await offlineQueue.getOperation(operation.id)
+          if (!freshOperation) {
+            throw new Error(`Operation ${operation.id} no longer exists`)
+          }
+          await this.syncUpdateStatus(freshOperation as OfflineOperation<UpdateOrderStatusPayload>)
           break
         default:
           throw new Error(`Unknown operation type: ${operation.type}`)
@@ -203,10 +228,64 @@ class SyncManager {
   private async syncCreateOrder(operation: OfflineOperation<CreateOrderPayload>): Promise<void> {
     const { _localMetadata, ...orderData } = operation.payload
     
-    // Remove local metadata before sending to server
-    const response = await apiPost<{ data: { order: { id: string } } }>('/orders', orderData)
+    // Use fetch with AbortController for reliable timeout
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 second timeout
     
-    console.log(`[SyncManager] Order created with server ID: ${response.data.order.id}`)
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData),
+        signal: controller.signal,
+        credentials: 'include',
+      })
+      
+      clearTimeout(timeoutId)
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}))
+        throw new Error(error.error || `Request failed: ${response.status}`)
+      }
+      
+      const result = await response.json()
+      const serverId = result.data?.order?.id
+      
+      if (!serverId) {
+        throw new Error('No order ID returned from server')
+      }
+      
+      console.log(`[SyncManager] Order created with server ID: ${serverId}`)
+      
+      // Update any pending UPDATE_ORDER_STATUS operations that reference the local ID
+      if (operation.localId) {
+        await this.updatePendingStatusOperations(operation.localId, serverId)
+      }
+    } catch (error) {
+      clearTimeout(timeoutId)
+      throw error
+    }
+  }
+
+  /**
+   * Update pending status operations to use server ID instead of local ID
+   */
+  private async updatePendingStatusOperations(localId: string, serverId: string): Promise<void> {
+    const operations = await offlineQueue.getOperations()
+    
+    for (const op of operations) {
+      if (op.type === 'UPDATE_ORDER_STATUS') {
+        const payload = op.payload as UpdateOrderStatusPayload
+        if (payload.orderId === localId) {
+          console.log(`[SyncManager] Updating operation ${op.id}: ${localId} → ${serverId}`)
+          // Update the payload with the server ID
+          await offlineQueue.updateOperationPayload(op.id, {
+            ...payload,
+            orderId: serverId,
+          })
+        }
+      }
+    }
   }
 
   /**
@@ -215,16 +294,40 @@ class SyncManager {
   private async syncUpdateStatus(operation: OfflineOperation<UpdateOrderStatusPayload>): Promise<void> {
     const { orderId, status, cancellation_reason } = operation.payload
     
-    await apiPatch(`/orders/${orderId}/status`, { 
-      status, 
-      cancellation_reason 
-    })
+    // Safety check: if orderId is a local ID, the CREATE_ORDER hasn't synced yet
+    if (orderId.startsWith('local_')) {
+      throw new Error(`Cannot update status: order ${orderId} not yet synced to server`)
+    }
     
-    console.log(`[SyncManager] Order ${orderId} status updated to ${status}`)
+    // Use fetch with AbortController for reliable timeout
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 second timeout
+    
+    try {
+      const response = await fetch(`/api/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, cancellation_reason }),
+        signal: controller.signal,
+        credentials: 'include',
+      })
+      
+      clearTimeout(timeoutId)
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}))
+        throw new Error(error.error || `Request failed: ${response.status}`)
+      }
+      
+      console.log(`[SyncManager] Order ${orderId} status updated to ${status}`)
+    } catch (error) {
+      clearTimeout(timeoutId)
+      throw error
+    }
   }
 
   /**
-   * Check if an error is retryable (network errors, server errors)
+   * Check if an error is retryable (network errors, server errors, dependency errors)
    */
   private isRetryableError(error: unknown): boolean {
     if (error instanceof Error) {
@@ -242,6 +345,11 @@ class SyncManager {
       
       // Server errors (5xx) are retryable
       if (message.includes('500') || message.includes('502') || message.includes('503')) {
+        return true
+      }
+      
+      // "Not yet synced" errors are retryable (waiting for dependent operation)
+      if (message.includes('not yet synced')) {
         return true
       }
     }

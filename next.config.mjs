@@ -51,17 +51,18 @@ const withPWA = withPWAInit({
         },
       },
     },
-    // Cache API calls for orders (network first, fallback to cache)
+    // Cache API calls for orders - GET only (not POST/PATCH/DELETE)
     {
       urlPattern: /^https?:\/\/.*\/api\/orders\/.*/i,
       handler: 'NetworkFirst',
+      method: 'GET', // Only cache GET requests, let mutations fail fast
       options: {
         cacheName: 'orders-api-cache',
         expiration: {
           maxEntries: 100,
           maxAgeSeconds: 60 * 5, // 5 minutes
         },
-        networkTimeoutSeconds: 10,
+        networkTimeoutSeconds: 3, // Reduced from 10s for faster offline detection
         cacheableResponse: {
           statuses: [0, 200],
         },

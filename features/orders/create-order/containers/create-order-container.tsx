@@ -22,17 +22,19 @@ import { VariantSelectionDialog } from '../components/variant-selection-dialog'
 import { DesktopMenuContent } from '../components/desktop-menu-content'
 import { MobileSetupStep } from '../components/mobile-setup-step'
 import { MobileMenuStep } from '../components/mobile-menu-step'
+import { Location } from '@/lib/types'
 
 interface CreateOrderDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  locations: Location[]
 }
 
-export function CreateOrderContainer({ open, onOpenChange }: CreateOrderDialogProps) {
+export function CreateOrderContainer({ open, onOpenChange, locations }: CreateOrderDialogProps) {
   const t = useTranslations('createOrder')
   const tCommon = useTranslations('common')
 
-  const state = useCreateOrderState({ open, onOpenChange, t })
+  const state = useCreateOrderState({ open, onOpenChange, t, locations })
 
   // Shared props for menu content
   const menuContentProps = {

@@ -8,12 +8,12 @@
  */
 
 import { useState, useEffect } from 'react'
-import { 
-  Cloud, 
-  CloudOff, 
-  RefreshCw, 
-  Trash2, 
-  ChevronUp, 
+import {
+  Cloud,
+  CloudOff,
+  RefreshCw,
+  Trash2,
+  ChevronUp,
   ChevronDown,
   AlertCircle,
   CheckCircle,
@@ -66,19 +66,19 @@ function StatusIcon({ status }: { status: string }) {
   }
 }
 
-function OperationItem({ 
+function OperationItem({
   operation,
   onRetry,
   onDiscard,
   onReset,
-}: { 
+}: {
   operation: OfflineOperation
   onRetry: (id: string) => void
   onDiscard: (id: string) => void
   onReset: (id: string) => void
 }) {
   const [discardConfirm, setDiscardConfirm] = useState(false)
-  
+
   const getDescription = () => {
     if (operation.type === 'CREATE_ORDER') {
       const payload = operation.payload as CreateOrderPayload
@@ -169,6 +169,12 @@ export function OfflineSyncIndicator() {
   const { discardOperation, retryOperation, retryAllFailed, triggerSync, resetStuckOperations } = useOfflineOperationActions()
   const [isExpanded, setIsExpanded] = useState(false)
 
+  console.log('OfflineSyncIndicator', {
+    isOffline,
+    operations,
+    stats
+  })
+
   // Wrapper for resetting stuck operations (ignores the id, resets all)
   const handleResetStuck = async (_id: string) => {
     await resetStuckOperations()
@@ -186,9 +192,17 @@ export function OfflineSyncIndicator() {
     return null
   }
 
-  const pendingOps = operations.filter(
-    (op) => op.status === 'pending' || op.status === 'syncing' || op.status === 'failed'
-  )
+  // Filter and sort: CREATE_ORDER first, then UPDATE_ORDER_STATUS (matches sync order)
+  const pendingOps = operations
+    .filter((op) => op.status === 'pending' || op.status === 'syncing' || op.status === 'failed')
+    .sort((a, b) => {
+      const typeOrder = { 'CREATE_ORDER': 0, 'UPDATE_ORDER_STATUS': 1 }
+      const aOrder = typeOrder[a.type as keyof typeof typeOrder] ?? 2
+      const bOrder = typeOrder[b.type as keyof typeof typeOrder] ?? 2
+      if (aOrder !== bOrder) return aOrder - bOrder
+      // Within same type, maintain FIFO order
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    })
 
   return (
     <div className="fixed bottom-4 right-4 z-50 w-80">
@@ -213,7 +227,7 @@ export function OfflineSyncIndicator() {
                   <Cloud className="h-4 w-4" />
                 )}
               </div>
-              
+
               <div className="flex-1 text-left">
                 <p className="font-medium text-sm">
                   {isOffline ? 'Offline Mode' : isSyncing ? 'Syncing...' : 'Saved Locally'}
@@ -225,17 +239,15 @@ export function OfflineSyncIndicator() {
                     `${stats.syncing} syncing...`
                   ) : stats.pending > 0 ? (
                     `${stats.pending} pending • Will auto-sync`
-                  ) : null}
-                  {stats.failed > 0 && (
+                  ) : stats.failed > 0 ? (
                     <span className="text-destructive"> • {stats.failed} failed</span>
-                  )}
-                  {stats.total === 0 && 'No pending operations'}
+                  ) : null}
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
                 {stats.total > 0 && (
-                  <Badge 
+                  <Badge
                     variant={stats.failed > 0 ? "destructive" : "secondary"}
                     className="h-6"
                   >
@@ -326,8 +338,8 @@ export function OfflineSyncIndicator() {
  */
 export function OfflineBadge({ className }: { className?: string }) {
   return (
-    <Badge 
-      variant="outline" 
+    <Badge
+      variant="outline"
       className={cn(
         "bg-amber-500/10 text-amber-600 border-amber-500/30 text-xs",
         className
@@ -344,8 +356,8 @@ export function OfflineBadge({ className }: { className?: string }) {
  */
 export function PendingSyncBadge({ className }: { className?: string }) {
   return (
-    <Badge 
-      variant="outline" 
+    <Badge
+      variant="outline"
       className={cn(
         "bg-blue-500/10 text-blue-600 border-blue-500/30 text-xs",
         className

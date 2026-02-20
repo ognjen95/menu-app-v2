@@ -283,6 +283,48 @@ class OfflineQueueManager {
   }
 
   /**
+   * Update an operation's payload (e.g., to replace local ID with server ID)
+   */
+  async updateOperationPayload<T>(id: string, payload: T): Promise<void> {
+    await this.init()
+    if (!this.db) return
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([STORE_NAME], 'readwrite')
+      const store = transaction.objectStore(STORE_NAME)
+      const getRequest = store.get(id)
+
+      getRequest.onsuccess = () => {
+        const operation = getRequest.result
+        if (!operation) {
+          reject(new Error(`Operation ${id} not found`))
+          return
+        }
+
+        operation.payload = payload
+        operation.updatedAt = new Date().toISOString()
+
+        const putRequest = store.put(operation)
+
+        putRequest.onsuccess = () => {
+          console.log('[OfflineQueue] Operation payload updated:', id)
+          this.notifyListeners()
+          resolve()
+        }
+
+        putRequest.onerror = () => {
+          console.error('[OfflineQueue] Failed to update operation payload:', putRequest.error)
+          reject(putRequest.error)
+        }
+      }
+
+      getRequest.onerror = () => {
+        reject(getRequest.error)
+      }
+    })
+  }
+
+  /**
    * Remove an operation from the queue
    */
   async removeOperation(id: string): Promise<void> {
