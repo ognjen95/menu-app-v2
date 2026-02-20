@@ -39,7 +39,7 @@ import { statusConfig, typeIcons, formatTimeElapsed, getTimerColor } from '@/fea
 import { OrdersKanban } from '@/features/orders/orders-list/components/orders-kanban'
 import { NewOrdersModal } from '@/features/orders/orders-list/components/new-orders-modal'
 import { useRealtimeOrders } from '@/lib/hooks/use-realtime-orders'
-import { playNotificationSound, unlockAudio } from '@/lib/utils/notification-sound'
+import { playNotificationSound, unlockAudio, checkAudioPermission } from '@/lib/utils/notification-sound'
 import {
   Table,
   TableBody,
@@ -67,18 +67,20 @@ import { motion } from '@/components/ui/animated'
 import { OrdersGridSkeleton, KanbanLayoutSkeleton } from '@/components/ui/skeletons'
 import { OfflineSyncIndicator } from '@/components/ui/offline-sync-indicator'
 import { useInitOfflineSync, useOfflineUpdateOrderStatus } from '@/lib/hooks/use-offline-orders'
+import LiveAlert from '@/features/orders/orders-list/components/live-alert'
 
 const ACTIVE_STATUSES: OrderStatus[] = ['placed', 'accepted', 'preparing', 'ready', 'served']
 
 export default function OrdersPage() {
   const t = useTranslations('ordersPage')
-  
+
   // Initialize offline sync manager
   useInitOfflineSync()
-  
+
   const [selectedStatuses, setSelectedStatuses] = useState<Set<OrderStatus>>(new Set(ACTIVE_STATUSES))
   const [selectedOrderForDetail, setSelectedOrderForDetail] = useState<OrderWithRelations | null>(null)
   const [selectedLocationId, setSelectedLocationId] = useState<string>('all')
+  const [selectedTableId, setSelectedTableId] = useState<string>('all')
   const [layout, setLayout] = useState<'list' | 'kanban'>('list')
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false)
@@ -88,7 +90,6 @@ export default function OrdersPage() {
   const [uncheckedOrders, setUncheckedOrders] = useState<OrderWithRelations[]>([])
   const [showNewOrdersModal, setShowNewOrdersModal] = useState(false)
   const [audioUnlocked, setAudioUnlocked] = useState(false)
-  const [soundAlertDismissed, setSoundAlertDismissed] = useState(false)
   const [liveAlertDismissed, setLiveAlertDismissed] = useState(false)
   const lastOrderCountRef = useRef(0)
   const updateOrderStatus = useOfflineUpdateOrderStatus()
@@ -103,15 +104,29 @@ export default function OrdersPage() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Load layout and live mode from localStorage on mount
+  // Load layout and location from localStorage on mount (live mode intentionally NOT restored - requires user action each session)
   useEffect(() => {
     const savedLayout = localStorage.getItem('orders-layout') as 'list' | 'kanban' | null
     if (savedLayout) {
       setLayout(savedLayout)
     }
-    const savedLive = localStorage.getItem('orders-live-mode')
-    if (savedLive === 'true') {
-      setLiveEnabled(true)
+
+    const savedLocation = localStorage.getItem('orders-selected-location')
+    if (savedLocation) {
+      setSelectedLocationId(savedLocation)
+    }
+
+    // Check if audio was previously unlocked (PWA persistence)
+    const wasAudioUnlocked = localStorage.getItem('orders-audio-unlocked') === 'true'
+    if (wasAudioUnlocked) {
+      // Verify audio permission is still valid (browser may have revoked it)
+      checkAudioPermission().then(success => {
+        setAudioUnlocked(success)
+        if (!success) {
+          // Permission was revoked, clear the cached state
+          localStorage.removeItem('orders-audio-unlocked')
+        }
+      })
     }
   }, [])
 
@@ -134,14 +149,20 @@ export default function OrdersPage() {
     localStorage.setItem('orders-layout', newLayout)
   }
 
-  // Toggle live mode
-  const handleLiveToggle = useCallback(() => {
+  // Toggle live mode and unlock audio if enabling
+  const handleLiveToggle = useCallback(async () => {
     setLiveEnabled(prev => {
       const newValue = !prev
-      localStorage.setItem('orders-live-mode', String(newValue))
       if (newValue) {
+        // Unlock audio when enabling live mode and persist for PWA
+        unlockAudio().then(unlocked => {
+          if (unlocked) {
+            setAudioUnlocked(true)
+            localStorage.setItem('orders-audio-unlocked', 'true')
+          }
+        })
         toast.success(t('liveEnabled') || 'Live mode enabled', {
-          description: t('liveEnabledDesc') || 'Orders will update in real-time',
+          description: t('liveEnabledDesc') || 'Orders will update in real-time with sound alerts',
         })
       } else {
         toast.info(t('liveDisabled') || 'Live mode disabled')
@@ -261,6 +282,19 @@ export default function OrdersPage() {
   })
   const locations = locationsData?.data?.locations || []
 
+  // Fetch tables for selected location
+  const { data: tablesData } = useQuery({
+    queryKey: ['tables', selectedLocationId],
+    queryFn: () => apiGet<{ data: { tables: Array<{ id: string; name: string; zone?: string }> } }>(`/tables?location_id=${selectedLocationId}`),
+    enabled: selectedLocationId !== 'all',
+  })
+  const availableTables = tablesData?.data?.tables || []
+
+  // Reset table selection when location changes
+  useEffect(() => {
+    setSelectedTableId('all')
+  }, [selectedLocationId])
+
   const orders = useMemo(() => data?.data?.orders || [], [data])
 
   // When orders data updates, find any pending orders and add them to unchecked
@@ -288,8 +322,12 @@ export default function OrdersPage() {
     lastOrderCountRef.current = orders.length
   }, [orders.length, soundEnabled, liveEnabled, audioUnlocked])
 
-  // Filter orders by selected statuses
-  const filteredOrders = orders.filter(o => selectedStatuses.has(o.status as OrderStatus))
+  // Filter orders by selected statuses and table
+  const filteredOrders = orders.filter(o => {
+    const matchesStatus = selectedStatuses.has(o.status as OrderStatus)
+    const matchesTable = selectedTableId === 'all' || o.table_id === selectedTableId
+    return matchesStatus && matchesTable
+  })
 
   // Sort orders
   const sortedOrders = useMemo(() => {
@@ -464,139 +502,32 @@ export default function OrdersPage() {
   }, [selectedStatuses])
 
   const selectAllStatuses = () => {
-    setSelectedStatuses(new Set(ACTIVE_STATUSES))
+    if (selectedStatuses.size === ACTIVE_STATUSES.length) {
+      setSelectedStatuses(new Set())
+    } else {
+      setSelectedStatuses(new Set(ACTIVE_STATUSES))
+    }
   }
 
   return (
     <div className="space-y-6 h-full">
-      {/* Sound activation alert - show when audio not unlocked OR sound is disabled */}
-      {!soundAlertDismissed && (!audioUnlocked || !soundEnabled) && (
-        <Alert variant="warning" className="hidden md:flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <BellRing className="h-5 w-5 animate-pulse" />
-            <div>
-              <AlertTitle>
-                {!audioUnlocked
-                  ? t('enableSoundNotifications') || 'Enable Sound Notifications'
-                  : t('soundDisabledTitle') || 'Sound Notifications Disabled'
-                }
-              </AlertTitle>
-              <AlertDescription>
-                {!audioUnlocked
-                  ? t('enableSoundDesc') || 'Get audio alerts when new orders arrive in real-time'
-                  : t('soundDisabledDesc') || 'You will not hear alerts for new orders'
-                }
-              </AlertDescription>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 ml-4">
-            {!audioUnlocked ? (
-              <Button onClick={handleEnableSound} className="gap-2 shrink-0">
-                <Volume2 className="h-4 w-4" />
-                {t('enableSound') || 'Enable Sound'}
-              </Button>
-            ) : (
-              <Button onClick={() => setSoundEnabled(true)} className="gap-2 shrink-0">
-                <Volume2 className="h-4 w-4" />
-                {t('turnOnSound') || 'Turn On'}
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSoundAlertDismissed(true)}
-              className="shrink-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </Alert>
-      )}
-
-      {/* Live connection status alert - hide when successfully connected */}
+      {/* Live connection status alert - always show when live is off, hide when successfully connected */}
       {!liveAlertDismissed && !(liveEnabled && isLive) && (
-        <Alert
-          variant={
-            !liveEnabled ? 'muted'
-              : isLive ? 'success'
-                : (realtimeStatus === 'connecting' || isReconnecting) ? 'warning'
-                  : realtimeStatus === 'error' ? 'destructive'
-                    : 'muted'
-          }
-          className="hidden md:flex items-center justify-between"
-        >
-          <div className="flex items-center gap-3">
-            {!liveEnabled ? (
-              <Radio className="h-5 w-5" />
-            ) : isLive ? (
-              <Wifi className="h-5 w-5" />
-            ) : (realtimeStatus === 'connecting' || isReconnecting) ? (
-              <RefreshCw className="h-5 w-5 animate-spin" />
-            ) : realtimeStatus === 'error' ? (
-              <WifiOff className="h-5 w-5" />
-            ) : (
-              <Radio className="h-5 w-5" />
-            )}
-            <div>
-              <AlertTitle>
-                {!liveEnabled
-                  ? t('liveOff') || 'Real-time updates disabled'
-                  : isLive
-                    ? t('liveConnected') || 'Connected - Real-time updates active'
-                    : isReconnecting
-                      ? `${t('reconnecting') || 'Reconnecting'}... (${reconnectAttempts}/${maxReconnectAttempts})`
-                      : realtimeStatus === 'connecting'
-                        ? t('liveConnecting') || 'Connecting...'
-                        : realtimeStatus === 'error' && reconnectAttempts >= maxReconnectAttempts
-                          ? t('liveErrorMaxRetries') || 'Connection failed - Manual retry required'
-                          : realtimeStatus === 'error'
-                            ? t('liveError') || 'Connection error'
-                            : t('liveDisconnected') || 'Disconnected'
-                }
-              </AlertTitle>
-              {liveEnabled && (!audioUnlocked || !soundEnabled) && isLive && (
-                <AlertDescription>
-                  {t('noSoundWarning') || 'Sound notifications are not enabled'}
-                </AlertDescription>
-              )}
-              {isReconnecting && (
-                <AlertDescription>
-                  {t('autoReconnecting') || 'Attempting to reconnect automatically...'}
-                </AlertDescription>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2 ml-4">
-            {liveEnabled && realtimeStatus === 'error' && !isReconnecting && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setReconnectAttempts(0)
-                  reconnect()
-                }}
-                className="gap-1.5"
-              >
-                <RefreshCw className="h-3 w-3" />
-                {t('retry') || 'Retry'}
-              </Button>
-            )}
-            {!liveEnabled && (
-              <Button variant="outline" size="sm" onClick={handleLiveToggle} className="gap-1.5">
-                <Radio className="h-3 w-3" />
-                {t('enableLive') || 'Enable'}
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setLiveAlertDismissed(true)}
-              className="shrink-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </Alert>
+        <LiveAlert
+          liveEnabled={liveEnabled}
+          isLive={isLive}
+          isReconnecting={isReconnecting}
+          realtimeStatus={realtimeStatus}
+          t={t}
+          reconnectAttempts={reconnectAttempts}
+          maxReconnectAttempts={maxReconnectAttempts}
+          setReconnectAttempts={setReconnectAttempts}
+          reconnect={reconnect}
+          handleLiveToggle={handleLiveToggle}
+          setLiveAlertDismissed={setLiveAlertDismissed}
+          audioUnlocked={audioUnlocked}
+          soundEnabled={soundEnabled}
+        />
       )}
 
       {/* Page header */}
@@ -614,7 +545,10 @@ export default function OrdersPage() {
         </div>
         <div className="flex items-center gap-2">
           {/* Location selector */}
-          <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
+          <Select value={selectedLocationId} onValueChange={(value) => {
+            setSelectedLocationId(value)
+            localStorage.setItem('orders-selected-location', value)
+          }}>
             <SelectTrigger className="w-[180px] md:w-[180px]">
               <SelectValue placeholder={t('allLocations')} />
             </SelectTrigger>
@@ -628,36 +562,65 @@ export default function OrdersPage() {
             </SelectContent>
           </Select>
 
-          {/* Sound toggle - only show if audio is unlocked */}
-          {audioUnlocked && (
-            <Button
-              variant="ghost"
-              className='hidden md:block'
-              onClick={() => {
-                const newValue = !soundEnabled
-                setSoundEnabled(newValue)
-                if (newValue) {
-                  playNotificationSound()
-                  toast.success(t('soundEnabled') || 'Sound enabled')
-                } else {
-                  toast.info(t('soundDisabled') || 'Sound disabled')
-                }
-              }}
-              title={soundEnabled ? t('disableSound') : t('enableSound')}
-            >
-              {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
-            </Button>
+          {/* Table selector */}
+          {availableTables.length > 0 && (
+            <Select value={selectedTableId} onValueChange={setSelectedTableId}>
+              <SelectTrigger className="w-[140px] md:w-[160px]">
+                <SelectValue placeholder={t('allTables')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('allTables')}</SelectItem>
+                {availableTables.map((table) => (
+                  <SelectItem key={table.id} value={table.id}>
+                    {table.name}{table.zone ? ` (${table.zone})` : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
 
-          {/* Live mode toggle */}
           <TooltipProvider>
+            {/* Sound toggle - only show if audio is unlocked */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className={cn('hidden md:flex', {
+                    'border-red-500 hover:bg-red-500/20': !audioUnlocked || !soundEnabled,
+                  })}
+                  onClick={() => {
+                    const newValue = !soundEnabled || !audioUnlocked
+                    setSoundEnabled(newValue)
+                    if (newValue) {
+                      unlockAudio().then(() => {
+                        setAudioUnlocked(true);
+                        playNotificationSound()
+                      })
+
+                      toast.success(t('soundEnabled') || 'Sound enabled')
+                    } else {
+                      toast.info(t('soundDisabled') || 'Sound disabled')
+                    }
+                  }}
+                >
+                  {soundEnabled && audioUnlocked ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4 text-red-500" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {soundEnabled && audioUnlocked ? t('disableSound') : t('enableSound')}
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Live mode toggle */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant={liveEnabled ? 'default' : 'outline'}
+                  size="icon"
                   onClick={handleLiveToggle}
                   className={cn(
-                    "gap-1.5 px-3 hidden md:flex",
+                    "hidden md:flex",
                     liveEnabled && isLive && "bg-green-600 hover:bg-green-700",
                     liveEnabled && !isLive && realtimeStatus === 'connecting' && "bg-yellow-600 hover:bg-yellow-700",
                     liveEnabled && !isLive && realtimeStatus === 'error' && "bg-red-600 hover:bg-red-700"
@@ -674,7 +637,6 @@ export default function OrdersPage() {
                   ) : (
                     <Radio className="h-4 w-4" />
                   )}
-                  <span className="hidden sm:inline">LIVE</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -688,30 +650,39 @@ export default function OrdersPage() {
                 }
               </TooltipContent>
             </Tooltip>
-          </TooltipProvider>
 
-          {/* Layout toggle - hidden on small screens */}
-          <div className="hidden md:flex border rounded-full">
-            <Button
-              variant={layout === 'list' ? 'default' : 'ghost'}
-              size="icon"
-              onClick={() => handleLayoutChange('list')}
-              className="rounded-r-none"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={layout === 'kanban' ? 'default' : 'ghost'}
-              size="icon"
-              onClick={() => handleLayoutChange('kanban')}
-              className="rounded-l-none"
-            >
-              <Columns className="h-4 w-4" />
-            </Button>
-          </div>
+            {/* Layout toggle - hidden on small screens */}
+            <div className="hidden md:flex border rounded-full">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={layout === 'list' ? 'default' : 'ghost'}
+                    size="icon"
+                    onClick={() => handleLayoutChange('list')}
+                    className="rounded-r-none"
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('listView')}</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={layout === 'kanban' ? 'default' : 'ghost'}
+                    size="icon"
+                    onClick={() => handleLayoutChange('kanban')}
+                    className="rounded-l-none"
+                  >
+                    <Columns className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('kanbanView')}</TooltipContent>
+              </Tooltip>
+            </div>
 
-          {/* Waiter Mode */}
-          {/* <Button variant="outline" asChild className="px-3 md:px-4">
+            {/* Waiter Mode */}
+            {/* <Button variant="outline" asChild className="px-3 md:px-4">
             <Link href="/dashboard/waiter">
               <Smartphone className="h-4 w-4 md:mr-2" />
               <span className="hidden md:inline">{t('waiterMode')}</span>
@@ -719,19 +690,30 @@ export default function OrdersPage() {
           </Button> */}
 
 
-          {/* Refresh */}
-          <motion.div whileHover={{ scale: 1.05, rotate: 180 }} whileTap={{ scale: 0.95 }}>
-            <Button onClick={() => refetch()} variant="outline" disabled={isLoading} size="icon" className="shrink-0">
-              <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
-            </Button>
-          </motion.div>
-          {/* Create Order */}
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button onClick={() => setIsCreateOrderOpen(true)}>
-              <Plus className="h-4 w-4 md:mr-2" />
-              <span className="hidden md:inline">{t('createOrder')}</span>
-            </Button>
-          </motion.div>
+            {/* Refresh */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.div whileHover={{ scale: 1.05, rotate: 180 }} whileTap={{ scale: 0.95 }}>
+                  <Button onClick={() => refetch()} variant="outline" disabled={isLoading} size="icon" className="shrink-0">
+                    <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
+                  </Button>
+                </motion.div>
+              </TooltipTrigger>
+              <TooltipContent>{t('refresh')}</TooltipContent>
+            </Tooltip>
+
+            {/* Create Order */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button size="icon" onClick={() => setIsCreateOrderOpen(true)}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </motion.div>
+              </TooltipTrigger>
+              <TooltipContent>{t('createOrder')}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </motion.div>
 

@@ -129,3 +129,32 @@ export function stopNotificationLoop(): void {
 export function isNotificationLooping(): boolean {
   return isLooping
 }
+
+/**
+ * Check if audio permission is still valid by attempting a silent play
+ * This is useful for PWA to verify cached permission still works
+ */
+export async function checkAudioPermission(): Promise<boolean> {
+  if (typeof window === 'undefined') return false
+  
+  // Initialize if not done
+  if (!isInitialized) {
+    initNotificationSound()
+  }
+  
+  if (!notificationAudio) return false
+  
+  try {
+    // Try to play silently to verify permission
+    const originalVolume = notificationAudio.volume
+    notificationAudio.volume = 0
+    await notificationAudio.play()
+    notificationAudio.pause()
+    notificationAudio.currentTime = 0
+    notificationAudio.volume = originalVolume
+    return true
+  } catch (error) {
+    // Permission denied or browser blocked autoplay
+    return false
+  }
+}

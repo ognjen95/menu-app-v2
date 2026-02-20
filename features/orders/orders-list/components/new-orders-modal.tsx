@@ -110,7 +110,7 @@ export function NewOrdersModal({
 
   return (
     <Dialog open={open}>
-      <DialogContent hideCloseButton className="sm:max-w-3xl z-[100]">
+      <DialogContent hideCloseButton className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 animate-pulse">
