@@ -22,19 +22,23 @@ import { VariantSelectionDialog } from '../components/variant-selection-dialog'
 import { DesktopMenuContent } from '../components/desktop-menu-content'
 import { MobileSetupStep } from '../components/mobile-setup-step'
 import { MobileMenuStep } from '../components/mobile-menu-step'
-import { Location } from '@/lib/types'
+import { Location, MenuItem, Table } from '@/lib/types'
+import { MenuItemWithVariants, TeamMember } from '../types'
 
 interface CreateOrderDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   locations: Location[]
+  tables: Table[]
+  team: TeamMember[]
+  menuItems: MenuItemWithVariants[]
 }
 
-export function CreateOrderContainer({ open, onOpenChange, locations }: CreateOrderDialogProps) {
+export function CreateOrderContainer({ open, onOpenChange, locations, tables, team, menuItems }: CreateOrderDialogProps) {
   const t = useTranslations('createOrder')
   const tCommon = useTranslations('common')
 
-  const state = useCreateOrderState({ open, onOpenChange, t, locations })
+  const state = useCreateOrderState({ open, onOpenChange, t, locations, tables, team, menuItems })
 
   // Shared props for menu content
   const menuContentProps = {
@@ -44,7 +48,7 @@ export function CreateOrderContainer({ open, onOpenChange, locations }: CreateOr
     tables: state.tables,
     selectedTableId: state.selectedTableId,
     onTableChange: state.setSelectedTableId,
-    teamMembers: state.teamMembers,
+    teamMembers: state.team,
     selectedStaffId: state.selectedStaffId,
     onStaffChange: state.setSelectedStaffId,
     orderType: state.orderType,
@@ -54,7 +58,7 @@ export function CreateOrderContainer({ open, onOpenChange, locations }: CreateOr
     categories: state.categories,
     selectedCategoryId: state.selectedCategoryId,
     onCategorySelect: state.setSelectedCategoryId,
-    isLoadingItems: state.isLoadingItems,
+    isLoadingItems: false,
     filteredItems: state.filteredItems,
     itemQuantities: state.itemQuantities,
     recentlyAddedId: state.recentlyAddedId,

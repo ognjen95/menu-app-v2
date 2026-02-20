@@ -2,18 +2,19 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api'
-import type { 
-  Menu, 
-  Category, 
-  MenuItem, 
-  ItemVariant, 
-  OptionGroup, 
+import type {
+  Menu,
+  Category,
+  MenuItem,
+  ItemVariant,
+  OptionGroup,
   ItemOption,
   Allergen,
   MenuWithCategories,
   MenuItemWithRelations,
   CategoryWithItems
 } from '@/lib/types'
+import { MenuItemWithVariants } from '@/features/orders/create-order'
 
 // Query keys
 export const menuKeys = {
@@ -29,13 +30,13 @@ export const menuKeys = {
 }
 
 // Types for API responses
-type MenusResponse = { data: {menus: Menu[] } }
+type MenusResponse = { data: { menus: Menu[] } }
 type MenuResponse = { menu: Menu }
-type CategoriesResponse = { data: {categories: Category[] } }
+type CategoriesResponse = { data: { categories: Category[] } }
 type CategoryResponse = { category: Category }
-type ItemsResponse = { data: {items: MenuItem[] } }
+type ItemsResponse = { data: { items: MenuItem[] } }
 type ItemResponse = { item: MenuItemWithRelations }
-type AllergensResponse = { data: {allergens: Allergen[] } }
+type AllergensResponse = { data: { allergens: Allergen[] } }
 type FullMenuResponse = { menu: MenuWithCategories }
 
 // Menu hooks
@@ -151,6 +152,15 @@ export function useMenuItems(categoryId: string) {
   })
 }
 
+// Fetch menu items
+export const useAllMenuItems = ({ enabled }: { enabled?: boolean }) => {
+  return useQuery({
+    queryKey: ['menu-items-all'],
+    queryFn: () => apiGet<{ data: { items: MenuItemWithVariants[] } }>('/menu/items'),
+    enabled,
+  })
+}
+
 export function useMenuItem(id: string) {
   return useQuery({
     queryKey: menuKeys.item(id),
@@ -159,7 +169,7 @@ export function useMenuItem(id: string) {
   })
 }
 
-type CreateMenuItemInput = Partial<MenuItem> & { 
+type CreateMenuItemInput = Partial<MenuItem> & {
   categoryId: string
   allergen_ids?: string[]
 }
@@ -176,7 +186,7 @@ export function useCreateMenuItem() {
   })
 }
 
-type UpdateMenuItemInput = Partial<MenuItem> & { 
+type UpdateMenuItemInput = Partial<MenuItem> & {
   id: string
   categoryId: string
   allergen_ids?: string[]

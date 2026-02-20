@@ -1,10 +1,9 @@
 // Domain
 export * from './domains/types'
 
-// Services
+// Services (client-side only)
 export * from './services/use-tables'
-export { getTablesPageData } from './services/tables-server'
-export type { TablesPageData } from './services/tables-server'
+// Note: Server-side exports (getTablesPageData) should be imported directly from './services/tables-server'
 
 // Components
 export * from './components'

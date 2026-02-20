@@ -3,13 +3,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
-import { useQuery } from '@tanstack/react-query'
+
 import { useActiveOrders } from '@/lib/hooks/use-orders'
-import { apiGet } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 
 import {
   Select,
@@ -68,6 +66,9 @@ import { OrdersGridSkeleton, KanbanLayoutSkeleton } from '@/components/ui/skelet
 import { OfflineSyncIndicator } from '@/components/ui/offline-sync-indicator'
 import { useInitOfflineSync, useOfflineUpdateOrderStatus } from '@/lib/hooks/use-offline-orders'
 import LiveAlert from '@/features/orders/orders-list/components/live-alert'
+import { useTables } from '@/features/tables'
+import { useAllMenuItems, useLocations, useMenuItems } from '@/lib/hooks'
+import { useTeams } from '@/features/teams/services/use-teams'
 
 const ACTIVE_STATUSES: OrderStatus[] = ['placed', 'accepted', 'preparing', 'ready', 'served']
 
@@ -91,11 +92,22 @@ export default function OrdersPage() {
   const [showNewOrdersModal, setShowNewOrdersModal] = useState(false)
   const [audioUnlocked, setAudioUnlocked] = useState(false)
   const [liveAlertDismissed, setLiveAlertDismissed] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
   const lastOrderCountRef = useRef(0)
   const updateOrderStatus = useOfflineUpdateOrderStatus()
 
   // Track if screen is mobile
-  const [isMobile, setIsMobile] = useState(false)
+
+  const { data: locationsData } = useLocations()
+  const locations = locationsData?.data?.locations || []
+
+  const { data: tablesData } = useTables(selectedLocationId !== 'all' ? selectedLocationId : null)
+  const availableTables = tablesData || []
+
+  const { team } = useTeams({})
+  const { data: menuItemsData } = useAllMenuItems({});
+  const menuItems = menuItemsData?.data?.items ?? [];
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -129,19 +141,6 @@ export default function OrdersPage() {
       })
     }
   }, [])
-
-  // Handle enabling sound notifications
-  const handleEnableSound = useCallback(async () => {
-    const unlocked = await unlockAudio()
-    if (unlocked) {
-      setAudioUnlocked(true)
-      toast.success(t('soundActivated') || 'Sound notifications enabled', {
-        description: t('soundActivatedDesc') || 'You will hear alerts for new orders'
-      })
-    } else {
-      toast.error(t('soundFailed') || 'Failed to enable sound')
-    }
-  }, [t])
 
   // Persist layout to localStorage
   const handleLayoutChange = (newLayout: 'list' | 'kanban') => {
@@ -275,21 +274,6 @@ export default function OrdersPage() {
     { disablePolling: liveEnabled } // Disable polling when LIVE mode is on
   )
 
-  // Fetch locations
-  const { data: locationsData } = useQuery({
-    queryKey: ['locations'],
-    queryFn: () => apiGet<{ data: { locations: Location[] } }>('/locations'),
-  })
-  const locations = locationsData?.data?.locations || []
-
-  // Fetch tables for selected location
-  const { data: tablesData } = useQuery({
-    queryKey: ['tables', selectedLocationId],
-    queryFn: () => apiGet<{ data: { tables: Array<{ id: string; name: string; zone?: string }> } }>(`/tables?location_id=${selectedLocationId}`),
-    enabled: selectedLocationId !== 'all',
-  })
-  const availableTables = tablesData?.data?.tables || []
-
   // Reset table selection when location changes
   useEffect(() => {
     setSelectedTableId('all')
@@ -303,7 +287,6 @@ export default function OrdersPage() {
       const pendingIds = pendingOrderIds.map(p => p.id)
       const foundOrders = orders.filter(o => pendingIds.includes(o.id))
       if (foundOrders.length > 0) {
-        console.log('[LIVE] Found full orders in refetched data:', foundOrders)
         setUncheckedOrders(prev => {
           const newOnes = foundOrders.filter(fo => !prev.some(p => p.id === fo.id))
           return [...newOnes, ...prev]
@@ -584,7 +567,7 @@ export default function OrdersPage() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant={(!audioUnlocked || !soundEnabled) ? "outline": 'default'}
+                  variant={(!audioUnlocked || !soundEnabled) ? "outline" : 'default'}
                   size="icon"
                   className={cn('hidden md:flex', {
                     'border-yellow-600 hover:bg-yellow-600/20': !audioUnlocked || !soundEnabled,
@@ -625,7 +608,7 @@ export default function OrdersPage() {
                       'bg-green-600 hover:bg-green-700': liveEnabled && isLive,
                       'bg-yellow-600 hover:bg-yellow-700': liveEnabled && !isLive && realtimeStatus === 'connecting',
                       'bg-red-600 hover:bg-red-700': liveEnabled && !isLive && realtimeStatus === 'error',
-                      "border border-yellow-600 hover:bg-yellow-600/20" : !liveEnabled,
+                      "border border-yellow-600 hover:bg-yellow-600/20": !liveEnabled,
                     }
                   )}
                 >
@@ -890,6 +873,9 @@ export default function OrdersPage() {
       <CreateOrderDialog
         open={isCreateOrderOpen}
         locations={locations}
+        tables={availableTables}
+        team={team}
+        menuItems={menuItems}
         onOpenChange={setIsCreateOrderOpen}
       />
 

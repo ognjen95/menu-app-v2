@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form'
 import { apiGet } from '@/lib/api'
 import { useOfflineCreateOrder } from '@/lib/hooks/use-offline-orders'
 import { toast } from 'sonner'
+import { createClient } from '@/utils/supabase/client'
 import type { Location, Table } from '@/lib/types'
 import type {
   CartItem,
@@ -32,9 +33,12 @@ type UseCreateOrderStateProps = {
   onOpenChange: (open: boolean) => void
   t: (key: string) => string
   locations: Location[]
+  tables: Table[]
+  team: TeamMember[]
+  menuItems: MenuItemWithVariants[]
 }
 
-export function useCreateOrderState({ open, onOpenChange, t, locations }: UseCreateOrderStateProps) {
+export function useCreateOrderState({ open, onOpenChange, t, locations, tables, menuItems, team }: UseCreateOrderStateProps) {
   const customerInfoForm = useForm<CustomerInfoValues>({
     defaultValues: { name: '', phone: '', notes: '' },
   })
@@ -54,7 +58,7 @@ export function useCreateOrderState({ open, onOpenChange, t, locations }: UseCre
   const [isCustomerInfoOpen, setIsCustomerInfoOpen] = useState(false)
   const [isMobileSearchFocused, setIsMobileSearchFocused] = useState(false)
   const [itemForVariants, setItemForVariants] = useState<MenuItemWithVariants | null>(null)
-  
+
   const addFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const mobileSearchInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -81,14 +85,6 @@ export function useCreateOrderState({ open, onOpenChange, t, locations }: UseCre
     }
   }, [selectedLocationId])
 
-  // Fetch locations
-  // const { data: locationsData } = useQuery({
-  //   queryKey: ['locations'],
-  //   queryFn: () => apiGet<{ data: { locations: Location[] } }>('/locations'),
-  //   enabled: open,
-  // })
-  // const locations = useMemo(() => locationsData?.data?.locations || [], [locationsData])
-
   // Set first location if none selected
   useEffect(() => {
     if (locations.length > 0 && !selectedLocationId) {
@@ -96,46 +92,20 @@ export function useCreateOrderState({ open, onOpenChange, t, locations }: UseCre
     }
   }, [locations, selectedLocationId])
 
-  // Fetch tables for selected location
-  const { data: tablesData } = useQuery({
-    queryKey: ['tables', selectedLocationId],
-    queryFn: () => apiGet<{ data: { tables: Table[] } }>('/tables', { location_id: selectedLocationId }),
-    enabled: open && !!selectedLocationId,
-  })
-  const tables = useMemo(() => tablesData?.data?.tables || [], [tablesData])
-
-  // Fetch team members
-  const { data: teamData } = useQuery({
-    queryKey: ['team'],
-    queryFn: () => apiGet<{ data: { members: TeamMember[] } }>('/team'),
-    enabled: open,
-  })
-  const teamMembers = useMemo(() => teamData?.data?.members || [], [teamData])
-
-  // Fetch current user profile to preselect
-  const { data: profileData } = useQuery({
-    queryKey: ['profile'],
-    queryFn: () => apiGet<{ data: { profile: { id: string; full_name: string } } }>('/profile'),
-    enabled: open,
-  })
-
   // Preselect current user as staff
   useEffect(() => {
-    if (profileData?.data?.profile?.id && teamMembers.length > 0 && !selectedStaffId) {
-      const currentMember = teamMembers.find(m => m.user_id === profileData.data.profile.id)
-      if (currentMember) {
-        setSelectedStaffId(currentMember.user_id)
-      }
-    }
-  }, [profileData, teamMembers, selectedStaffId])
+    if (!open || team.length === 0 || selectedStaffId) return
 
-  // Fetch menu items
-  const { data: menuItemsData, isLoading: isLoadingItems } = useQuery({
-    queryKey: ['menu-items-all'],
-    queryFn: () => apiGet<{ data: { items: MenuItemWithVariants[] } }>('/menu/items'),
-    enabled: open,
-  })
-  const menuItems = useMemo(() => menuItemsData?.data?.items || [], [menuItemsData])
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.id) {
+        const currentMember = team.find(m => m.user_id === user.id)
+        if (currentMember) {
+          setSelectedStaffId(currentMember.user_id)
+        }
+      }
+    })
+  }, [open, team, selectedStaffId])
 
   // Extract unique categories from items
   const categories = useMemo<Category[]>(() => {
@@ -359,7 +329,7 @@ export function useCreateOrderState({ open, onOpenChange, t, locations }: UseCre
   return {
     // Form
     customerInfoForm,
-    
+
     // Selection state
     selectedLocationId,
     setSelectedLocationId,
@@ -369,13 +339,13 @@ export function useCreateOrderState({ open, onOpenChange, t, locations }: UseCre
     setSelectedStaffId,
     orderType,
     setOrderType,
-    
+
     // Search & filter
     searchQuery,
     handleSearchChange,
     selectedCategoryId,
     setSelectedCategoryId,
-    
+
     // Cart
     cart,
     cartTotal,
@@ -387,19 +357,19 @@ export function useCreateOrderState({ open, onOpenChange, t, locations }: UseCre
     updateQuantity,
     removeFromCart,
     clearCart,
-    
+
     // Variants
     itemForVariants,
     setItemForVariants,
-    
+
     // Data
     locations,
     tables,
-    teamMembers,
+    team,
     categories,
     filteredItems,
-    isLoadingItems,
-    
+    menuItems,
+
     // UI state
     isMobile,
     showCart,
@@ -411,7 +381,7 @@ export function useCreateOrderState({ open, onOpenChange, t, locations }: UseCre
     isMobileSearchFocused,
     setIsMobileSearchFocused,
     mobileSearchInputRef,
-    
+
     // Actions
     handleCreateOrder,
     isSubmitting: createOrder.isPending,
