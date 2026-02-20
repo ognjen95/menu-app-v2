@@ -81,8 +81,8 @@ export const CategorySection = memo(function CategorySection({
         )}
       </div>
 
-      {/* Items grid - 1 column on mobile, grid on larger screens */}
-      <div className="flex flex-col gap-3 md:grid md:gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {/* Items grid - 1 column on mobile, max 3 columns on desktop */}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-5 lg:grid-cols-3">
         {category.items.map((item, itemIndex) => (
           <MenuItemCard
             key={item.id}

@@ -19,6 +19,7 @@ import { DIETARY_TAG_OPTIONS } from '@/lib/constants/menu-items'
 const CartSidebar = dynamic(() => import('./components/cart-sidebar').then(mod => mod.CartSidebar), { ssr: false })
 const ItemDetailModal = dynamic(() => import('./item-detail-modal').then(mod => mod.ItemDetailModal), { ssr: false })
 const CheckoutDialog = dynamic(() => import('./checkout-dialog').then(mod => mod.CheckoutDialog), { ssr: false })
+const InfoSidebar = dynamic(() => import('./components/info-sidebar').then(mod => mod.InfoSidebar), { ssr: false })
 
 // Language type for public menu
 type PublicLanguage = {
@@ -134,6 +135,7 @@ export function PublicMenuView({
   const [cartAnimation, setCartAnimation] = useState<string[]>([])
   const [currentLanguage, setCurrentLanguage] = useState(initialLanguage)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [infoOpen, setInfoOpen] = useState(false)
 
   // Sync language from URL on mount and when searchParams change
   useEffect(() => {
@@ -396,6 +398,7 @@ export function PublicMenuView({
           if (isSearchOpen) setSearchQuery('')
         }}
         onSearchChange={setSearchQuery}
+        onInfoOpen={() => setInfoOpen(true)}
         getTranslatedText={getTranslatedText}
         getContrastColor={getContrastColor}
         t={t}
@@ -482,10 +485,21 @@ export function PublicMenuView({
         cardBg={cardBg}
         borderColor={borderColor}
         mutedForeground={mutedForeground}
+        tableId={tableId}
         tYourOrder={t('yourOrder')}
         tCartEmpty={t('cartEmpty')}
         tTotal={t('total')}
         tPlaceOrder={t('placeOrder')}
+        tHistory={t('history')}
+        tNoHistory={t('noHistory')}
+        tOrderStatus={{
+          draft: t('orderStatus.draft'),
+          placed: t('orderStatus.placed'),
+          accepted: t('orderStatus.accepted'),
+          preparing: t('orderStatus.preparing'),
+          ready: t('orderStatus.ready'),
+          served: t('orderStatus.served'),
+        }}
         getTranslatedText={getTranslatedText}
         getContrastColor={getContrastColor}
         onClose={handleCloseCart}
@@ -520,6 +534,17 @@ export function PublicMenuView({
         dineInEnabled={(tenant.settings as { dine_in_enabled?: boolean } | null)?.dine_in_enabled !== false}
         takeawayEnabled={(tenant.settings as { takeaway_enabled?: boolean } | null)?.takeaway_enabled !== false}
         deliveryEnabled={(tenant.settings as { delivery_enabled?: boolean } | null)?.delivery_enabled === true}
+        theme={theme}
+      />
+
+      {/* Info Sidebar */}
+      <InfoSidebar
+        isOpen={infoOpen}
+        onClose={() => setInfoOpen(false)}
+        onCartOpen={() => setCartOpen(true)}
+        tenant={tenant}
+        location={locations.find(l => l.id === locationId) || locations[0]}
+        website={website}
         theme={theme}
       />
     </div>
