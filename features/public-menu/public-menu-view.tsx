@@ -542,6 +542,7 @@ export function PublicMenuView({
         isOpen={infoOpen}
         onClose={() => setInfoOpen(false)}
         onCartOpen={() => setCartOpen(true)}
+        cartItemsCount={cartItemsCount}
         tenant={tenant}
         location={locations.find(l => l.id === locationId) || locations[0]}
         website={website}

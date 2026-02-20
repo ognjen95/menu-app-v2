@@ -30,6 +30,7 @@ interface InfoSidebarProps {
   isOpen: boolean
   onClose: () => void
   onCartOpen: () => void
+  cartItemsCount?: number
   tenant: Tenant
   location?: Location
   website: Website | null
@@ -81,6 +82,7 @@ export function InfoSidebar({
   isOpen,
   onClose,
   onCartOpen,
+  cartItemsCount = 0,
   tenant,
   location,
   website,
@@ -219,7 +221,7 @@ export function InfoSidebar({
             {t('pay')}
           </button> */}
           <button
-            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all hover:opacity-90"
+            className="relative flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all hover:opacity-90"
             style={{ backgroundColor: theme.accent, color: getContrastColor(theme.accent) }}
             onClick={() => {
               onClose()
@@ -228,6 +230,14 @@ export function InfoSidebar({
           >
             <ShoppingCart className="h-4 w-4" />
             {t('cart')}
+            {cartItemsCount > 0 && (
+              <span
+                className="absolute -top-2 -right-2 h-5 w-5 rounded-full text-xs flex items-center justify-center font-semibold"
+                style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
+              >
+                {cartItemsCount}
+              </span>
+            )}
           </button>
         </div>
 
