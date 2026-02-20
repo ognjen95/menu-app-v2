@@ -513,6 +513,39 @@ export function TopWaitersListSkeleton({ count = 5 }: { count?: number }) {
   )
 }
 
+// Dashboard Overview Header Skeleton - Mirrors the header/date selector area
+export function DashboardOverviewHeaderSkeleton() {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
+          <Skeleton className="h-8 w-16 rounded-md" />
+          <Skeleton className="h-8 w-16 rounded-md" />
+          <Skeleton className="h-8 w-16 rounded-md" />
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Skeleton className="h-4 w-4 rounded" />
+        <Skeleton className="h-9 w-[100px] rounded-md" />
+        <Skeleton className="h-9 w-[140px] rounded-md" />
+        <div className="flex items-center gap-1 ml-2">
+          <Skeleton className="h-8 w-8 rounded-md" />
+          <Skeleton className="h-8 w-8 rounded-md" />
+        </div>
+        <Skeleton className="h-4 w-24 ml-2" />
+        <div className="w-px h-6 bg-border ml-2" />
+        <Skeleton className="h-4 w-4 rounded ml-2" />
+        <Skeleton className="h-9 w-[160px] rounded-md" />
+      </div>
+    </div>
+  )
+}
+
 // Dashboard Overview Skeleton - Only cards and charts, no header/date selector
 export function DashboardOverviewSkeleton() {
   return (
