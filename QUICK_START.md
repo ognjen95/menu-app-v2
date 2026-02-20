@@ -67,7 +67,7 @@ npm run stripe:listen
 ```
 ✅ Created /lib folder - All utilities now here
 ✅ Created /components/forms - Reusable form components
-✅ Created /components/features/auth - Feature-based components
+✅ Created /features/auth - Feature-based components
 ✅ Updated all imports across the codebase
 ```
 

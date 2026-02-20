@@ -206,7 +206,7 @@ export function CategoriesSidebarSkeleton({ count = 5 }: { count?: number }) {
 // Kanban Column Skeleton
 export function KanbanColumnSkeleton() {
   return (
-    <div className="flex-shrink-0 w-[380px] space-y-4">
+    <div className="flex-shrink-0 space-y-4">
       <div className="flex items-center gap-2 sticky top-0 bg-background py-2 z-10">
         <Skeleton className="h-3 w-3 rounded-full" />
         <Skeleton className="h-5 w-24" />
@@ -222,10 +222,10 @@ export function KanbanColumnSkeleton() {
 }
 
 // Kanban Layout Skeleton
-export function KanbanLayoutSkeleton({ columns = 4 }: { columns?: number }) {
+export function KanbanLayoutSkeleton({ columns = 5 }: { columns?: number }) {
   return (
     <motion.div
-      className="flex gap-4 min-h-[calc(100vh-280px)] pb-4"
+      className="grid grid-cols-5 gap-4 min-h-[calc(100vh-280px)] pb-4"
       initial="initial"
       animate="animate"
       variants={staggerContainer}
@@ -510,6 +510,39 @@ export function TopWaitersListSkeleton({ count = 5 }: { count?: number }) {
         </motion.div>
       </CardContent>
     </Card>
+  )
+}
+
+// Dashboard Overview Header Skeleton - Mirrors the header/date selector area
+export function DashboardOverviewHeaderSkeleton() {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
+          <Skeleton className="h-8 w-16 rounded-md" />
+          <Skeleton className="h-8 w-16 rounded-md" />
+          <Skeleton className="h-8 w-16 rounded-md" />
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Skeleton className="h-4 w-4 rounded" />
+        <Skeleton className="h-9 w-[100px] rounded-md" />
+        <Skeleton className="h-9 w-[140px] rounded-md" />
+        <div className="flex items-center gap-1 ml-2">
+          <Skeleton className="h-8 w-8 rounded-md" />
+          <Skeleton className="h-8 w-8 rounded-md" />
+        </div>
+        <Skeleton className="h-4 w-24 ml-2" />
+        <div className="w-px h-6 bg-border ml-2" />
+        <Skeleton className="h-4 w-4 rounded ml-2" />
+        <Skeleton className="h-9 w-[160px] rounded-md" />
+      </div>
+    </div>
   )
 }
 

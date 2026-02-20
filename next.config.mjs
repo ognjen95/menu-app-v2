@@ -1,26 +1,68 @@
 import createNextIntlPlugin from 'next-intl/plugin';
-import withPWAInit from 'next-pwa';
+import withPWAInit from '@ducanh2912/next-pwa'; // TODO: Change with https://serwist.pages.dev/docs/next/config
 
 const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 const withPWA = withPWAInit({
   dest: 'public',
-  disable: process.env.NODE_ENV === 'development', // Disable in development
+  disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
+  // Enable caching on client-side navigation
+  cacheOnFrontEndNav: true,
+  // Workbox options for @ducanh2912/next-pwa
+  workboxOptions: {
+    disableDevLogs: true,
+    // Exclude app-build-manifest.json from precaching
+    exclude: [/app-build-manifest\.json$/],
+  },
   // Cache strategies for different routes
+  extendDefaultRuntimeCaching: true,
   runtimeCaching: [
-    // Cache API calls for orders (network first, fallback to cache)
+    // Cache tenant/user info for offline auth (network first with longer cache)
+    {
+      urlPattern: /^https?:\/\/.*\/api\/tenant\/.*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'tenant-api-cache',
+        expiration: {
+          maxEntries: 10,
+          maxAgeSeconds: 60 * 60 * 24, // 24 hours
+        },
+        networkTimeoutSeconds: 5,
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
+    // Cache profile/user data for offline access
+    {
+      urlPattern: /^https?:\/\/.*\/api\/profile.*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'profile-api-cache',
+        expiration: {
+          maxEntries: 5,
+          maxAgeSeconds: 60 * 60 * 24, // 24 hours
+        },
+        networkTimeoutSeconds: 5,
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
+    // Cache API calls for orders - GET only (not POST/PATCH/DELETE)
     {
       urlPattern: /^https?:\/\/.*\/api\/orders\/.*/i,
       handler: 'NetworkFirst',
+      method: 'GET', // Only cache GET requests, let mutations fail fast
       options: {
         cacheName: 'orders-api-cache',
         expiration: {
           maxEntries: 100,
           maxAgeSeconds: 60 * 5, // 5 minutes
         },
-        networkTimeoutSeconds: 10,
+        networkTimeoutSeconds: 3, // Reduced from 10s for faster offline detection
         cacheableResponse: {
           statuses: [0, 200],
         },
@@ -77,30 +119,20 @@ const withPWA = withPWAInit({
         },
       },
     },
-    // Cache dashboard pages (network first for fresh data)
+    // Cache Next.js data requests (_next/data) for client-side navigation
     {
-      urlPattern: /^https?:\/\/.*\/dashboard\/.*/i,
+      urlPattern: /\/_next\/data\/.+\/.+\.json$/i,
       handler: 'NetworkFirst',
       options: {
-        cacheName: 'dashboard-pages-cache',
+        cacheName: 'next-data-cache',
         expiration: {
-          maxEntries: 50,
+          maxEntries: 100,
           maxAgeSeconds: 60 * 60, // 1 hour
         },
         networkTimeoutSeconds: 5,
-      },
-    },
-    // Default: cache everything else with network first
-    {
-      urlPattern: /.*/i,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'others-cache',
-        expiration: {
-          maxEntries: 200,
-          maxAgeSeconds: 60 * 60 * 24, // 24 hours
+        cacheableResponse: {
+          statuses: [0, 200],
         },
-        networkTimeoutSeconds: 10,
       },
     },
   ],

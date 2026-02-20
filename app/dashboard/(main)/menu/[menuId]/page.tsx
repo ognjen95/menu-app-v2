@@ -90,8 +90,8 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useTenantLanguages, useSaveTranslations, generateItemTranslationKey, generateCategoryTranslationKey, useTranslationsByPrefix } from '@/lib/hooks/use-translations'
-import { TranslationEditor } from '@/components/features/translations/translation-editor'
-import { VariantManager } from '@/components/features/menu/VariantManager'
+import { TranslationEditor } from '@/features/translations/translation-editor'
+import { VariantManager } from '@/features/menu/VariantManager'
 import type { Category } from '@/lib/types'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'

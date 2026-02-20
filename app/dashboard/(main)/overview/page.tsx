@@ -2,32 +2,20 @@
 
 import { useState, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { 
   DollarSign,
   ShoppingCart,
   TrendingUp,
   TrendingDown,
   Users,
-  Calendar,
   Award,
   Clock,
-  ChevronLeft,
-  ChevronRight,
-  MapPin,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {
   BarChart,
   Bar,
@@ -44,6 +32,7 @@ import {
 } from 'recharts'
 import { AnimatedDiv, AnimatedList, AnimatedListItem } from '@/components/ui/animated'
 import { DashboardOverviewSkeleton } from '@/components/ui/skeletons'
+import { OverviewHeader } from '../../../../features/overview/components/overview-header'
 
 type Timeframe = 'day' | 'month' | 'year'
 
@@ -213,146 +202,36 @@ export default function DashboardPage() {
     return null
   }
 
-  console.log(data?.topWaiters)
-
   return (
     <div className="space-y-6">
-      {/* Header with timeframe selector - Always visible */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
-            <p className="text-muted-foreground">{t('overview.subtitle')}</p>
-          </div>
-          <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
-            {timeframeOptions.map((option) => (
-              <Button
-                key={option.value}
-                variant={timeframe === option.value ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => handleTimeframeChange(option.value)}
-                className="px-4"
-              >
-                {option.label}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* Date Selection */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          
-          {/* Year Selector - Always visible */}
-          <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-            <SelectTrigger className="w-[100px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map((year) => (
-                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Month Selector - For day and month timeframe */}
-          {(timeframe === 'day' || timeframe === 'month') && (
-            <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {MONTHS.map((month, index) => (
-                  <SelectItem 
-                    key={month} 
-                    value={index.toString()}
-                    disabled={selectedYear === today.getFullYear() && index > today.getMonth()}
-                  >
-                    {month}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          {/* Day Selector - For day timeframe */}
-          {timeframe === 'day' && (
-            <Select value={selectedDay.toString()} onValueChange={(v) => setSelectedDay(parseInt(v))}>
-              <SelectTrigger className="w-[80px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {daysInMonth.map((day) => (
-                  <SelectItem 
-                    key={day} 
-                    value={day.toString()}
-                    disabled={
-                      selectedYear === today.getFullYear() && 
-                      selectedMonth === today.getMonth() && 
-                      day > today.getDate()
-                    }
-                  >
-                    {day}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          {/* Quick Navigation */}
-          <div className="flex items-center gap-1 ml-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => {
-                if (timeframe === 'day') navigateDay(-1)
-                else if (timeframe === 'month') navigateMonth(-1)
-                else setSelectedYear(y => y - 1)
-              }}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => {
-                if (timeframe === 'day') navigateDay(1)
-                else if (timeframe === 'month') navigateMonth(1)
-                else setSelectedYear(y => Math.min(y + 1, today.getFullYear()))
-              }}
-              disabled={!canGoForward}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Formatted Date Display */}
-          <span className="text-sm font-medium text-muted-foreground ml-2">
-            {formattedDate}
-          </span>
-
-          {/* Separator */}
-          <div className="w-px h-6 bg-border ml-2" />
-
-          {/* Location Selector */}
-          <MapPin className="h-4 w-4 text-muted-foreground ml-2" />
-          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder={t('overview.allLocations')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('overview.allLocations')}</SelectItem>
-              {locations.map((location) => (
-                <SelectItem key={location.id} value={location.id}>
-                  {location.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      <OverviewHeader
+        timeframe={timeframe}
+        selectedYear={selectedYear}
+        selectedMonth={selectedMonth}
+        selectedDay={selectedDay}
+        selectedLocation={selectedLocation}
+        locations={locations}
+        years={years}
+        daysInMonth={daysInMonth}
+        formattedDate={formattedDate}
+        canGoForward={canGoForward}
+        today={today}
+        onTimeframeChange={handleTimeframeChange}
+        onYearChange={setSelectedYear}
+        onMonthChange={setSelectedMonth}
+        onDayChange={setSelectedDay}
+        onLocationChange={setSelectedLocation}
+        onNavigateBack={() => {
+          if (timeframe === 'day') navigateDay(-1)
+          else if (timeframe === 'month') navigateMonth(-1)
+          else setSelectedYear(y => y - 1)
+        }}
+        onNavigateForward={() => {
+          if (timeframe === 'day') navigateDay(1)
+          else if (timeframe === 'month') navigateMonth(1)
+          else setSelectedYear(y => Math.min(y + 1, today.getFullYear()))
+        }}
+      />
 
       {/* Show skeleton or data based on loading state */}
       {isLoading ? (

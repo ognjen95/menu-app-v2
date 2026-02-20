@@ -325,7 +325,7 @@ import {
 
 6. **Follow component patterns**
    - Use existing Shadcn components from `/components/ui`
-   - Extend them in `/components/features` for custom needs
+   - Extend them in `/features` for custom needs
    - Don't modify `/components/ui` files directly
 
 7. **Consistent spacing**
@@ -421,7 +421,7 @@ import { Button } from "shadcn-ui"
 npx shadcn@latest add button
 
 // Extend components in features folder
-// Create /components/features/custom-button.tsx
+// Create /features/custom-button.tsx
 
 // Test both themes
 // Check light and dark mode

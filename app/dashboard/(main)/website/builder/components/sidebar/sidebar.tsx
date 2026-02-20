@@ -12,8 +12,8 @@ import {
 import { Paintbrush, FileText, Layers, Settings, Loader2, Languages } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { motion } from '@/components/ui/animated'
-import { BlockEditor } from '@/components/features/website-builder/BlockEditorComponents'
-import { PageTranslationEditor } from '@/components/features/website-builder/PageTranslationEditor'
+import { BlockEditor } from '@/features/website-builder/BlockEditorComponents'
+import { PageTranslationEditor } from '@/features/website-builder/PageTranslationEditor'
 import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
 import { BLOCK_TYPES } from '@/lib/constants/website'
 
