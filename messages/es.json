@@ -1048,6 +1048,7 @@
     "yourOrder": "Tu Pedido",
     "cart": "Carrito",
     "viewCart": "Ver Carrito",
+    "viewOrder": "Ver Pedido",
     "cartEmpty": "Tu carrito está vacío",
     "clearCart": "Vaciar Carrito",
     "total": "Total",
@@ -1061,7 +1062,17 @@
     "customize": "Personalizar",
     "quantity": "Cantidad",
     "notes": "Notas",
-    "notesPlaceholder": "Solicitudes especiales..."
+    "notesPlaceholder": "Solicitudes especiales...",
+    "history": "Historial de Pedidos",
+    "noHistory": "No hay pedidos activos para esta mesa",
+    "orderStatus": {
+      "draft": "Borrador",
+      "placed": "Realizado",
+      "accepted": "Aceptado",
+      "preparing": "Preparando",
+      "ready": "Listo",
+      "served": "Servido"
+    }
   },
   "websiteBuilder": {
     "title": "Constructor de Sitio Web",

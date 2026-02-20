@@ -90,7 +90,37 @@
     "notesPlaceholder": "Posebni zahtevi...",
     "save": "Ušteda",
     "min": "min",
-    "kcal": "kcal"
+    "kcal": "kcal",
+    "history": "Istorija Porudžbina",
+    "noHistory": "Nema aktivnih porudžbina za ovaj sto",
+    "orderStatus": {
+      "draft": "Nacrt",
+      "placed": "Poslato",
+      "accepted": "Prihvaćeno",
+      "preparing": "U pripremi",
+      "ready": "Spremno",
+      "served": "Servirano"
+    }
+  },
+  "infoSidebar": {
+    "about": "O nama",
+    "website": "Vebsajt",
+    "review": "Recenzija",
+    "bookTable": "Rezerviši Sto",
+    "pay": "Plati",
+    "cart": "Korpa",
+    "contact": "Kontakt",
+    "openingHours": "Radno Vreme",
+    "followUs": "Pratite nas",
+    "poweredBy": "Pokretano sa",
+    "closed": "Zatvoreno",
+    "mon": "Pon",
+    "tue": "Uto",
+    "wed": "Sre",
+    "thu": "Čet",
+    "fri": "Pet",
+    "sat": "Sub",
+    "sun": "Ned"
   },
   "dietaryTags": {
     "vegetarian": "Vegetarijansko",

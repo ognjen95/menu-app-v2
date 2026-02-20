@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Search, X, ChevronDown, ShoppingCart } from 'lucide-react'
+import { Search, X, ChevronDown, Menu } from 'lucide-react'
 
 interface Language {
   code: string
@@ -44,6 +44,7 @@ interface PublicMenuHeaderProps {
   onCartOpen: () => void
   onSearchToggle: () => void
   onSearchChange: (query: string) => void
+  onInfoOpen: () => void
   getTranslatedText: (id: string, field: 'name' | 'description', fallback: string, type?: 'menu_item' | 'category' | 'variant_category' | 'menu_item_variant') => string
   getContrastColor: (hex: string) => string
   t: (key: string) => string
@@ -67,6 +68,7 @@ export function PublicMenuHeader({
   onCartOpen,
   onSearchToggle,
   onSearchChange,
+  onInfoOpen,
   getTranslatedText,
   getContrastColor,
   t,
@@ -75,7 +77,7 @@ export function PublicMenuHeader({
 
   const currentLang = languages.find(l => l.code === currentLanguage)
   const haveLogo = website?.logo_url || tenant.logo_url
-  
+
   const borderColor = `${theme.foreground}15`
   const cardBg = `${theme.foreground}05`
   const mutedForeground = `${theme.foreground}99`
@@ -107,38 +109,37 @@ export function PublicMenuHeader({
             )}
             <div>
               {!haveLogo && (
-                <h1 
-                  className="font-bold text-lg" 
-                  style={{ 
-                    fontFamily: `${theme.fontHeading}, sans-serif`, 
-                    color: theme.foreground 
+                <h1
+                  className="font-bold text-lg"
+                  style={{
+                    fontFamily: `${theme.fontHeading}, sans-serif`,
+                    color: theme.foreground
                   }}
                 >
                   {tenant.name}
                 </h1>
               )}
-              {tableId && (
+              {/* {tableId && (
                 <p className="text-sm" style={{ color: mutedForeground }}>
                   Table ordering
                 </p>
-              )}
+              )} */}
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             {/* Search button */}
             <button
               className="p-2 rounded-md transition-colors"
               style={{
-                border: `1px solid ${borderColor}`,
+                // border: `1px solid ${borderColor}`,
                 backgroundColor: isSearchOpen ? cardBg : 'transparent',
                 color: theme.foreground,
               }}
               onClick={onSearchToggle}
               aria-label={isSearchOpen ? 'Close search' : 'Search'}
             >
-              {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
-            </button>
+              {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}            </button>
 
             {/* Language selector */}
             {languages.length > 1 && (
@@ -146,15 +147,15 @@ export function PublicMenuHeader({
                 <button
                   className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium"
                   style={{
-                    border: `1px solid ${borderColor}`,
+                    // border: `1px solid ${borderColor}`,
                     backgroundColor: 'transparent',
                     color: theme.foreground,
                   }}
                   onClick={() => setLangMenuOpen(!langMenuOpen)}
                 >
                   <span className="text-base">{currentLang?.flagEmoji}</span>
-                  <span className="hidden sm:inline">{currentLang?.nativeName}</span>
-                  <ChevronDown className="h-3.5 w-3.5" />
+                  <span className="hidden md:inline">{currentLang?.nativeName}</span>
+                  <ChevronDown className="h-3.5 w-3.5 hidden md:block" />
                 </button>
 
                 {/* Language dropdown */}
@@ -170,7 +171,7 @@ export function PublicMenuHeader({
                       className="absolute right-0 top-full mt-1 z-50 min-w-[140px] py-1 rounded-md shadow-lg"
                       style={{
                         backgroundColor: theme.background,
-                        border: `1px solid ${borderColor}`,
+                        // border: `1px solid ${borderColor}`,
                       }}
                     >
                       {languages.map((lang) => (
@@ -193,17 +194,17 @@ export function PublicMenuHeader({
               </div>
             )}
 
-            {/* Cart button */}
+            {/* Menu/Cart button */}
             <button
-              className={`relative p-2 rounded-md ${cartAnimation.length > 0 ? 'animate-cart-shake' : ''}`}
+              className={`relative p-2 rounded-md transition-colors ${cartAnimation.length > 0 ? 'animate-cart-shake' : ''}`}
               style={{
-                border: `1px solid ${borderColor}`,
                 backgroundColor: 'transparent',
                 color: theme.foreground,
               }}
-              onClick={onCartOpen}
+              onClick={onInfoOpen}
+              aria-label="Menu"
             >
-              <ShoppingCart className="h-5 w-5" />
+              <Menu className="h-5 w-5" />
               {cartItemsCount > 0 && (
                 <span
                   key={cartItemsCount}
@@ -229,6 +230,7 @@ export function PublicMenuHeader({
                 </span>
               ))}
             </button>
+
           </div>
         </div>
 

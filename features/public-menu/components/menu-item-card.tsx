@@ -57,7 +57,7 @@ export const MenuItemCard = memo(function MenuItemCard({
 
   return (
     <div
-      className="animate-fade-in-up rounded-2xl overflow-hidden hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer"
+      className="animate-fade-in-up rounded-2xl overflow-hidden hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer flex flex-col"
       style={{ 
         backgroundColor: cardBg, 
         // border: `1px solid ${borderColor}`,
@@ -166,93 +166,89 @@ export const MenuItemCard = memo(function MenuItemCard({
         </div>
       </div>
 
-      {/* Desktop: Vertical layout (original) */}
-      <div className="hidden md:flex md:flex-col h-full">
-        {/* Image - fixed height */}
-        {item.image_urls && item.image_urls.length > 0 ? (
-          <div className="h-40 flex-shrink-0 relative" style={{ backgroundColor: theme.secondary }}>
+      {/* Desktop: Full image with overlay at bottom */}
+      <div className="hidden md:block">
+        {/* Image container with overlay */}
+        <div className="relative w-full overflow-hidden rounded-2xl" style={{ aspectRatio: '1/1', backgroundColor: theme.secondary }}>
+          {item.image_urls && item.image_urls.length > 0 && (
             <Image
               src={item.image_urls[0]}
               alt={item.name}
               fill
-              sizes="(max-width: 1024px) 33vw, 25vw"
-              quality={60}
+              sizes="(max-width: 1024px) 50vw, 33vw"
+              quality={70}
               className="object-cover"
               loading="lazy"
             />
-          </div>
-        ) : (
-          <div className="h-40 flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: theme.secondary }}>
-            <span className="text-4xl">🍽️</span>
-          </div>
-        )}
-
-        <div className="p-5 flex-1 flex flex-col">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <h3 className="font-semibold truncate" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: theme.foreground }}>
-                  {getTranslatedText(item.id, 'name', item.name)}
-                </h3>
-                {item.is_featured && (
-                  <Star className="h-4 w-4 fill-current" style={{ color: theme.accent }} />
-                )}
-              </div>
-              {item.description && (
-                <p className="text-sm line-clamp-2 mt-1" style={{ color: mutedForeground }}>
-                  {getTranslatedText(item.id, 'description', item.description)}
-                </p>
-              )}
+          )}
+          {!(item.image_urls && item.image_urls.length > 0) && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-5xl">🍽️</span>
             </div>
-            <div className="text-right">
-              <span className="font-bold whitespace-nowrap" style={{ color: theme.primary }}>
-                €{item.base_price.toFixed(2)}
-              </span>
-              {item.compare_price && item.compare_price > item.base_price && (
-                <div className="text-xs line-through" style={{ color: mutedForeground }}>
-                  €{item.compare_price.toFixed(2)}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Tags and info */}
-          {(item.is_new || (item.compare_price && item.compare_price > item.base_price) || item.dietary_tags?.length || itemAllergens.length > 0) && (
-            <div className="flex flex-wrap gap-1.5 mt-3 max-h-14 overflow-hidden">
+          )}
+          
+          {/* Top badges */}
+          {(item.is_new || (item.compare_price && item.compare_price > item.base_price)) && (
+            <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
               {item.is_new && (
-                <span className="text-xs px-2 py-0.5 rounded font-medium flex-shrink-0" style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}>{tNew}</span>
+                <span className="text-xs px-2.5 py-1 rounded-lg font-semibold shadow-md" style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}>{tNew}</span>
               )}
               {item.compare_price && item.compare_price > item.base_price && (
-                <span className="text-xs px-2 py-0.5 rounded font-medium flex-shrink-0" style={{ backgroundColor: theme.accent, color: getContrastColor(theme.accent) }}>{tSale}</span>
-              )}
-              {item.dietary_tags?.slice(0, 2).map((tag: string) => (
-                <span key={tag} className="text-xs px-2 py-0.5 rounded flex items-center gap-1 flex-shrink-0 max-w-24 truncate" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
-                  <Leaf className="h-3 w-3 flex-shrink-0" />
-                  <span className="truncate">{tDietary(tag) || tag}</span>
-                </span>
-              ))}
-              {itemAllergens.length > 0 && (
-                <span className="text-xs px-2 py-0.5 rounded flex items-center gap-1 flex-shrink-0" style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}>
-                  <AlertTriangle className="h-3 w-3" />
-                  {itemAllergens.length}
-                </span>
+                <span className="text-xs px-2.5 py-1 rounded-lg font-semibold shadow-md" style={{ backgroundColor: theme.accent, color: getContrastColor(theme.accent) }}>{tSale}</span>
               )}
             </div>
           )}
+          {item.is_featured && (
+            <div className="absolute top-3 right-3">
+              <Star className="h-5 w-5 fill-current drop-shadow-md" style={{ color: theme.accent }} />
+            </div>
+          )}
 
-          {/* Add to cart button */}
-          <div className="mt-auto pt-5">
+          {/* Bottom overlay with blur */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col gap-2" style={{ 
+            background: `linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.3), transparent)`,
+            backdropFilter: 'blur(8px)'
+          }}>
+            {/* Title and price */}
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-semibold text-base leading-tight line-clamp-2 flex-1" style={{ fontFamily: `${theme.fontHeading}, sans-serif`, color: '#FFFFFF' }}>
+                {getTranslatedText(item.id, 'name', item.name)}
+              </h3>
+              <div className="text-right flex-shrink-0">
+                <span className="font-bold text-base whitespace-nowrap" style={{ color: theme.primary }}>
+                  €{item.base_price.toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+            {/* Tags row */}
+            {(item.dietary_tags?.length || itemAllergens.length > 0) && (
+              <div className="flex flex-wrap gap-1">
+                {item.dietary_tags?.slice(0, 2).map((tag: string) => (
+                  <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5 flex-shrink-0" style={{ backgroundColor: `${theme.primary}80`, color: '#FFFFFF' }}>
+                    <Leaf className="h-2.5 w-2.5 flex-shrink-0" />
+                  </span>
+                ))}
+                {itemAllergens.length > 0 && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5 flex-shrink-0" style={{ backgroundColor: `${theme.accent}80`, color: '#FFFFFF' }}>
+                    <AlertTriangle className="h-2.5 w-2.5" />
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Add to cart button */}
             {cartQuantity > 0 ? (
               <div
-                className="w-full py-2.5 px-4 rounded-lg font-medium flex items-center justify-center gap-2"
-                style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: `0 4px 14px 0 ${theme.primary}40` }}
+                className="w-full py-2 px-3 rounded-lg font-medium flex items-center justify-center gap-2 text-sm"
+                style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
               >
                 <span className="font-bold">{cartQuantity}×</span> {tAddToOrder}
               </div>
             ) : (
               <button
-                className="w-full py-2.5 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] active:shadow-md"
-                style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: `0 4px 14px 0 ${theme.primary}40` }}
+                className="w-full py-2 px-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-200 text-sm hover:scale-[1.05] active:scale-[0.95]"
+                style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
                 onClick={(e) => {
                   e.stopPropagation()
                   if (item.variants?.length || item.option_groups?.length) {

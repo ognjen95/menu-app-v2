@@ -1048,6 +1048,7 @@
     "yourOrder": "Your Order",
     "cart": "Cart",
     "viewCart": "View Cart",
+    "viewOrder": "View Order",
     "cartEmpty": "Your cart is empty",
     "clearCart": "Clear Cart",
     "total": "Total",
@@ -1061,7 +1062,17 @@
     "customize": "Customize",
     "quantity": "Quantity",
     "notes": "Notes",
-    "notesPlaceholder": "Special requests..."
+    "notesPlaceholder": "Special requests...",
+    "history": "Order History",
+    "noHistory": "No active orders for this table",
+    "orderStatus": {
+      "draft": "Draft",
+      "placed": "Placed",
+      "accepted": "Accepted",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "served": "Served"
+    }
   },
   "websiteBuilder": {
     "title": "Website Builder",

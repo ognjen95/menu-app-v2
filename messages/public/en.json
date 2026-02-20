@@ -90,7 +90,37 @@
     "notesPlaceholder": "Special requests...",
     "save": "Save",
     "min": "min",
-    "kcal": "kcal"
+    "kcal": "kcal",
+    "history": "Order History",
+    "noHistory": "No active orders for this table",
+    "orderStatus": {
+      "draft": "Draft",
+      "placed": "Placed",
+      "accepted": "Accepted",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "served": "Served"
+    }
+  },
+  "infoSidebar": {
+    "about": "About",
+    "website": "Website",
+    "review": "Review",
+    "bookTable": "Book Table",
+    "pay": "Pay",
+    "cart": "Cart",
+    "contact": "Contact",
+    "openingHours": "Opening Hours",
+    "followUs": "Follow Us",
+    "poweredBy": "Powered by",
+    "closed": "Closed",
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thu": "Thu",
+    "fri": "Fri",
+    "sat": "Sat",
+    "sun": "Sun"
   },
   "dietaryTags": {
     "vegetarian": "Vegetarian",

@@ -1048,6 +1048,7 @@
     "yourOrder": "Vaša Porudžbina",
     "cart": "Korpa",
     "viewCart": "Pogledaj korpu",
+    "viewOrder": "Pogledaj porudžbinu",
     "cartEmpty": "Vaša korpa je prazna",
     "clearCart": "Isprazni korpu",
     "total": "Ukupno",
@@ -1061,7 +1062,17 @@
     "customize": "Prilagodi",
     "quantity": "Količina",
     "notes": "Napomene",
-    "notesPlaceholder": "Posebni zahtevi..."
+    "notesPlaceholder": "Posebni zahtevi...",
+    "history": "Istorija Porudžbina",
+    "noHistory": "Nema aktivnih porudžbina za ovaj sto",
+    "orderStatus": {
+      "draft": "Nacrt",
+      "placed": "Poslato",
+      "accepted": "Prihvaćeno",
+      "preparing": "U pripremi",
+      "ready": "Spremno",
+      "served": "Servirano"
+    }
   },
   "websiteBuilder": {
     "title": "Kreator veb sajta",

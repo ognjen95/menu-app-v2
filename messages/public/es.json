@@ -90,7 +90,37 @@
     "notesPlaceholder": "Solicitudes especiales...",
     "save": "Ahorra",
     "min": "min",
-    "kcal": "kcal"
+    "kcal": "kcal",
+    "history": "Historial de Pedidos",
+    "noHistory": "No hay pedidos activos para esta mesa",
+    "orderStatus": {
+      "draft": "Borrador",
+      "placed": "Realizado",
+      "accepted": "Aceptado",
+      "preparing": "Preparando",
+      "ready": "Listo",
+      "served": "Servido"
+    }
+  },
+  "infoSidebar": {
+    "about": "Acerca de",
+    "website": "Sitio Web",
+    "review": "Reseña",
+    "bookTable": "Reservar Mesa",
+    "pay": "Pagar",
+    "cart": "Carrito",
+    "contact": "Contacto",
+    "openingHours": "Horario de Apertura",
+    "followUs": "Síguenos",
+    "poweredBy": "Impulsado por",
+    "closed": "Cerrado",
+    "mon": "Lun",
+    "tue": "Mar",
+    "wed": "Mié",
+    "thu": "Jue",
+    "fri": "Vie",
+    "sat": "Sáb",
+    "sun": "Dom"
   },
   "dietaryTags": {
     "vegetarian": "Vegetariano",
