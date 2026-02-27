@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import { MoreVertical, type LucideIcon } from 'lucide-react'
+import { Menu, MoreVertical, type LucideIcon } from 'lucide-react'
 
 interface NavItem {
   key: string
@@ -67,7 +67,7 @@ export function MobileBottomNav({
           title={t('more') || 'More'}
         >
           <div className="p-2 rounded-2xl transition-all duration-300 hover:bg-accent/50">
-            <MoreVertical className="h-6 w-6 transition-transform duration-300 hover:scale-125" />
+            <Menu className="h-6 w-6 transition-transform duration-300 hover:scale-125" />
           </div>
         </button>
       </div>
