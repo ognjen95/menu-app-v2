@@ -267,7 +267,9 @@
     "settingsSection": "Podešavanja",
     "collapse": "Skupi",
     "logout": "Odjavi se",
-    "profile": "Profil"
+    "profile": "Profil",
+    "more": "Više",
+    "moreOptions": "Više Opcija"
   },
   "profilePage": {
     "title": "Podešavanja Profila",

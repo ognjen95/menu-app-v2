@@ -42,6 +42,7 @@ const LiveAlert = ({
                 : 'muted'
       }
       className="hidden md:flex items-center justify-between animate-slide-up"
+      suppressHydrationWarning
     >
       <div className="flex items-center gap-3">
         {!liveEnabled ? (

@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
+import { useTheme } from 'next-themes'
+import { type Locale } from '@/i18n/config'
+import { createClient } from '@/lib/supabase-client'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { NavbarActions } from '@/components/NavbarActions'
@@ -12,22 +15,15 @@ import {
   UtensilsCrossed,
   ShoppingCart,
   QrCode,
-  Package,
   Globe,
-  BarChart3,
   Settings,
   Users,
   MapPin,
-  Menu,
   Languages,
-  X,
-  ChevronLeft,
-  Store,
-  SidebarIcon,
-  SidebarOpenIcon,
   SidebarCloseIcon,
-  Smartphone,
 } from 'lucide-react'
+import { MobileBottomNav } from './components/mobile-bottom-nav'
+import { MoreOptionsSheet } from './components/more-options-sheet'
 
 const navigationItems = [
   { key: 'overview', href: '/dashboard/overview', icon: LayoutDashboard },
@@ -53,18 +49,46 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname()
   const t = useTranslations('sidebar')
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const tCommon = useTranslations('common')
+  const locale = useLocale() as Locale
+  const { resolvedTheme, setTheme } = useTheme()
   const [collapsed, setCollapsed] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [moreSheetOpen, setMoreSheetOpen] = useState(false)
+  const [user, setUser] = useState<{
+    full_name: string | null
+    avatar_url: string | null
+    email: string
+  } | null>(null)
+  const supabase = createClient()
 
-  // Load collapsed state after mount
+  // Load collapsed state and fetch user data after mount
   useEffect(() => {
     const saved = localStorage.getItem('sidebar-collapsed')
     if (saved === 'true') {
       setCollapsed(true)
     }
     setMounted(true)
-  }, [])
+
+    // Fetch user data
+    const fetchUser = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (authUser) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('id', authUser.id)
+          .single()
+
+        setUser({
+          full_name: profile?.full_name || null,
+          avatar_url: profile?.avatar_url || null,
+          email: authUser.email || '',
+        })
+      }
+    }
+    fetchUser()
+  }, [supabase])
 
   // Persist collapsed state
   useEffect(() => {
@@ -79,24 +103,36 @@ export default function DashboardLayout({
     return <>{children}</>
   }
 
+  // Main navigation items for bottom bar (first 4)
+  const mainNavItems = navigationItems.slice(0, 4)
+  // All items for more sheet
+  const allItems = [...navigationItems, ...settingsItems]
+
+  const isNavItemActive = (href: string) => {
+    return pathname === href || (href !== '/dashboard/overview' && pathname.startsWith(href))
+  }
+
+  // // Render minimal shell until mounted to prevent translation hydration mismatch
+  // if (!mounted) {
+  //   return (
+  //     <div className="min-h-screen bg-background">
+  //       <div className="lg:pl-[281px]">
+  //         <main className="p-4 pb-24 lg:p-6 lg:pb-6">
+  //           {children}
+  //         </main>
+  //       </div>
+  //     </div>
+  //   )
+  // }
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile sidebar backdrop */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-
+      {/* Desktop Sidebar */}
       <aside
         className={cn(
-          'fixed z-50 flex flex-col rounded-xl left-3 top-3 bottom-3 right-3 bg-background/95 backdrop-blur-xl lg:right-auto lg:left-5 lg:top-5 lg:bottom-5 lg:bg-gradient-to-b lg:from-white lg:to-white lg:shadow-lg lg:shadow-black/5 dark:lg:from-white/[0.08] dark:lg:to-white/[0.03] dark:lg:shadow-none dark:lg:backdrop-blur-sm lg:border-border/30 dark:lg:border-white/[0.1]',
+          'fixed z-50 hidden lg:flex flex-col rounded-xl left-5 top-5 bottom-5 bg-gradient-to-b from-white to-white shadow-lg shadow-black/5 dark:from-white/[0.08] dark:to-white/[0.03] dark:shadow-none dark:backdrop-blur-sm border-border/30 dark:border-white/[0.1]',
           mounted ? 'transition-all duration-300 ease-in-out' : '',
-          collapsed ? 'lg:w-[72px]' : 'lg:w-64',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-[calc(100%+24px)] lg:translate-x-0'
+          collapsed ? 'w-[72px]' : 'w-64'
         )}
       >
         {/* Logo Header */}
@@ -109,29 +145,20 @@ export default function DashboardLayout({
             collapsed ? 'justify-center' : ''
           )}>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-              {/* <Store className="h-5 w-5 text-primary" /> */}
               <h1 className='font-bold text-xl text-primary'>K</h1>
             </div>
-            {!collapsed && (
-              <span className="font-bold text-lg tracking-tight">Klopay<span className='text-primary'>.app</span></span>
-            )}
+            <span className={cn(
+              "font-bold text-lg tracking-tight overflow-hidden whitespace-nowrap transition-all duration-300",
+              collapsed ? "w-0 opacity-0" : "w-auto opacity-100"
+            )}>Klopay<span className='text-primary'>.app</span></span>
           </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden h-9 w-9"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-3">
           <ul className="space-y-1.5">
             {navigationItems.map((item) => {
-              const isActive = pathname === item.href ||
-                (item.href !== '/dashboard/overview' && pathname.startsWith(item.href))
+              const isActive = isNavItemActive(item.href)
               const name = t(item.key)
               return (
                 <li key={item.key}>
@@ -147,14 +174,13 @@ export default function DashboardLayout({
                     title={collapsed ? name : undefined}
                   >
                     <item.icon className={cn(
-                      'flex-shrink-0 transition-transform duration-200',
-                      collapsed ? 'h-5 w-5' : 'h-5 w-5',
+                      'flex-shrink-0 transition-transform duration-200 h-5 w-5',
                       !isActive && 'group-hover:scale-110'
                     )} />
-                    {<span className={cn({
-                      'md:hidden': collapsed
-                    })}
-                    >{name}</span>}
+                    <span className={cn(
+                      "overflow-hidden whitespace-nowrap transition-all duration-300",
+                      collapsed ? "w-0 opacity-0" : "w-auto opacity-100"
+                    )}>{name}</span>
                   </Link>
                 </li>
               )
@@ -163,15 +189,15 @@ export default function DashboardLayout({
 
           {/* Settings section */}
           <div className="mt-6 pt-4 border-t border-border/50">
-            {!collapsed && (
-              <p className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                {t('settingsSection')}
-              </p>
-            )}
+            <p className={cn(
+              "px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider overflow-hidden transition-all duration-300",
+              collapsed ? "h-0 opacity-0 mb-0" : "h-auto opacity-100"
+            )}>
+              {t('settingsSection')}
+            </p>
             <ul className="space-y-1.5">
               {settingsItems.map((item) => {
-                const isActive = pathname === item.href ||
-                  (item.href !== '/dashboard/settings' && pathname.startsWith(item.href))
+                const isActive = isNavItemActive(item.href)
                 const name = t(item.key)
                 return (
                   <li key={item.key}>
@@ -187,14 +213,14 @@ export default function DashboardLayout({
                       title={collapsed ? name : undefined}
                     >
                       <item.icon className={cn(
-                        'flex-shrink-0 transition-transform duration-200',
-                        collapsed ? 'h-5 w-5' : 'h-5 w-5',
+                        'flex-shrink-0 transition-transform duration-200 h-5 w-5',
                         !isActive && 'group-hover:scale-110'
                       )} />
-                      {<span className={cn({
-                        'md:hidden': collapsed
-                      })}
-                      >{name}</span>}                    </Link>
+                      <span className={cn(
+                      "overflow-hidden whitespace-nowrap transition-all duration-300",
+                      collapsed ? "w-0 opacity-0" : "w-auto opacity-100"
+                    )}>{name}</span>
+                    </Link>
                   </li>
                 )
               })}
@@ -204,55 +230,65 @@ export default function DashboardLayout({
 
         {/* Collapse Button at Bottom */}
         <div className="p-3 border-t border-border/50">
-          {/* Collapse Button */}
           <Button
             variant="ghost"
             className={cn(
-              'w-full hidden lg:flex items-center gap-3 rounded-xl py-3 h-auto font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-200',
+              'w-full flex items-center gap-3 rounded-xl py-3 h-auto font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-200',
               collapsed ? 'justify-center px-0' : 'justify-start px-3'
             )}
             onClick={() => setCollapsed(!collapsed)}
           >
-            {collapsed ? (
-              <SidebarOpenIcon className="h-5 w-5" />
-            ) : (
-              <>
-                <SidebarCloseIcon className="h-5 w-5" />
-                <span>{t('collapse')}</span>
-              </>
-            )}
+            <SidebarCloseIcon className={cn(
+              "h-5 w-5 transition-transform duration-300",
+              collapsed && "rotate-180"
+            )} />
+            <span className={cn(
+              "overflow-hidden whitespace-nowrap transition-all duration-300",
+              collapsed ? "w-0 opacity-0" : "w-auto opacity-100"
+            )}>{t('collapse')}</span>
           </Button>
         </div>
       </aside>
 
-
       {/* Main content */}
       <div className={cn(
         mounted ? 'transition-all duration-300 ease-in-out' : '',
-        collapsed ? 'lg:pl-[97px]' : 'lg:pl-[281px]'
+        'lg:pl-[281px]',
+        collapsed && 'lg:pl-[97px]'
       )}>
-        {/* Top header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4   backdrop-blur px-4 lg:px-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
-
+        {/* Top header - Desktop only */}
+        <header className="sticky top-0 z-30 hidden lg:flex h-16 items-center gap-4 backdrop-blur px-6 border-border/50">
           <div className="flex-1" />
-
-          {/* Language, Theme, Notifications */}
           <NavbarActions />
         </header>
 
         {/* Page content */}
-        <main className="p-4 pb-20 lg:p-6 lg:pb-6">
+        <main className="p-4 pb-24 lg:p-6 lg:pb-6">
           {children}
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <MobileBottomNav
+        items={mainNavItems}
+        isNavItemActive={isNavItemActive}
+        t={t}
+        onMoreClick={() => setMoreSheetOpen(true)}
+      />
+
+      {/* More Options Sheet */}
+      <MoreOptionsSheet
+        open={moreSheetOpen}
+        onOpenChange={setMoreSheetOpen}
+        items={allItems.slice(4)}
+        isNavItemActive={isNavItemActive}
+        t={t}
+        locale={locale}
+        resolvedTheme={resolvedTheme}
+        setTheme={setTheme}
+        user={user}
+        mounted={mounted}
+      />
     </div>
   )
 }

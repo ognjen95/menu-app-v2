@@ -16,7 +16,18 @@ const OfflineContext = createContext<OfflineContextValue>({
   triggerSync: async () => {},
 })
 
-export const useOfflineStatus = () => useContext(OfflineContext)
+export const useOfflineStatus = () => {
+  const context = useContext(OfflineContext)
+  // Return default values if context is not available (SSR)
+  if (!context) {
+    return {
+      isOffline: false,
+      isServiceWorkerReady: false,
+      triggerSync: async () => {},
+    }
+  }
+  return context
+}
 
 export function SwRegister({ children }: { children?: React.ReactNode }) {
   const [isOffline, setIsOffline] = useState(false)

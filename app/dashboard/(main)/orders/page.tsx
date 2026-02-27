@@ -34,25 +34,18 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { OrderStatus, OrderWithRelations, Location } from '@/lib/types'
 import { statusConfig, typeIcons, formatTimeElapsed, getTimerColor } from '@/features/orders/orders-list/components/order-card'
+import { OrdersListCards } from '@/features/orders/orders-list/components/orders-list-cards'
 import { OrdersKanban } from '@/features/orders/orders-list/components/orders-kanban'
 import { NewOrdersModal } from '@/features/orders/orders-list/components/new-orders-modal'
 import { useRealtimeOrders } from '@/lib/hooks/use-realtime-orders'
 import { playNotificationSound, unlockAudio, checkAudioPermission } from '@/lib/utils/notification-sound'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Store, Clock, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { Store, Clock } from 'lucide-react'
 
 type SortColumn = 'type' | 'orderNumber' | 'status' | 'items' | 'total' | 'time'
 type SortDirection = 'asc' | 'desc'
@@ -93,6 +86,7 @@ export default function OrdersPage() {
   const [audioUnlocked, setAudioUnlocked] = useState(false)
   const [liveAlertDismissed, setLiveAlertDismissed] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   const lastOrderCountRef = useRef(0)
   const updateOrderStatus = useOfflineUpdateOrderStatus()
@@ -110,6 +104,7 @@ export default function OrdersPage() {
   const menuItems = menuItemsData?.data?.items ?? [];
 
   useEffect(() => {
+    setMounted(true)
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
     checkMobile()
     window.addEventListener('resize', checkMobile)
@@ -344,22 +339,6 @@ export default function OrdersPage() {
     return sorted
   }, [filteredOrders, sortColumn, sortDirection])
 
-  const handleSort = useCallback((column: SortColumn) => {
-    if (sortColumn === column) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortColumn(column)
-      setSortDirection('asc')
-    }
-  }, [sortColumn])
-
-  const SortIcon = ({ column }: { column: SortColumn }) => {
-    if (sortColumn !== column) return <ArrowUpDown className="ml-1 h-3 w-3 opacity-50" />
-    return sortDirection === 'asc'
-      ? <ArrowUp className="ml-1 h-3 w-3" />
-      : <ArrowDown className="ml-1 h-3 w-3" />
-  }
-
   // Handle status update from kanban drag
   const handleUpdateStatus = useCallback(async (orderId: string, newStatus: OrderStatus): Promise<void> => {
     const result = await updateOrderStatus.mutateAsync({ orderId, status: newStatus })
@@ -492,47 +471,57 @@ export default function OrdersPage() {
     }
   }
 
+  // Prevent hydration mismatch from translations
+  if (!mounted) {
+    return (
+      <div className="space-y-6 h-full">
+        <OrdersGridSkeleton />
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-6 h-full">
-      {/* Live connection status alert - always show when live is off, hide when successfully connected */}
-      {!liveAlertDismissed && !(liveEnabled && isLive) && (
-        <LiveAlert
-          liveEnabled={liveEnabled}
-          isLive={isLive}
-          isReconnecting={isReconnecting}
-          realtimeStatus={realtimeStatus}
-          t={t}
-          reconnectAttempts={reconnectAttempts}
-          maxReconnectAttempts={maxReconnectAttempts}
-          setReconnectAttempts={setReconnectAttempts}
-          reconnect={reconnect}
-          handleLiveToggle={handleLiveToggle}
-          setLiveAlertDismissed={setLiveAlertDismissed}
-          audioUnlocked={audioUnlocked}
-          soundEnabled={soundEnabled}
-        />
+    <div className="h-full">
+      {/* Live connection status alert - only render after mount to prevent hydration mismatch */}
+      {mounted && !liveAlertDismissed && !(liveEnabled && isLive) && (
+        <div className='md:pb-3'>
+          <LiveAlert
+            liveEnabled={liveEnabled}
+            isLive={isLive}
+            isReconnecting={isReconnecting}
+            realtimeStatus={realtimeStatus}
+            t={t}
+            reconnectAttempts={reconnectAttempts}
+            maxReconnectAttempts={maxReconnectAttempts}
+            setReconnectAttempts={setReconnectAttempts}
+            reconnect={reconnect}
+            handleLiveToggle={handleLiveToggle}
+            setLiveAlertDismissed={setLiveAlertDismissed}
+            audioUnlocked={audioUnlocked}
+            soundEnabled={soundEnabled}
+          />
+        </div>
       )}
 
       {/* Page header */}
       <motion.div
-        className="flex items-center justify-between flex-wrap gap-4"
+        className="flex items-center justify-between flex-wrap gap-4 w-full pb-5 md:pb-3"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
         <div>
-          <h1 className="text-xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
-          <p className="text-muted-foreground hidden md:block">
-            {t('description')}
-          </p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
+          <p className="text-sm md:text-base text-muted-foreground"> {t('description')}</p>
+
         </div>
-        <div className="flex items-center gap-1 md:gap-2">
+        <div className="flex items-center gap-1 md:gap-2 flex-1">
           {/* Location selector */}
           <Select value={selectedLocationId} onValueChange={(value) => {
             setSelectedLocationId(value)
             localStorage.setItem('orders-selected-location', value)
           }}>
-            <SelectTrigger className="w-[120px] md:w-[180px] text-xs md:text-sm">
+            <SelectTrigger className="md:w-[120px] md:w-[180px] text-xs md:text-sm">
               <SelectValue placeholder={t('allLocations')} />
             </SelectTrigger>
             <SelectContent>
@@ -548,7 +537,7 @@ export default function OrdersPage() {
           {/* Table selector */}
           {availableTables.length > 0 && (
             <Select value={selectedTableId} onValueChange={setSelectedTableId}>
-              <SelectTrigger className="w-[100px] md:w-[160px] text-xs md:text-sm">
+              <SelectTrigger className="md:w-[100px] md:w-[160px] text-xs md:text-sm">
                 <SelectValue placeholder={t('allTables')} />
               </SelectTrigger>
               <SelectContent>
@@ -677,34 +666,40 @@ export default function OrdersPage() {
 
 
             {/* Refresh */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <motion.div whileHover={{ scale: 1.05, rotate: 180 }} whileTap={{ scale: 0.95 }}>
-                  <Button onClick={() => refetch()} variant="outline" disabled={isLoading} size="icon" className="shrink-0">
-                    <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
-                  </Button>
-                </motion.div>
-              </TooltipTrigger>
-              <TooltipContent>{t('refresh')}</TooltipContent>
-            </Tooltip>
+            <div className='hidden'>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <motion.div whileHover={{ scale: 1.05, rotate: 180 }} whileTap={{ scale: 0.95 }}>
+                    <Button onClick={() => refetch()} variant="ghost" disabled={isLoading} size="icon" className="shrink-0">
+                      <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
+                    </Button>
+                  </motion.div>
+                </TooltipTrigger>
+                <TooltipContent>{t('refresh')}</TooltipContent>
+              </Tooltip>
+            </div>
 
             {/* Create Order */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button size="icon" onClick={() => setIsCreateOrderOpen(true)}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </motion.div>
-              </TooltipTrigger>
-              <TooltipContent>{t('createOrder')}</TooltipContent>
-            </Tooltip>
+
+            <Button size={'lg'} className='hidden md:block' onClick={() => setIsCreateOrderOpen(true)}>
+              <div className='flex items-center w-full'>
+                <Plus className="h-4 w-4 mr-3" />
+                {t('createOrder')}
+              </div>
+            </Button>
           </TooltipProvider>
         </div>
       </motion.div>
 
+      <div className='md:hidden pb-3'>
+        <Button className='w-full' onClick={() => setIsCreateOrderOpen(true)}>
+          <Plus className="h-5 w-5 pr-2" />
+          {t('createOrder')}
+        </Button>
+      </div>
+
       {/* Status filter tabs (multi-select) */}
-      <div className="flex flex-wrap gap-2 md:gap-3">
+      <div className="flex flex-wrap gap-2 md:gap-3 pb-3 items-center justify-between md:justify-start">
         <Button
           variant={selectedStatuses.size === ACTIVE_STATUSES.length ? 'default' : 'outline'}
           onClick={selectAllStatuses}
@@ -734,119 +729,41 @@ export default function OrdersPage() {
         })}
       </div>
 
-      {/* Content */}
-      {isLoading ? (
-        layout === 'list' || isMobile ? (
-          <OrdersGridSkeleton count={8} />
+      <div className='pt-5'>
+        {/* Content */}
+        {isLoading ? (
+          layout === 'list' || isMobile ? (
+            <OrdersGridSkeleton count={8} />
+          ) : (
+            <div className="overflow-x-auto -mx-6 px-6">
+              <KanbanLayoutSkeleton columns={selectedStatuses.size || 4} />
+            </div>
+          )
+        ) : filteredOrders.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">{t('noOrdersFound')}</p>
+            </CardContent>
+          </Card>
+        ) : layout === 'list' || isMobile ? (
+          /* List Layout - Responsive Cards */
+          <OrdersListCards
+            orders={sortedOrders}
+            onSelectOrder={setSelectedOrderForDetail}
+          />
         ) : (
-          <div className="overflow-x-auto -mx-6 px-6">
-            <KanbanLayoutSkeleton columns={selectedStatuses.size || 4} />
-          </div>
-        )
-      ) : filteredOrders.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">{t('noOrdersFound')}</p>
-          </CardContent>
-        </Card>
-      ) : layout === 'list' || isMobile ? (
-        /* List/Table Layout */
-        <Card>
-          <TooltipProvider>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-16 cursor-pointer hover:bg-muted/50" onClick={() => handleSort('type')}>
-                    <div className="flex items-center">{t('typeColumn')}<SortIcon column="type" /></div>
-                  </TableHead>
-                  <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('orderNumber')}>
-                    <div className="flex items-center">{t('orderNumber')}<SortIcon column="orderNumber" /></div>
-                  </TableHead>
-                  <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('status')}>
-                    <div className="flex items-center">{t('statusColumn')}<SortIcon column="status" /></div>
-                  </TableHead>
-                  <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => handleSort('items')}>
-                    <div className="flex items-center">{t('items')}<SortIcon column="items" /></div>
-                  </TableHead>
-                  <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => handleSort('total')}>
-                    <div className="flex items-center justify-end">{t('total')}<SortIcon column="total" /></div>
-                  </TableHead>
-                  <TableHead className="w-20 cursor-pointer hover:bg-muted/50" onClick={() => handleSort('time')}>
-                    <div className="flex items-center">{t('time')}<SortIcon column="time" /></div>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedOrders.map((order) => {
-                  const TypeIcon = typeIcons[order.type] || Store
-                  const StatusIcon = statusConfig[order.status]?.icon || Clock
-                  const config = statusConfig[order.status]
-                  const timerColor = getTimerColor(order.placed_at)
-                  const itemsList = order.items?.map(item => `${item.quantity}× ${item.menu_item?.name || 'Item'}`).join(', ') || ''
-                  const itemsShort = itemsList.length > 40 ? itemsList.slice(0, 40) + '...' : itemsList
-
-                  return (
-                    <TableRow
-                      key={order.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => setSelectedOrderForDetail(order)}
-                    >
-                      <TableCell>
-                        <div className="flex items-center justify-center rounded-full h-12 w-12 bg-secondary">
-                          <TypeIcon className="h-5 w-5 text-primary" />
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        #{order.order_number || order.id.slice(0, 8)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={cn('gap-1', config?.badgeColor)}>
-                          <StatusIcon className="h-3 w-3" />
-                          {t(`status.${order.status}`)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {itemsList.length > 40 ? (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="cursor-help">{itemsShort}</span>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" className="max-w-xs">
-                              <p className="text-sm">{itemsList}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        ) : (
-                          <span>{itemsList || '-'}</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        €{order.total?.toFixed(2) || '0.00'}
-                      </TableCell>
-                      <TableCell>
-                        <span className={cn('text-sm font-medium', timerColor)}>
-                          {formatTimeElapsed(order.placed_at)}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </TooltipProvider>
-        </Card>
-      ) : (
-        /* Kanban Layout */
-        <OrdersKanban
-          orders={filteredOrders}
-          selectedStatuses={selectedStatuses}
-          onSelectOrder={setSelectedOrderForDetail}
-          onUpdateStatus={handleUpdateStatus}
-          onCompleteOrder={handleCompleteOrder}
-          onCancelOrder={handleCancelOrder}
-        />
-      )}
-
+          /* Kanban Layout */
+          <OrdersKanban
+            orders={filteredOrders}
+            selectedStatuses={selectedStatuses}
+            onSelectOrder={setSelectedOrderForDetail}
+            onUpdateStatus={handleUpdateStatus}
+            onCompleteOrder={handleCompleteOrder}
+            onCancelOrder={handleCancelOrder}
+          />
+        )}
+      </div>
 
       {/* New Orders Modal (Live only) */}
       <NewOrdersModal

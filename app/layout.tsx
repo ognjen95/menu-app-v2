@@ -7,6 +7,9 @@ import { getMessages, getLocale } from 'next-intl/server';
 import { Toaster } from 'sonner';
 import { SwRegister } from '@/components/providers/sw-register'
 
+// Force dynamic rendering to ensure locale cookie is read on every request
+export const dynamic = 'force-dynamic'
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -131,7 +134,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
-        <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider locale={locale} messages={messages}>
           <SwRegister>
             <Providers>{children}</Providers>
             <Toaster position="top-right" richColors />

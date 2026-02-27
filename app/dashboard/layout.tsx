@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { redirect } from "next/navigation"
-import { headers } from 'next/headers'
 import { DashboardAuthWrapper } from './dashboard-auth-wrapper'
 
 export const metadata: Metadata = {

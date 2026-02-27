@@ -267,7 +267,9 @@
     "settingsSection": "Configuración",
     "collapse": "Colapsar",
     "logout": "Cerrar Sesión",
-    "profile": "Perfil"
+    "profile": "Perfil",
+    "more": "Más",
+    "moreOptions": "Más Opciones"
   },
   "profilePage": {
     "title": "Configuración de Perfil",

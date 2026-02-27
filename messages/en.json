@@ -267,7 +267,9 @@
     "settingsSection": "Settings",
     "collapse": "Collapse",
     "logout": "Log Out",
-    "profile": "Profile"
+    "profile": "Profile",
+    "more": "More",
+    "moreOptions": "More Options"
   },
   "profilePage": {
     "title": "Profile Settings",

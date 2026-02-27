@@ -12,6 +12,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
+import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
@@ -99,6 +106,7 @@ function UserBadge({ profile, action }: { profile: ProfileInfo | null | undefine
 export function OrderDetailDialog({ order, open, onOpenChange }: OrderDetailDialogProps) {
   const t = useTranslations('orderDetail')
   const tLogs = useTranslations('orderLogs')
+  const isMobile = useMediaQuery('(max-width: 768px)')
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | ''>('')
   const [selectedUserId, setSelectedUserId] = useState<string>('')
   const [profiles, setProfiles] = useState<Map<string, ProfileInfo>>(new Map())
@@ -196,27 +204,25 @@ export function OrderDetailDialog({ order, open, onOpenChange }: OrderDetailDial
 
   const StatusIcon = order ? statusConfig[order.status]?.icon || Clock : Clock
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] min-h-[60vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <span>#{order?.order_number}</span>
-            {order && (
-              <Badge className={cn(
-                'ml-2',
-                statusConfig[order.status]?.color,
-                'text-white'
-              )}>
-                <StatusIcon className="h-3 w-3 mr-1" />
-                {t(`status.${order.status}`)}
-              </Badge>
-            )}
-          </DialogTitle>
-        </DialogHeader>
+  const headerContent = (
+    <div className="flex items-center gap-2">
+      <span>#{order?.order_number}</span>
+      {order && (
+        <Badge className={cn(
+          'ml-2',
+          statusConfig[order.status]?.color,
+          'text-white'
+        )}>
+          <StatusIcon className="h-3 w-3 mr-1" />
+          {t(`status.${order.status}`)}
+        </Badge>
+      )}
+    </div>
+  )
 
-        <Tabs defaultValue="actions" className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="grid w-full grid-cols-3">
+  const mainContent = (
+    <Tabs defaultValue="actions" className="flex-1 flex flex-col overflow-hidden">
+      <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="details" className="gap-2">
               <ClipboardList className="h-4 w-4" />
               {t('tabs.details')}
@@ -363,80 +369,85 @@ export function OrderDetailDialog({ order, open, onOpenChange }: OrderDetailDial
             )}
           </TabsContent>
 
-          <TabsContent value="actions" className="flex-1 overflow-y-auto space-y-6 mt-4">
-            {/* Change Status */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">{t('changeStatus')}</Label>
-              <Select
-                value={selectedStatus}
-                onValueChange={(value) => setSelectedStatus(value as OrderStatus)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t('selectStatus')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {ALL_STATUSES.map((status) => {
-                    const config = statusConfig[status]
-                    const Icon = config.icon
-                    return (
-                      <SelectItem key={status} value={status}>
+          <TabsContent value="actions" className="flex-1 flex flex-col overflow-hidden mt-4">
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto space-y-6 pb-4">
+              {/* Change Status */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">{t('changeStatus')}</Label>
+                <Select
+                  value={selectedStatus}
+                  onValueChange={(value) => setSelectedStatus(value as OrderStatus)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('selectStatus')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ALL_STATUSES.map((status) => {
+                      const config = statusConfig[status]
+                      const Icon = config.icon
+                      return (
+                        <SelectItem key={status} value={status}>
+                          <div className="flex items-center gap-2">
+                            <div className={cn('w-2 h-2 rounded-full', config.color)} />
+                            {t(`status.${status}`)}
+                          </div>
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Assign User */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">{t('assignUser')}</Label>
+                <Select
+                  value={selectedUserId}
+                  onValueChange={setSelectedUserId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('selectUser')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {teamMembers.map((member) => (
+                      <SelectItem key={member.user_id} value={member.user_id}>
                         <div className="flex items-center gap-2">
-                          <div className={cn('w-2 h-2 rounded-full', config.color)} />
-                          {t(`status.${status}`)}
+                          <Avatar className="h-5 w-5">
+                            <AvatarImage src={member.profiles?.avatar_url || undefined} />
+                            <AvatarFallback className="text-xs">
+                              {member.profiles?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>{member.profiles?.full_name || 'Unknown'}</span>
+                          {member.user_id === currentUserId && (
+                            <Badge variant="secondary" className="text-xs ml-1">{t('you')}</Badge>
+                          )}
                         </div>
                       </SelectItem>
-                    )
-                  })}
-                </SelectContent>
-              </Select>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {/* Assign User */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">{t('assignUser')}</Label>
-              <Select
-                value={selectedUserId}
-                onValueChange={setSelectedUserId}
+            {/* Fixed Action Button */}
+            <div className="pt-4 border-t mt-auto">
+              <Button
+                className="w-full"
+                onClick={handleUpdateStatus}
+                disabled={updateStatus.isPending || !selectedStatus || selectedStatus === order?.status}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder={t('selectUser')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {teamMembers.map((member) => (
-                    <SelectItem key={member.user_id} value={member.user_id}>
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-5 w-5">
-                          <AvatarImage src={member.profiles?.avatar_url || undefined} />
-                          <AvatarFallback className="text-xs">
-                            {member.profiles?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span>{member.profiles?.full_name || 'Unknown'}</span>
-                        {member.user_id === currentUserId && (
-                          <Badge variant="secondary" className="text-xs ml-1">{t('you')}</Badge>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {updateStatus.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {t('updating')}
+                  </>
+                ) : (
+                  t('updateOrder')
+                )}
+              </Button>
             </div>
-
-            {/* Action Button */}
-            <Button
-              className="w-full"
-              onClick={handleUpdateStatus}
-              disabled={updateStatus.isPending || !selectedStatus || selectedStatus === order?.status}
-            >
-              {updateStatus.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {t('updating')}
-                </>
-              ) : (
-                t('updateOrder')
-              )}
-            </Button>
           </TabsContent>
 
           <TabsContent value="history" className="flex-1 overflow-y-auto mt-4">
@@ -586,6 +597,32 @@ export function OrderDetailDialog({ order, open, onOpenChange }: OrderDetailDial
             )}
           </TabsContent>
         </Tabs>
+  )
+
+  // Mobile: Bottom Sheet
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent side="bottom" className="flex flex-col">
+          <SheetHeader className="pb-2">
+            <SheetTitle>{headerContent}</SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto">
+            {mainContent}
+          </div>
+        </SheetContent>
+      </Sheet>
+    )
+  }
+
+  // Desktop: Dialog
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[85vh] min-h-[60vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle>{headerContent}</DialogTitle>
+        </DialogHeader>
+        {mainContent}
       </DialogContent>
     </Dialog>
   )
