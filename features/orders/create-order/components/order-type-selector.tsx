@@ -56,19 +56,23 @@ export function OrderTypeSelectorMobile({
   return (
     <div className="grid grid-cols-3 gap-2">
       {types.map(({ type, icon: Icon, label }) => (
-        <button
+        <Button
           key={type}
+          size={'lg'}
+          variant={orderType === type ? 'default' : 'secondary'}
           onClick={() => onOrderTypeChange(type)}
           className={cn(
-            "p-3 rounded-lg border-2 flex flex-col items-center gap-1 transition-all",
+            "p-3 rounded-lg border-2 flex flex-col items-center gap-1 transition-all flex flex-col h-auto",
             orderType === type
               ? "border-primary bg-primary text-primary-foreground"
               : "border-border hover:border-primary/50"
           )}
         >
-          <Icon className="h-5 w-5" />
+          <div>
+            <Icon className="h-5 w-5" />
+          </div>
           <span className="text-sm font-medium">{label}</span>
-        </button>
+        </Button>
       ))}
     </div>
   )

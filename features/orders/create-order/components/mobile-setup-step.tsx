@@ -1,13 +1,16 @@
+'use client'
+
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
-import { MapPin, User, UtensilsCrossed, Check, ChevronRight, ChevronLeft } from 'lucide-react'
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
+import { MapPin, User, UtensilsCrossed, ChevronRight, ChevronLeft, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 import { OrderTypeSelectorMobile } from './order-type-selector'
@@ -29,107 +32,94 @@ export function MobileSetupStep({
   onBack,
   t,
 }: MobileSetupStepProps) {
+  const [staffDrawerOpen, setStaffDrawerOpen] = useState(false)
+  
   const selectedLocation = locations.find(l => l.id === selectedLocationId)
   const selectedStaff = teamMembers.find(m => m.user_id === selectedStaffId)
 
   const canContinue = selectedLocationId && selectedStaffId && 
     (orderType !== 'dine_in' || selectedTableId)
 
+  const handleStaffSelect = (userId: string) => {
+    onStaffChange(userId)
+    setStaffDrawerOpen(false)
+  }
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <ScrollArea className="flex-1 min-h-0">
-        <div className="p-4 space-y-4">
-          <Accordion type="multiple" className="space-y-2">
-            {/* Location Accordion */}
-            <AccordionItem value="location" className="border rounded-lg px-3">
-              <AccordionTrigger className="hover:no-underline py-3">
-                <div className="flex items-center gap-2 text-left">
-                  <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div className="flex flex-col">
-                    <span className="text-xs text-muted-foreground">{t('selectLocation')}</span>
-                    <span className="font-medium">
-                      {selectedLocation?.name || t('selectLocation')}
-                    </span>
-                  </div>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pb-3">
-                <div className="grid grid-cols-2 gap-2">
-                  {locations.map(loc => (
-                    <button
-                      key={loc.id}
-                      onClick={() => onLocationChange(loc.id)}
-                      className={cn(
-                        "p-3 rounded-lg border-2 text-left transition-all",
-                        selectedLocationId === loc.id
-                          ? "border-primary bg-primary/10"
-                          : "border-border hover:border-primary/50"
-                      )}
-                    >
-                      <span className="font-medium">{loc.name}</span>
-                      {selectedLocationId === loc.id && (
-                        <Check className="h-4 w-4 text-primary float-right" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
+        <div className="px-4 py-2 space-y-3">
+          {/* Location & Staff */}
+          <div className="grid grid-cols-2 gap-2">
+            {/* Location - disabled button */}
+            <Button
+              variant="secondary"
+              size="lg"
+              className="h-10 rounded-xl gap-2 justify-start"
+              disabled
+            >
+              <MapPin className="h-4 w-4 shrink-0" />
+              <span className="truncate text-sm">
+                {selectedLocation?.name || '-'}
+              </span>
+            </Button>
 
-            {/* Staff Accordion */}
-            <AccordionItem value="staff" className="border rounded-lg px-3">
-              <AccordionTrigger className="hover:no-underline py-3">
-                <div className="flex items-center gap-2 text-left">
-                  <User className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div className="flex flex-col">
-                    <span className="text-xs text-muted-foreground">{t('selectStaff')}</span>
-                    <div className="flex items-center gap-2">
-                      {selectedStaff && (
-                        <Avatar className="h-5 w-5">
-                          <AvatarImage src={selectedStaff.profiles?.avatar_url || undefined} />
-                          <AvatarFallback className="text-[10px]">
-                            {(selectedStaff.profiles?.full_name || selectedStaff.role).charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
-                      <span className="font-medium">
-                        {selectedStaff?.profiles?.full_name || selectedStaff?.role || t('selectStaff')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pb-3">
-                <div className="grid grid-cols-2 gap-2">
+            {/* Staff - clickable, opens drawer */}
+            <Button
+              variant="secondary"
+              size="lg"
+              className="h-10 rounded-xl gap-2 justify-start"
+              onClick={() => setStaffDrawerOpen(true)}
+            >
+              {selectedStaff ? (
+                <Avatar className="h-5 w-5">
+                  <AvatarImage src={selectedStaff.profiles?.avatar_url || undefined} />
+                  <AvatarFallback className="text-[10px]">
+                    {(selectedStaff.profiles?.full_name || selectedStaff.role).charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              ) : (
+                <User className="h-4 w-4" />
+              )}
+              <span className="truncate text-sm">
+                {selectedStaff?.profiles?.full_name || selectedStaff?.role || '-'}
+              </span>
+            </Button>
+          </div>
+
+          {/* Staff Selection Drawer */}
+          <Sheet open={staffDrawerOpen} onOpenChange={setStaffDrawerOpen} nested>
+            <SheetContent side="bottom" className="p-0 flex flex-col">
+              <SheetHeader className="px-4 pt-2 pb-3 shrink-0">
+                <SheetTitle className="text-base text-center">
+                  {t('selectStaff')}
+                </SheetTitle>
+              </SheetHeader>
+              <div className="px-4 pb-8">
+                <div className="flex flex-col gap-2">
                   {teamMembers.map(member => (
-                    <button
+                    <Button
                       key={member.user_id}
-                      onClick={() => onStaffChange(member.user_id)}
-                      className={cn(
-                        "p-3 rounded-lg border-2 flex items-center gap-2 transition-all",
-                        selectedStaffId === member.user_id
-                          ? "border-primary bg-primary/10"
-                          : "border-border hover:border-primary/50"
-                      )}
+                      size="lg"
+                      variant={selectedStaffId === member.user_id ? "default" : "secondary"}
+                      onClick={() => handleStaffSelect(member.user_id)}
+                      className="h-12 rounded-xl gap-3 justify-start px-4"
                     >
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={member.profiles?.avatar_url || undefined} />
-                        <AvatarFallback className="text-xs">
+                        <AvatarFallback className="text-sm">
                           {(member.profiles?.full_name || member.role).charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="font-medium truncate flex-1">
+                      <span className="font-medium">
                         {member.profiles?.full_name || member.role}
                       </span>
-                      {selectedStaffId === member.user_id && (
-                        <Check className="h-4 w-4 text-primary shrink-0" />
-                      )}
-                    </button>
+                    </Button>
                   ))}
                 </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+              </div>
+            </SheetContent>
+          </Sheet>
 
           {/* Order Type */}
           <div className="space-y-2">
@@ -153,11 +143,15 @@ export function MobileSetupStep({
               {tables.length > 0 ? (
                 <div className="grid grid-cols-3 gap-2">
                   {tables.map(table => (
-                    <button
+                    <Button
                       key={table.id}
+                      size="lg"
+                      variant={
+                        selectedTableId === table.id ? "default" : "secondary"
+                      }
                       onClick={() => onTableChange(table.id)}
                       className={cn(
-                        "p-3 rounded-lg border-2 text-center transition-all",
+                        "p-3 h-auto rounded-lg text-center transition-all flex flex-col",
                         selectedTableId === table.id
                           ? "border-primary bg-primary text-primary-foreground"
                           : "border-border hover:border-primary/50"
@@ -167,7 +161,7 @@ export function MobileSetupStep({
                       {table.zone && (
                         <span className="block text-xs opacity-70">{table.zone}</span>
                       )}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               ) : (

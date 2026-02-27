@@ -85,13 +85,13 @@ export function CreateOrderContainer({ open, onOpenChange, locations, tables, te
             fullHeight
             className="p-0 flex flex-col"
           >
-            <SheetHeader className="p-4 pb-0 shrink-0">
-              <SheetTitle className="flex items-center justify-center gap-2">
-                <UtensilsCrossed className="h-5 w-5" />
+            <SheetHeader className="px-4 pt-2 pb-3 shrink-0">
+              <SheetTitle className="flex items-center justify-center gap-2 text-base">
+                <UtensilsCrossed className="h-4 w-4" />
                 {state.mobileStep === 1 ? t('orderSetup') : t('title')}
               </SheetTitle>
               {/* Progress line */}
-              <div className="flex gap-1.5 mt-2">
+              <div className="flex gap-1 mt-1.5">
                 <div className="h-1 flex-1 rounded-full bg-primary" />
                 <div className={`h-1 flex-1 rounded-full transition-colors ${state.mobileStep === 2 ? 'bg-primary' : 'bg-muted'}`} />
               </div>
