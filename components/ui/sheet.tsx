@@ -66,18 +66,22 @@ interface SheetContentProps
   renderCloseButton?: () => React.ReactNode;
   showDragHandle?: boolean;
   onOpenChange?: (open: boolean) => void;
+  fullHeight?: boolean;
 }
 
 // Bottom sheet content using Vaul (native swipe-to-dismiss)
 const BottomSheetContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
-  SheetContentProps
->(({ className, children, showDragHandle = true, renderCloseButton, ...props }, ref) => (
+  SheetContentProps & { fullHeight?: boolean }
+>(({ className, children, showDragHandle = true, renderCloseButton, fullHeight = false, ...props }, ref) => (
   <DrawerPrimitive.Portal>
     <DrawerOverlay />
     <DrawerPrimitive.Content
       ref={ref}
-      className="fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-3xl bg-background h-[96dvh]"
+      className={cn(
+        "fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-3xl bg-background",
+        fullHeight ? "h-[96dvh]" : "max-h-[96dvh]"
+      )}
       {...props}
     >
       {showDragHandle && (

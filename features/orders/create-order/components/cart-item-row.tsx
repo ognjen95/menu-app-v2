@@ -20,11 +20,11 @@ export function CartItemRow({
           €{(item.calculatedPrice * item.quantity).toFixed(2)}
         </p>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         <Button
           variant="outline"
           size="icon"
-          className="h-7 w-7"
+          className="h-10 w-10"
           onClick={() => onUpdateQuantity(item.id, -1)}
         >
           <Minus className="h-3 w-3" />
@@ -33,7 +33,7 @@ export function CartItemRow({
         <Button
           variant="outline"
           size="icon"
-          className="h-7 w-7"
+          className="h-10 w-10"
           onClick={() => onUpdateQuantity(item.id, 1)}
         >
           <Plus className="h-3 w-3" />
@@ -41,7 +41,7 @@ export function CartItemRow({
         <Button
           variant="secondary"
           size="icon"
-          className="h-7 w-7 text-destructive ml-3"
+          className="h-10 w-10 text-destructive ml-5"
           onClick={() => onRemove(item.id)}
         >
           <Trash2 className="h-3 w-3" />

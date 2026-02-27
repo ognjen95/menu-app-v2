@@ -82,6 +82,7 @@ export function CreateOrderContainer({ open, onOpenChange, locations, tables, te
         >
           <SheetContent
             side="bottom"
+            fullHeight
             className="p-0 flex flex-col"
           >
             <SheetHeader className="p-4 pb-0 shrink-0">
@@ -119,6 +120,7 @@ export function CreateOrderContainer({ open, onOpenChange, locations, tables, te
         <Sheet open={state.showCart} onOpenChange={state.setShowCart}>
           <SheetContent
             side="bottom"
+            fullHeight
             className="p-0 flex flex-col"
           >
             <CartSidebar
