@@ -478,7 +478,7 @@ export default function OrdersPage() {
     <div className="h-full">
       {/* Live connection status alert - only render after mount to prevent hydration mismatch */}
       {mounted && !liveAlertDismissed && !(liveEnabled && isLive) && (
-        <div className='md:pb-3'>
+        <div className='md:pb-5'>
           <LiveAlert
             liveEnabled={liveEnabled}
             isLive={isLive}
@@ -499,7 +499,7 @@ export default function OrdersPage() {
 
       {/* Page header */}
       <motion.div
-        className="flex items-center justify-between flex-wrap gap-4 w-full pb-5 md:pb-3"
+        className="flex items-center justify-between flex-wrap gap-4 w-full pb-5 md:pb-3 w-full"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -509,7 +509,7 @@ export default function OrdersPage() {
           <p className="text-sm md:text-base text-muted-foreground"> {t('description')}</p>
 
         </div>
-        <div className="flex items-center gap-1 md:gap-2 flex-1">
+        <div className="flex items-center gap-1 md:gap-2 flex-1 md:justify-end">
           {/* Location selector */}
           <Select value={selectedLocationId} onValueChange={(value) => {
             setSelectedLocationId(value)
