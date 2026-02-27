@@ -269,7 +269,10 @@
     "logout": "Cerrar Sesión",
     "profile": "Perfil",
     "more": "Más",
-    "moreOptions": "Más Opciones"
+    "moreOptions": "Más Opciones",
+    "theme": "Tema",
+    "light": "Claro",
+    "dark": "Oscuro"
   },
   "profilePage": {
     "title": "Configuración de Perfil",

@@ -269,7 +269,10 @@
     "logout": "Odjavi se",
     "profile": "Profil",
     "more": "Više",
-    "moreOptions": "Više Opcija"
+    "moreOptions": "Više Opcija",
+    "theme": "Tema",
+    "light": "Svetla",
+    "dark": "Tamna"
   },
   "profilePage": {
     "title": "Podešavanja Profila",

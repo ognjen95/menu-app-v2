@@ -269,7 +269,10 @@
     "logout": "Log Out",
     "profile": "Profile",
     "more": "More",
-    "moreOptions": "More Options"
+    "moreOptions": "More Options",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark"
   },
   "profilePage": {
     "title": "Profile Settings",

@@ -98,7 +98,7 @@ export function MoreOptionsSheet({
           {/* Theme Picker */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground px-4">
-              Theme
+              {t('theme')}
             </label>
             <div className="flex gap-2 px-4">
               <Button
@@ -108,7 +108,7 @@ export function MoreOptionsSheet({
                 className="flex-1 gap-2"
               >
                 <Sun className="h-4 w-4" />
-                Light
+                {t('light')}
               </Button>
               <Button
                 variant={mounted && resolvedTheme === 'dark' ? 'default' : 'outline'}
@@ -117,13 +117,13 @@ export function MoreOptionsSheet({
                 className="flex-1 gap-2"
               >
                 <Moon className="h-4 w-4" />
-                Dark
+                {t('dark')}
               </Button>
             </div>
           </div>
 
           {/* Language Select */}
-          <div className="space-y-2">
+          <div className="space-y-2 px-4">
             <label className="text-sm font-medium text-muted-foreground px-4">
               {t('languages') || 'Language'}
             </label>
@@ -137,7 +137,7 @@ export function MoreOptionsSheet({
                 }, 150)
               }}
             >
-              <SelectTrigger className="mx-4">
+              <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
