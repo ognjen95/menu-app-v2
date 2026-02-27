@@ -160,6 +160,7 @@ export type MobileSetupStepProps = {
   selectedTableId: string
   onTableChange: (tableId: string) => void
   onContinue: () => void
+  onBack: () => void
   t: (key: string) => string
 }
 
@@ -185,5 +186,6 @@ export type MobileMenuStepProps = {
   cartItemsCount: number
   cartTotal: number
   onShowCart: () => void
+  onBack: () => void
   t: (key: string) => string
 }

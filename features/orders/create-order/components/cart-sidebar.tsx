@@ -11,7 +11,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { ShoppingCart, X, Trash2, User } from 'lucide-react'
+import { ShoppingCart, X, Trash2, User, ChevronLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CartItemRow } from './cart-item-row'
 import type { CartSidebarProps, CustomerInfoValues } from '../types'
@@ -115,9 +115,9 @@ export function CartSidebar({
   t,
 }: CartSidebarProps) {
   return (
-    <div className={cn("flex flex-col h-full bg-muted/30", className)}>
+    <div className={cn("flex flex-col h-full overflow-hidden", className)}>
       {/* Cart header */}
-      <div className="p-4 border-b flex items-center justify-between">
+      <div className="shrink-0 p-4 flex items-center justify-center">
         <div className="flex items-center gap-2">
           <ShoppingCart className="h-5 w-5" />
           <span className="font-semibold">{t('cart')}</span>
@@ -125,48 +125,40 @@ export function CartSidebar({
             <Badge variant="secondary">{cartItemsCount}</Badge>
           )}
         </div>
-        {onClose && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-8 w-8 block md:hidden"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
       </div>
 
-      {/* Cart items */}
-      <ScrollArea className="flex-1 p-4 transition-all">
-        {cart.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <ShoppingCart className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>{t('cartEmpty')}</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {cart.map(item => (
-              <CartItemRow
-                key={item.id}
-                item={item}
-                onUpdateQuantity={onUpdateQuantity}
-                onRemove={onRemoveItem}
-              />
-            ))}
-            <div className="flex justify-center pt-3 border-t">
-              <Button className="w-full" variant="ghost" onClick={onClearCart}>
-                <Trash2 className="h-4 w-4 mr-1" />
-                {t('clear')}
-              </Button>
+      {/* Cart items - scrollable area */}
+      <ScrollArea className="flex-1 min-h-0 bg-muted/30 rounded-3xl">
+        <div className="p-4">
+          {cart.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <ShoppingCart className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>{t('cartEmpty')}</p>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="space-y-3">
+              {cart.map(item => (
+                <CartItemRow
+                  key={item.id}
+                  item={item}
+                  onUpdateQuantity={onUpdateQuantity}
+                  onRemove={onRemoveItem}
+                />
+              ))}
+              <div className="flex justify-center pt-3 border-t">
+                <Button className="w-full" variant="ghost" onClick={onClearCart}>
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  {t('clear')}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </ScrollArea>
 
-      {/* Order details */}
+      {/* Footer - fixed at bottom */}
       {cart.length > 0 && (
-        <div className="p-4 border-t space-y-3 safe-area-pb">
+        <div className="shrink-0 p-4 pb-8 space-y-3 bg-background">
           {/* Customer info (optional) */}
           <CustomerInfoAccordion
             t={t}
@@ -176,19 +168,25 @@ export function CartSidebar({
           />
 
           {/* Total */}
-          <div className="flex items-center justify-between text-lg font-semibold pt-2 border-t">
+          <div className="flex items-center justify-between text-lg font-semibold pt-2">
             <span>{t('total')}</span>
             <span>€{cartTotal.toFixed(2)}</span>
           </div>
 
           {/* Submit */}
-          <Button
-            className="w-full p-4 text-lg font-semibold"
-            onClick={onSubmit}
-            disabled={isSubmitting || cart.length === 0}
-          >
-            {isSubmitting ? t('creating') : t('placeOrder')}
-          </Button>
+          <div className='flex items-center justify-between gap-3'>
+            <Button onClick={onClose} variant={'secondary'} className="h-12 px-4">
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+
+            <Button
+              className="w-full p-4 text-lg font-semibold"
+              onClick={onSubmit}
+              disabled={isSubmitting || cart.length === 0}
+            >
+              {isSubmitting ? t('creating') : t('placeOrder')}
+            </Button>
+          </div>
         </div>
       )}
     </div>

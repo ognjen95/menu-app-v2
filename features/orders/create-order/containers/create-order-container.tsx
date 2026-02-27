@@ -82,40 +82,25 @@ export function CreateOrderContainer({ open, onOpenChange, locations, tables, te
         >
           <SheetContent
             side="bottom"
-            className="max-h-[100dvh] h-[100dvh] p-0 flex flex-col rounded-3xl"
+            className="p-0 flex flex-col"
           >
-            <SheetHeader className="p-4 border-b shrink-0">
-              <SheetTitle className="flex items-center gap-2">
-                {state.mobileStep === 1 && (
-                  <Button
-                    onClick={() => onOpenChange(false)}
-                    variant="ghost"
-                    className="mr-1 hover:bg-muted -ml-1 h-9 w-9 p-0"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </Button>
-                )}
-                {state.mobileStep === 2 && (
-                  <Button
-                    onClick={() => state.setMobileStep(1)}
-                    variant="ghost"
-                    className="mr-1 hover:bg-muted -ml-1 h-9 w-9 p-0"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </Button>
-                )}
+            <SheetHeader className="p-4 pb-0 shrink-0">
+              <SheetTitle className="flex items-center justify-center gap-2">
                 <UtensilsCrossed className="h-5 w-5" />
                 {state.mobileStep === 1 ? t('orderSetup') : t('title')}
               </SheetTitle>
-              <p className="text-sm text-muted-foreground">
-                {t('step', { current: state.mobileStep, total: 2 })}
-              </p>
+              {/* Progress line */}
+              <div className="flex gap-1.5 mt-2">
+                <div className="h-1 flex-1 rounded-full bg-primary" />
+                <div className={`h-1 flex-1 rounded-full transition-colors ${state.mobileStep === 2 ? 'bg-primary' : 'bg-muted'}`} />
+              </div>
             </SheetHeader>
             <div className="flex-1 min-h-0 overflow-hidden">
               {state.mobileStep === 1 ? (
                 <MobileSetupStep
                   {...menuContentProps}
                   onContinue={() => state.setMobileStep(2)}
+                  onBack={() => onOpenChange(false)}
                 />
               ) : (
                 <MobileMenuStep
@@ -123,6 +108,7 @@ export function CreateOrderContainer({ open, onOpenChange, locations, tables, te
                   searchInputRef={state.mobileSearchInputRef}
                   onSearchFocus={() => state.setIsMobileSearchFocused(true)}
                   onSearchBlur={() => state.setIsMobileSearchFocused(false)}
+                  onBack={() => state.setMobileStep(1)}
                 />
               )}
             </div>
@@ -132,8 +118,8 @@ export function CreateOrderContainer({ open, onOpenChange, locations, tables, te
         {/* Cart sheet for mobile */}
         <Sheet open={state.showCart} onOpenChange={state.setShowCart}>
           <SheetContent
-            side="right"
-            className="w-full sm:max-w-md p-0 max-h-[100dvh] h-[100dvh] flex flex-col"
+            side="bottom"
+            className="p-0 flex flex-col"
           >
             <CartSidebar
               cart={state.cart}

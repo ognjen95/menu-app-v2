@@ -2,7 +2,7 @@ import type { RefObject } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Search, ShoppingCart, MapPin, UtensilsCrossed } from 'lucide-react'
+import { Search, ShoppingCart, MapPin, UtensilsCrossed, ChevronLeft } from 'lucide-react'
 
 import { MenuItemsGrid } from './menu-items-grid'
 import { CategoryFilter } from './category-filter'
@@ -30,15 +30,16 @@ export function MobileMenuStep({
   cartItemsCount,
   cartTotal,
   onShowCart,
+  onBack,
   t,
 }: MobileMenuStepProps) {
   const selectedLocation = locations.find(l => l.id === selectedLocationId)
   const selectedTable = tables.find(t => t.id === selectedTableId)
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Search and filters */}
-      <div className="p-4 border-b space-y-3">
+      <div className="p-4 border-b space-y-3 shrink-0">
         {/* Order info badge */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span className="px-2 py-1 bg-muted rounded-md flex items-center gap-1">
@@ -84,29 +85,38 @@ export function MobileMenuStep({
       </div>
 
       {/* Menu items */}
-      <ScrollArea className="flex-1 p-4">
-        <MenuItemsGrid
-          items={filteredItems}
-          itemQuantities={itemQuantities}
-          recentlyAddedId={recentlyAddedId}
-          isLoading={isLoadingItems}
-          onItemClick={onItemClick}
-          t={t}
-        />
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="p-4">
+          <MenuItemsGrid
+            items={filteredItems}
+            itemQuantities={itemQuantities}
+            recentlyAddedId={recentlyAddedId}
+            isLoading={isLoadingItems}
+            onItemClick={onItemClick}
+            t={t}
+          />
+        </div>
       </ScrollArea>
 
-      {/* Mobile cart button */}
-      {cartItemsCount > 0 && (
-        <div className="p-4 border-t safe-area-pb">
+      {/* Footer buttons */}
+      <div className="shrink-0 p-4 pb-8 border-t bg-background flex gap-3">
+        <Button
+          variant="secondary"
+          className="h-12 px-4"
+          onClick={onBack}
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
+
           <Button
-            className="w-full h-12"
+            className="flex-1 h-12"
             onClick={onShowCart}
+            disabled={!cartItemsCount}
           >
             <ShoppingCart className="h-5 w-5 mr-2" />
             {t('viewCart')} ({cartItemsCount}) - €{cartTotal.toFixed(2)}
           </Button>
-        </div>
-      )}
+      </div>
     </div>
   )
 }

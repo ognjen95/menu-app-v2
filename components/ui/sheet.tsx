@@ -43,14 +43,14 @@ const DrawerOverlay = React.forwardRef<
 DrawerOverlay.displayName = "DrawerOverlay"
 
 const sheetVariants = cva(
-  "fixed z-50 gap-4 rounded-3xl m-3 bg-background p-6 shadow-lg transition-all duration-300 ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
+  "fixed z-50 gap-4 bg-background shadow-lg transition-all duration-300 ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
   {
     variants: {
       side: {
-        top: "inset-x-0 top-0 border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
-        bottom: "inset-x-0 bottom-0 border data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
-        left: "inset-y-0 left-0 h-full w-3/4 border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left md:max-w-lg",
-        right: "inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right md:max-w-lg",
+        top: "inset-x-0 top-0 border-b rounded-3xl m-3 p-6 data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
+        bottom: "inset-x-0 inset-y-0 rounded-t-3xl data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+        left: "inset-y-0 left-0 h-full w-3/4 border-r rounded-3xl m-3 p-6 data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left md:max-w-lg",
+        right: "inset-y-0 right-0 h-full w-3/4 border-l rounded-3xl m-3 p-6 data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right md:max-w-lg",
       },
     },
     defaultVariants: {
@@ -77,16 +77,14 @@ const BottomSheetContent = React.forwardRef<
     <DrawerOverlay />
     <DrawerPrimitive.Content
       ref={ref}
-      className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-3xl bg-background m-2 mb-0 rounded-b-none",
-        className
-      )}
+      className="fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-3xl bg-background h-[96dvh]"
       {...props}
     >
       {showDragHandle && (
-        <div className="mx-auto mt-4 h-1.5 w-[100px] rounded-full bg-muted" />
+        <div className="mx-auto mt-4 h-1.5 w-[100px] rounded-full bg-muted shrink-0" />
       )}
-      <div className="pt-4">
+      {/* Content wrapper - flex-1 with overflow hidden to properly contain scrollable children */}
+      <div className={cn("flex-1 min-h-0 flex flex-col overflow-hidden", className)}>
         {children}
       </div>
       {renderCloseButton && (
@@ -124,7 +122,7 @@ const RegularSheetContent = React.forwardRef<
 ))
 RegularSheetContent.displayName = "RegularSheetContent"
 
-// Main SheetContent that switches between Vaul (bottom) and Radix (other sides)
+// Main SheetContent - uses Vaul for bottom, Radix for others
 const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>(
   ({ side = "right", ...props }, ref) => {
     if (side === "bottom") {
@@ -154,6 +152,7 @@ const Sheet = ({ children, side, ...props }: SheetProps) => {
   const effectiveSide = side || contentChild?.props?.side || "right"
 
   if (effectiveSide === "bottom") {
+    // Use Vaul for bottom sheets (drag-to-close)
     return (
       <DrawerPrimitive.Root {...props}>
         {children}

@@ -7,7 +7,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { MapPin, User, UtensilsCrossed, Check, ChevronRight } from 'lucide-react'
+import { MapPin, User, UtensilsCrossed, Check, ChevronRight, ChevronLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 import { OrderTypeSelectorMobile } from './order-type-selector'
@@ -26,6 +26,7 @@ export function MobileSetupStep({
   selectedTableId,
   onTableChange,
   onContinue,
+  onBack,
   t,
 }: MobileSetupStepProps) {
   const selectedLocation = locations.find(l => l.id === selectedLocationId)
@@ -179,10 +180,17 @@ export function MobileSetupStep({
         </div>
       </ScrollArea>
 
-      {/* Continue button */}
-      <div className="shrink-0 p-4 bg-background border-t">
+      {/* Footer buttons */}
+      <div className="shrink-0 p-4 pb-8 bg-background border-t flex gap-3">
         <Button
-          className="w-full h-12 text-lg"
+          variant="secondary"
+          className="h-12 px-4"
+          onClick={onBack}
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
+        <Button
+          className="flex-1 h-12 text-lg"
           onClick={onContinue}
           disabled={!canContinue}
         >
