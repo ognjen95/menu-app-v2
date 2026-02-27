@@ -63,6 +63,8 @@ export function CreateOrderContainer({ open, onOpenChange, locations, tables, te
     itemQuantities: state.itemQuantities,
     recentlyAddedId: state.recentlyAddedId,
     onItemClick: state.handleItemClick,
+    onQuantityChange: state.updateItemQuantity,
+    onRemoveOne: state.removeOneByItemId,
     cartItemsCount: state.cartItemsCount,
     cartTotal: state.cartTotal,
     onShowCart: () => state.setShowCart(true),

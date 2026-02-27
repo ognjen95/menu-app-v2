@@ -8,6 +8,8 @@ export function MenuItemsGrid({
   recentlyAddedId,
   isLoading,
   onItemClick,
+  onQuantityChange,
+  onRemoveOne,
   t,
 }: MenuItemsGridProps) {
   if (isLoading) {
@@ -23,6 +25,8 @@ export function MenuItemsGrid({
           quantity={itemQuantities[item.id] || 0}
           isHighlighted={recentlyAddedId === item.id}
           onItemClick={onItemClick}
+          onQuantityChange={onQuantityChange}
+          onRemoveOne={onRemoveOne}
           t={t}
         />
       ))}

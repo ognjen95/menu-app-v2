@@ -46,6 +46,8 @@ export type MenuItemCardProps = {
   quantity: number
   isHighlighted: boolean
   onItemClick: (item: MenuItemWithVariants) => void
+  onQuantityChange: (itemId: string, delta: number) => void
+  onRemoveOne: (itemId: string) => void
   t: (key: string) => string
 }
 
@@ -55,6 +57,8 @@ export type MenuItemsGridProps = {
   recentlyAddedId: string | null
   isLoading: boolean
   onItemClick: (item: MenuItemWithVariants) => void
+  onQuantityChange: (itemId: string, delta: number) => void
+  onRemoveOne: (itemId: string) => void
   t: (key: string) => string
 }
 
@@ -183,6 +187,8 @@ export type MobileMenuStepProps = {
   itemQuantities: Record<string, number>
   recentlyAddedId: string | null
   onItemClick: (item: MenuItemWithVariants) => void
+  onQuantityChange: (itemId: string, delta: number) => void
+  onRemoveOne: (itemId: string) => void
   cartItemsCount: number
   cartTotal: number
   onShowCart: () => void

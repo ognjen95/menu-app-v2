@@ -212,6 +212,68 @@ export function useCreateOrderState({ open, onOpenChange, t, locations, tables, 
     setCart([])
   }, [])
 
+  // Update quantity by menu item ID (for items without variants)
+  const updateItemQuantity = useCallback((itemId: string, delta: number) => {
+    setCart(prev => {
+      // Find cart items matching this menu item (without variants)
+      const cartItem = prev.find(c => c.menuItem.id === itemId && (!c.selectedVariants || c.selectedVariants.length === 0))
+      
+      if (cartItem) {
+        // Update existing cart item
+        if (delta > 0) {
+          return prev.map(c => 
+            c.id === cartItem.id ? { ...c, quantity: c.quantity + delta } : c
+          )
+        } else {
+          // Decrease quantity
+          const newQty = cartItem.quantity + delta
+          if (newQty <= 0) {
+            return prev.filter(c => c.id !== cartItem.id)
+          }
+          return prev.map(c => 
+            c.id === cartItem.id ? { ...c, quantity: newQty } : c
+          )
+        }
+      } else if (delta > 0) {
+        // Item not in cart, find the menu item and add it
+        const menuItem = menuItems.find(m => m.id === itemId)
+        if (menuItem) {
+          const newItem: CartItem = {
+            id: crypto.randomUUID(),
+            menuItem,
+            selectedVariants: [],
+            calculatedPrice: menuItem.base_price,
+            quantity: delta,
+          }
+          return [...prev, newItem]
+        }
+      }
+      return prev
+    })
+  }, [menuItems])
+
+  // Remove one item from cart by menu item ID (removes last added)
+  const removeOneByItemId = useCallback((itemId: string) => {
+    setCart(prev => {
+      // Find all cart items for this menu item
+      const itemsForMenuItem = prev.filter(c => c.menuItem.id === itemId)
+      if (itemsForMenuItem.length === 0) return prev
+      
+      // Get the last one (most recently added)
+      const lastItem = itemsForMenuItem[itemsForMenuItem.length - 1]
+      
+      if (lastItem.quantity > 1) {
+        // Decrease quantity
+        return prev.map(c => 
+          c.id === lastItem.id ? { ...c, quantity: c.quantity - 1 } : c
+        )
+      } else {
+        // Remove the cart item entirely
+        return prev.filter(c => c.id !== lastItem.id)
+      }
+    })
+  }, [])
+
   // Calculate totals
   const cartTotal = useMemo(() => {
     return cart.reduce((sum, item) => sum + (item.calculatedPrice * item.quantity), 0)
@@ -355,6 +417,8 @@ export function useCreateOrderState({ open, onOpenChange, t, locations, tables, 
     addToCartDirect,
     handleItemClick,
     updateQuantity,
+    updateItemQuantity,
+    removeOneByItemId,
     removeFromCart,
     clearCart,
 

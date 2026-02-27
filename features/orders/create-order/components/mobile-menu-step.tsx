@@ -27,6 +27,8 @@ export function MobileMenuStep({
   itemQuantities,
   recentlyAddedId,
   onItemClick,
+  onQuantityChange,
+  onRemoveOne,
   cartItemsCount,
   cartTotal,
   onShowCart,
@@ -93,6 +95,8 @@ export function MobileMenuStep({
             recentlyAddedId={recentlyAddedId}
             isLoading={isLoadingItems}
             onItemClick={onItemClick}
+            onQuantityChange={onQuantityChange}
+            onRemoveOne={onRemoveOne}
             t={t}
           />
         </div>
