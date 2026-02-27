@@ -169,8 +169,8 @@ export default function DashboardLayout({
                   <Link
                     href={item.href}
                     className={cn(
-                      'group flex items-center gap-3 rounded-xl px-3 py-3 font-medium transition-all duration-200',
-                      collapsed ? 'justify-center' : '',
+                      'group flex items-center rounded-xl px-3 py-3 font-medium transition-all duration-200',
+                      collapsed ? 'justify-center' : 'gap-3',
                       isActive
                         ? 'bg-primary text-primary-foreground shadow-md'
                         : 'text-muted-foreground hover:bg-accent hover:text-foreground hover:shadow-sm'
@@ -181,10 +181,7 @@ export default function DashboardLayout({
                       'flex-shrink-0 transition-transform duration-200 h-5 w-5',
                       !isActive && 'group-hover:scale-110'
                     )} />
-                    <span className={cn(
-                      "overflow-hidden whitespace-nowrap transition-all duration-300",
-                      collapsed ? "w-0 opacity-0" : "w-auto opacity-100"
-                    )}>{name}</span>
+                    {!collapsed && <span>{name}</span>}
                   </Link>
                 </li>
               )
@@ -208,8 +205,8 @@ export default function DashboardLayout({
                     <Link
                       href={item.href}
                       className={cn(
-                        'group flex items-center gap-3 rounded-xl px-3 py-3 font-medium transition-all duration-200',
-                        collapsed ? 'justify-center' : '',
+                        'group flex items-center rounded-xl px-3 py-3 font-medium transition-all duration-200',
+                        collapsed ? 'justify-center' : 'gap-3',
                         isActive
                           ? 'bg-primary text-primary-foreground shadow-md'
                           : 'text-muted-foreground hover:bg-accent hover:text-foreground hover:shadow-sm'
@@ -220,10 +217,7 @@ export default function DashboardLayout({
                         'flex-shrink-0 transition-transform duration-200 h-5 w-5',
                         !isActive && 'group-hover:scale-110'
                       )} />
-                      <span className={cn(
-                      "overflow-hidden whitespace-nowrap transition-all duration-300",
-                      collapsed ? "w-0 opacity-0" : "w-auto opacity-100"
-                    )}>{name}</span>
+                      {!collapsed && <span>{name}</span>}
                     </Link>
                   </li>
                 )
@@ -237,19 +231,16 @@ export default function DashboardLayout({
           <Button
             variant="ghost"
             className={cn(
-              'w-full flex items-center gap-3 rounded-xl py-3 h-auto font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-200',
-              collapsed ? 'justify-center px-0' : 'justify-start px-3'
+              'w-full flex items-center rounded-xl py-3 h-auto font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-200',
+              collapsed ? 'justify-center px-3' : 'justify-start px-3 gap-3'
             )}
             onClick={() => setCollapsed(!collapsed)}
           >
             <SidebarCloseIcon className={cn(
-              "h-5 w-5 transition-transform duration-300",
+              "h-5 w-5 flex-shrink-0 transition-transform duration-300",
               collapsed && "rotate-180"
             )} />
-            <span className={cn(
-              "overflow-hidden whitespace-nowrap transition-all duration-300",
-              collapsed ? "w-0 opacity-0" : "w-auto opacity-100"
-            )}>{t('collapse')}</span>
+            {!collapsed && <span>{t('collapse')}</span>}
           </Button>
         </div>
       </aside>

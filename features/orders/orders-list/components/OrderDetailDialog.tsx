@@ -221,8 +221,8 @@ export function OrderDetailDialog({ order, open, onOpenChange }: OrderDetailDial
   )
 
   const mainContent = (
-    <Tabs defaultValue="actions" className="flex-1 flex flex-col overflow-hidden">
-      <TabsList className="grid w-full grid-cols-3">
+    <Tabs defaultValue="actions" className="flex-1 flex flex-col-reverse md:flex-col overflow-hidden">
+      <TabsList className="grid w-full grid-cols-3 mt-3 md:mt-0">
             <TabsTrigger value="details" className="gap-2">
               <ClipboardList className="h-4 w-4" />
               {t('tabs.details')}
