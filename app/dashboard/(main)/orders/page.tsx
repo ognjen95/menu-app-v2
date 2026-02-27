@@ -34,6 +34,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { OrderStatus, OrderWithRelations, Location } from '@/lib/types'
 import { statusConfig, typeIcons, formatTimeElapsed, getTimerColor } from '@/features/orders/orders-list/components/order-card'
+import { useScrollDirection } from '@/lib/hooks/use-scroll-direction'
 import { OrdersListCards } from '@/features/orders/orders-list/components/orders-list-cards'
 import { OrdersKanban } from '@/features/orders/orders-list/components/orders-kanban'
 import { NewOrdersModal } from '@/features/orders/orders-list/components/new-orders-modal'
@@ -87,6 +88,7 @@ export default function OrdersPage() {
   const [liveAlertDismissed, setLiveAlertDismissed] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const { isScrollingDown } = useScrollDirection({ threshold: 10, enabled: isMobile })
 
   const lastOrderCountRef = useRef(0)
   const updateOrderStatus = useOfflineUpdateOrderStatus()
@@ -471,14 +473,6 @@ export default function OrdersPage() {
     }
   }
 
-  // Prevent hydration mismatch from translations
-  if (!mounted) {
-    return (
-      <div className="space-y-6 h-full">
-        <OrdersGridSkeleton />
-      </div>
-    )
-  }
 
   return (
     <div className="h-full">
@@ -691,10 +685,25 @@ export default function OrdersPage() {
         </div>
       </motion.div>
 
-      <div className='md:hidden pb-3'>
-        <Button className='w-full' onClick={() => setIsCreateOrderOpen(true)}>
-          <Plus className="h-5 w-5 pr-2" />
-          {t('createOrder')}
+      <div 
+        className='md:hidden fixed right-4 z-10 transition-[bottom] duration-300 ease-in-out'
+        style={{ bottom: isScrollingDown ? '1rem' : '100px' }}
+      >
+        <Button 
+          className='transition-all duration-300 shadow-lg' 
+          onClick={() => setIsCreateOrderOpen(true)}
+          size={isScrollingDown ? 'icon' : 'default'}
+        >
+          <Plus className={cn(
+            "h-5 w-5 transition-all duration-300",
+            !isScrollingDown && "mr-2"
+          )} />
+          <span className={cn(
+            "transition-all duration-300 overflow-hidden whitespace-nowrap",
+            isScrollingDown ? "w-0 opacity-0" : "w-auto opacity-100"
+          )}>
+            {t('createOrder')}
+          </span>
         </Button>
       </div>
 

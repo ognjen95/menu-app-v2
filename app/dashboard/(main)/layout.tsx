@@ -24,6 +24,8 @@ import {
 } from 'lucide-react'
 import { MobileBottomNav } from './components/mobile-bottom-nav'
 import { MoreOptionsSheet } from './components/more-options-sheet'
+import { useScrollDirection } from '@/lib/hooks/use-scroll-direction'
+import { useMediaQuery } from '@/lib/hooks/use-media-query'
 
 const navigationItems = [
   { key: 'overview', href: '/dashboard/overview', icon: LayoutDashboard },
@@ -52,6 +54,8 @@ export default function DashboardLayout({
   const tCommon = useTranslations('common')
   const locale = useLocale() as Locale
   const { resolvedTheme, setTheme } = useTheme()
+  const isMobile = useMediaQuery('(max-width: 1023px)')
+  const { isScrollingDown } = useScrollDirection({ threshold: 10, enabled: isMobile })
   const [collapsed, setCollapsed] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [moreSheetOpen, setMoreSheetOpen] = useState(false)
@@ -274,6 +278,7 @@ export default function DashboardLayout({
         isNavItemActive={isNavItemActive}
         t={t}
         onMoreClick={() => setMoreSheetOpen(true)}
+        isHidden={isScrollingDown}
       />
 
       {/* More Options Sheet */}

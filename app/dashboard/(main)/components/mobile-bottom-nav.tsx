@@ -15,6 +15,7 @@ interface MobileBottomNavProps {
   isNavItemActive: (href: string) => boolean
   t: (key: string) => string
   onMoreClick: () => void
+  isHidden?: boolean
 }
 
 export function MobileBottomNav({
@@ -22,9 +23,13 @@ export function MobileBottomNav({
   isNavItemActive,
   t,
   onMoreClick,
+  isHidden = false,
 }: MobileBottomNavProps) {
   return (
-    <nav className="fixed bottom-4 left-4 right-4 z-40 lg:hidden">
+    <nav className={cn(
+      "fixed bottom-4 left-4 right-4 z-40 lg:hidden transition-transform duration-300 ease-in-out",
+      isHidden && "translate-y-[calc(100%+2rem)]"
+    )}>
       {/* Blur background */}
       <div className="absolute inset-0 bg-background/60 backdrop-blur-xl rounded-full border border-border/50 shadow-lg" />
 

@@ -4,35 +4,37 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { motion, staggerContainer, staggerItemScale } from './animated'
 
-// Order Card Skeleton
+// Order Card Skeleton - matches accordion card layout
 export function OrderCardSkeleton() {
   return (
     <Card className="relative overflow-hidden">
-      <Skeleton className="absolute top-0 left-0 right-0 h-1" />
-      <CardHeader className="pb-2 pt-3">
-        <div className="flex items-center justify-between gap-1">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <Skeleton className="h-5 w-12" />
-            <Skeleton className="h-5 w-20" />
+      {/* Status Bar - Left Edge */}
+      <Skeleton className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg" />
+      
+      {/* Main Card Content */}
+      <div className="pl-4 md:pl-5">
+        <div className="p-3 md:p-4">
+          <div className="flex items-center gap-3">
+            {/* Type Icon */}
+            <Skeleton className="flex-shrink-0 h-10 w-10 md:h-12 md:w-12 rounded-full" />
+
+            {/* Order Info */}
+            <div className="flex-1 min-w-0 space-y-1.5">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-16 md:h-5 md:w-20" />
+                <Skeleton className="h-5 w-16 md:w-20 rounded-full" />
+              </div>
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-3 w-12 md:h-4 md:w-16" />
+                <Skeleton className="h-3 w-14 md:h-4 md:w-16" />
+              </div>
+            </div>
+
+            {/* Time */}
+            <Skeleton className="h-4 w-10 md:w-12" />
           </div>
-          <Skeleton className="h-4 w-8" />
         </div>
-        <div className="flex items-center gap-1.5 flex-wrap mt-2">
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-5 w-16" />
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3 pt-0">
-        <div className="space-y-1.5">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-        </div>
-        <div className="flex items-center justify-between pt-2">
-          <Skeleton className="h-6 w-16" />
-          <Skeleton className="h-6 w-20" />
-        </div>
-      </CardContent>
+      </div>
     </Card>
   )
 }
@@ -131,11 +133,11 @@ export function CategoryItemSkeleton() {
   )
 }
 
-// Animated Grid Skeleton
+// Animated Grid Skeleton - single column on mobile (accordion style), grid on desktop
 export function OrdersGridSkeleton({ count = 6 }: { count?: number }) {
   return (
     <motion.div
-      className="grid gap-4 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+      className="space-y-2 md:space-y-0 md:grid md:gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
       initial="initial"
       animate="animate"
       variants={staggerContainer}
