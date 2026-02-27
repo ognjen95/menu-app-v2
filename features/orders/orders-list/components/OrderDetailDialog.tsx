@@ -603,7 +603,7 @@ export function OrderDetailDialog({ order, open, onOpenChange }: OrderDetailDial
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="flex flex-col">
+        <SheetContent side="bottom" className="flex flex-col p-3">
           <SheetHeader className="pb-2">
             <SheetTitle>{headerContent}</SheetTitle>
           </SheetHeader>
