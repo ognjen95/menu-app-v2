@@ -144,9 +144,10 @@ interface SheetProps {
   onOpenChange?: (open: boolean) => void;
   modal?: boolean;
   side?: "top" | "bottom" | "left" | "right";
+  nested?: boolean;
 }
 
-const Sheet = ({ children, side, ...props }: SheetProps) => {
+const Sheet = ({ children, side, nested, ...props }: SheetProps) => {
   // Extract side from children if SheetContent is present
   const childArray = React.Children.toArray(children)
   const contentChild = childArray.find(
@@ -157,10 +158,12 @@ const Sheet = ({ children, side, ...props }: SheetProps) => {
 
   if (effectiveSide === "bottom") {
     // Use Vaul for bottom sheets (drag-to-close)
+    // Use NestedRoot when this drawer is inside another drawer
+    const DrawerRoot = nested ? DrawerPrimitive.NestedRoot : DrawerPrimitive.Root
     return (
-      <DrawerPrimitive.Root {...props}>
+      <DrawerRoot {...props}>
         {children}
-      </DrawerPrimitive.Root>
+      </DrawerRoot>
     )
   }
   

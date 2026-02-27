@@ -113,6 +113,15 @@ export function CreateOrderContainer({ open, onOpenChange, locations, tables, te
                 />
               )}
             </div>
+            
+            {/* Variant Selection Dialog - nested inside parent sheet */}
+            <VariantSelectionDialog
+              item={state.itemForVariants}
+              onClose={() => state.setItemForVariants(null)}
+              onAddToCart={state.addToCartDirect}
+              t={t}
+              tCommon={tCommon}
+            />
           </SheetContent>
         </Sheet>
 
@@ -140,15 +149,6 @@ export function CreateOrderContainer({ open, onOpenChange, locations, tables, te
             />
           </SheetContent>
         </Sheet>
-
-        {/* Variant Selection Dialog */}
-        <VariantSelectionDialog
-          item={state.itemForVariants}
-          onClose={() => state.setItemForVariants(null)}
-          onAddToCart={state.addToCartDirect}
-          t={t}
-          tCommon={tCommon}
-        />
       </>
     )
   }

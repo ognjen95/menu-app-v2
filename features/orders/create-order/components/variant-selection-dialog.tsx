@@ -51,10 +51,10 @@ export function VariantSelectionDialog({
 
   if (!item) return null
 
-  // Mobile: Use Sheet (bottom drawer)
+  // Mobile: Use Sheet (bottom drawer) - nested since it's inside another sheet
   if (isMobile) {
     return (
-      <Sheet open={!!item} onOpenChange={(open) => !open && onClose()}>
+      <Sheet open={!!item} onOpenChange={(open) => !open && onClose()} nested>
         <SheetContent side="bottom" className="p-0 flex flex-col">
           <SheetHeader className="p-4 pb-0 shrink-0">
             <SheetTitle className="flex items-center justify-center gap-2">
