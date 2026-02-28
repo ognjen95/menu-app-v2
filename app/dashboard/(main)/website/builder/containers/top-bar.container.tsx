@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiPatch } from '@/lib/api'
-import { TopBar } from '../components/top-bar'
+import { TopBar, type PreviewTarget } from '../components/top-bar'
 import type { Website } from './preview-and-editor.'
 
 type WebsiteCache = { data: { website: Website | null } }
@@ -10,16 +10,20 @@ type WebsiteCache = { data: { website: Website | null } }
 type TopBarContainerProps = {
   website: Website | null | undefined
   previewMode: 'desktop' | 'tablet' | 'mobile'
+  previewTarget: PreviewTarget
   sidebarOpen: boolean
   setPreviewMode: (mode: 'desktop' | 'tablet' | 'mobile') => void
+  setPreviewTarget: (target: PreviewTarget) => void
   setSidebarOpen: (open: boolean) => void
 }
 
 export function TopBarContainer({
   website,
   previewMode,
+  previewTarget,
   sidebarOpen,
   setPreviewMode,
+  setPreviewTarget,
   setSidebarOpen,
 }: TopBarContainerProps) {
   const queryClient = useQueryClient()
@@ -46,9 +50,11 @@ export function TopBarContainer({
     <TopBar
       website={website}
       previewMode={previewMode}
+      previewTarget={previewTarget}
       sidebarOpen={sidebarOpen}
       isPublishing={publishWebsite.isPending}
       setPreviewMode={setPreviewMode}
+      setPreviewTarget={setPreviewTarget}
       setSidebarOpen={setSidebarOpen}
       onPublish={() => publishWebsite.mutate()}
     />

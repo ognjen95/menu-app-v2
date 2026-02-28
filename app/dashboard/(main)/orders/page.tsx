@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo, useLayoutEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 
@@ -118,7 +118,7 @@ export default function OrdersPage() {
   }, [])
 
   // Load layout and location from localStorage on mount (live mode intentionally NOT restored - requires user action each session)
-  useEffect(() => {
+  useLayoutEffect(() => {
     const savedLayout = localStorage.getItem('orders-layout') as 'list' | 'kanban' | null
     if (savedLayout) {
       setLayout(savedLayout)
@@ -127,6 +127,10 @@ export default function OrdersPage() {
     const savedLocation = localStorage.getItem('orders-selected-location')
     if (savedLocation) {
       setSelectedLocationId(savedLocation)
+    } else {
+      if (locations?.[0]?.id) {
+        setSelectedLocationId(locations?.[0]?.id)
+      }
     }
 
     // Check if audio was previously unlocked (PWA persistence)
@@ -141,7 +145,7 @@ export default function OrdersPage() {
         }
       })
     }
-  }, [])
+  }, [locations])
 
   // Persist layout to localStorage
   const handleLayoutChange = (newLayout: 'list' | 'kanban') => {
@@ -480,27 +484,6 @@ export default function OrdersPage() {
 
   return (
     <div className="h-full">
-      {/* Live connection status alert - only render after mount to prevent hydration mismatch */}
-      {mounted && !liveAlertDismissed && !(liveEnabled && isLive) && (
-        <div className='md:pb-5'>
-          <LiveAlert
-            liveEnabled={liveEnabled}
-            isLive={isLive}
-            isReconnecting={isReconnecting}
-            realtimeStatus={realtimeStatus}
-            t={t}
-            reconnectAttempts={reconnectAttempts}
-            maxReconnectAttempts={maxReconnectAttempts}
-            setReconnectAttempts={setReconnectAttempts}
-            reconnect={reconnect}
-            handleLiveToggle={handleLiveToggle}
-            setLiveAlertDismissed={setLiveAlertDismissed}
-            audioUnlocked={audioUnlocked}
-            soundEnabled={soundEnabled}
-          />
-        </div>
-      )}
-
       {/* Page header */}
       <motion.div
         className="flex items-center justify-between flex-wrap gap-4 w-full pb-5 md:pb-3 w-full"
@@ -523,7 +506,6 @@ export default function OrdersPage() {
               <SelectValue placeholder={t('allLocations')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t('allLocations')}</SelectItem>
               {locations.map((loc) => (
                 <SelectItem key={loc.id} value={loc.id}>
                   {loc.name}
@@ -711,6 +693,28 @@ export default function OrdersPage() {
         </Button>
       </div>
 
+      {/* Live connection status alert - only render after mount to prevent hydration mismatch */}
+      {mounted && !liveAlertDismissed && !(liveEnabled && isLive) && (
+        <div className='md:pb-10 md:py-5'>
+          <LiveAlert
+            liveEnabled={liveEnabled}
+            isLive={isLive}
+            isReconnecting={isReconnecting}
+            realtimeStatus={realtimeStatus}
+            t={t}
+            reconnectAttempts={reconnectAttempts}
+            maxReconnectAttempts={maxReconnectAttempts}
+            setReconnectAttempts={setReconnectAttempts}
+            reconnect={reconnect}
+            handleLiveToggle={handleLiveToggle}
+            setLiveAlertDismissed={setLiveAlertDismissed}
+            audioUnlocked={audioUnlocked}
+            soundEnabled={soundEnabled}
+          />
+        </div>
+      )}
+
+
       {/* Status filter tabs (multi-select) */}
       <div className="flex flex-wrap gap-2 md:gap-3 pb-3 items-center justify-between md:justify-start">
         <Button
@@ -753,8 +757,8 @@ export default function OrdersPage() {
             </div>
           )
         ) : filteredOrders.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
+          <Card className='h-full'>
+            <CardContent className="py-12 text-center h-full">
               <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground">{t('noOrdersFound')}</p>
             </CardContent>

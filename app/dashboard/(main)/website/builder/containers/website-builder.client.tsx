@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { TopBarContainer } from './top-bar.container'
 import { PreviewAndEditorContainer, type Website, type WebsitePage } from './preview-and-editor.'
 import { TemplateSelectionContainer } from './template-selection.container'
+import type { PreviewTarget } from '../components/top-bar'
 
 type WebsiteBuilderClientProps = {
   initialWebsite: Website | null
@@ -31,6 +32,7 @@ export function WebsiteBuilderClient({
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [activePanel, setActivePanel] = useState<'design' | 'pages' | 'blocks' | 'settings'>('design')
   const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
+  const [previewTarget, setPreviewTarget] = useState<PreviewTarget>('website')
 
   // Template modal state
   const [showTemplateModal, setShowTemplateModal] = useState(!initialWebsite)
@@ -47,13 +49,23 @@ export function WebsiteBuilderClient({
     setActivePanel('pages')
   }, [])
 
+  // Handle preview target change - auto-switch to mobile for menu
+  const handlePreviewTargetChange = useCallback((target: PreviewTarget) => {
+    setPreviewTarget(target)
+    if (target === 'menu') {
+      setPreviewMode('mobile')
+    }
+  }, [])
+
   return (
     <div className="fixed inset-0 flex overflow-hidden bg-background">
       <TopBarContainer
         website={website}
         previewMode={previewMode}
+        previewTarget={previewTarget}
         sidebarOpen={sidebarOpen}
         setPreviewMode={setPreviewMode}
+        setPreviewTarget={handlePreviewTargetChange}
         setSidebarOpen={setSidebarOpen}
       />
 
@@ -63,6 +75,7 @@ export function WebsiteBuilderClient({
         initialPages={initialPages}
         sidebarOpen={sidebarOpen}
         previewMode={previewMode}
+        previewTarget={previewTarget}
         activePanel={activePanel}
         setActivePanel={setActivePanel}
         setShowTemplateModal={setShowTemplateModal}

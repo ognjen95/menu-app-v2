@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { createClient } from '@supabase/supabase-js'
+import { getSeedDataForType } from '@/lib/seed-data'
+import { seedTenantData } from '@/lib/services/seed-data.service'
+import type { TenantType } from '@/lib/types'
 
 // Service role client for bypassing RLS during tenant creation
 const supabaseAdmin = createClient(
@@ -32,7 +35,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, slug, type, email, phone, country, location } = body
+    const { 
+      name, 
+      slug, 
+      type, 
+      email, 
+      phone, 
+      country, 
+      location,
+      workingHours,
+      languages = ['en'],
+      defaultLanguage = 'en',
+      seedData = false
+    } = body
 
     if (!name || !slug || !type) {
       return NextResponse.json({ error: 'Name, slug, and type are required' }, { status: 400 })
@@ -90,33 +105,54 @@ export async function POST(request: NextRequest) {
     }
 
     // Create default location if provided (use admin client)
+    let menuId: string | null = null
+    console.log('Location data received:', location)
+    console.log('seedData flag:', seedData)
+    
     if (location) {
       const { data: locationData, error: locationError } = await supabaseAdmin
         .from('locations')
         .insert({
           tenant_id: tenant.id,
-          name: location.name || 'Main Location',
+          name: location.address || location.name || 'Main Location',
           slug: 'main',
           address: location.address,
           city: location.city,
           country: location.country || country || 'RS',
           is_active: true,
           service_modes: ['dine_in'],
+          opening_hours: workingHours || null,
         })
         .select()
         .single()
 
+      if (locationError) {
+        console.error('Location creation error:', locationError)
+      }
+      
       if (!locationError && locationData) {
-        // Create a default menu
-        await supabaseAdmin
+        console.log('Location created:', locationData.id)
+        // Create a default menu (or use seed data menu name)
+        const seedInfo = seedData ? getSeedDataForType(type as TenantType) : null
+        const { data: menuData, error: menuError } = await supabaseAdmin
           .from('menus')
           .insert({
             tenant_id: tenant.id,
             location_id: locationData.id,
-            name: 'Main Menu',
+            name: seedInfo?.menuName || 'Main Menu',
             is_active: true,
             available_days: [0, 1, 2, 3, 4, 5, 6],
           })
+          .select()
+          .single()
+
+        if (menuError) {
+          console.error('Menu creation error:', menuError)
+        }
+        if (menuData) {
+          menuId = menuData.id
+          console.log('Menu created:', menuId)
+        }
 
         // Generate a QR code for the location
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -129,13 +165,34 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Set default language (English)
-    await supabaseAdmin.from('tenant_languages').insert({
+    // Set tenant languages
+    const languageInserts = languages.map((langCode: string) => ({
       tenant_id: tenant.id,
-      language_code: 'en',
-      is_default: true,
+      language_code: langCode,
+      is_default: langCode === defaultLanguage,
       is_enabled: true,
-    })
+    }))
+    await supabaseAdmin.from('tenant_languages').insert(languageInserts)
+
+    // Seed initial data if requested
+    if (seedData && menuId) {
+      console.log('Seeding data for type:', type, 'menuId:', menuId)
+      
+      const seedResult = await seedTenantData(tenant.id, menuId, type as TenantType)
+      
+      if (seedResult.success) {
+        console.log('Seed data created:', {
+          categories: seedResult.categories.length,
+          menuItems: seedResult.menuItems.length,
+          variantCategories: seedResult.variantCategories.length,
+          variants: seedResult.variants.length,
+        })
+      } else {
+        console.error('Seed data errors:', seedResult.errors)
+      }
+    } else {
+      console.log('Skipping seed data: seedData=', seedData, 'menuId=', menuId)
+    }
 
     // Create website placeholder
     await supabaseAdmin.from('websites').insert({

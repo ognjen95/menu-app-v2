@@ -36,9 +36,14 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
   noStore()
 
   const { subdomain } = await params
-  const { page: pageSlug, lang, preview } = await searchParams
+  const resolvedSearchParams = await searchParams
+  const { page: pageSlug, lang, preview } = resolvedSearchParams
   const t = await getTranslations('blockRenderer')
-  const isPreview = preview === 'true'
+  
+  // Preview mode allows viewing unpublished websites in the builder iframe
+  // Handle various truthy values for preview parameter
+  const isPreview = preview === 'true' || preview === '1' || preview === 'yes'
+  console.log('[PublicWebsitePage] subdomain:', subdomain, 'searchParams:', JSON.stringify(resolvedSearchParams), 'isPreview:', isPreview)
 
   const { tenant, website } = await getWebsiteBySubdomain(subdomain, isPreview)
   const tenantId = tenant.id

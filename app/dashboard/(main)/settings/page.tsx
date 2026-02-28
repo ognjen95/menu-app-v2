@@ -2,13 +2,20 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { useCurrentTenant, useUpdateTenant } from '@/lib/hooks/use-tenant'
+import { useCurrentTenant, useUpdateTenant, useLocations, useUpdateLocation } from '@/lib/hooks/use-tenant'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   CreditCard,
   Loader2,
@@ -20,11 +27,15 @@ import {
   Utensils,
   Truck,
   Info,
+  Clock,
 } from 'lucide-react'
 import { motion } from '@/components/ui/animated'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Currency } from '@/lib/types'
 import { CURRENCY_SYMBOL_MAP } from '@/lib/constants/currency'
+import { defaultWorkingHours, type WorkingHours } from '@/lib/seed-data'
+
+const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
 
 type TenantSettings = {
   online_payments_enabled?: boolean
@@ -36,9 +47,13 @@ type TenantSettings = {
 export default function SettingsPage() {
   const t = useTranslations('settingsPage')
   const { data, isLoading, refetch } = useCurrentTenant()
+  const { data: locationsData, refetch: refetchLocations } = useLocations()
   const updateTenant = useUpdateTenant()
+  const updateLocation = useUpdateLocation()
   const [isEditing, setIsEditing] = useState(false)
+  const [isEditingHours, setIsEditingHours] = useState(false)
   const [isSavingSettings, setIsSavingSettings] = useState(false)
+  const [isSavingHours, setIsSavingHours] = useState(false)
   const [formData, setFormData] = useState<{
     name: string
     email: string
@@ -47,9 +62,44 @@ export default function SettingsPage() {
     default_currency: Currency
     vat_rate: number
   } | null>(null)
+  const [workingHours, setWorkingHours] = useState<WorkingHours>(defaultWorkingHours)
 
   const tenant = data?.data?.tenant
+  const locations = locationsData?.data?.locations || []
+  const mainLocation = locations[0]
   const settings: TenantSettings = (tenant?.settings as TenantSettings) || {}
+
+  // Load working hours from main location
+  useEffect(() => {
+    if (mainLocation?.working_hours) {
+      setWorkingHours(mainLocation.working_hours as WorkingHours)
+    }
+  }, [mainLocation])
+
+  const handleWorkingHoursChange = (day: keyof WorkingHours, field: 'open' | 'close' | 'isOpen', value: string | boolean) => {
+    setWorkingHours(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [field]: value,
+      },
+    }))
+  }
+
+  const handleSaveWorkingHours = async () => {
+    if (!mainLocation) return
+    setIsSavingHours(true)
+    try {
+      await updateLocation.mutateAsync({
+        id: mainLocation.id,
+        working_hours: workingHours,
+      })
+      refetchLocations()
+      setIsEditingHours(false)
+    } finally {
+      setIsSavingHours(false)
+    }
+  }
 
   const handleEdit = () => {
     if (tenant) {
@@ -182,18 +232,21 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="currency">{t('currency')}</Label>
-                  <select
-                    id="currency"
+                  <Select
                     value={formData.default_currency}
-                    onChange={(e) => setFormData({ ...formData, default_currency: e.target.value as Currency })}
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                    onValueChange={(value) => setFormData({ ...formData, default_currency: value as Currency })}
                   >
-                    {Object.entries(CURRENCY_SYMBOL_MAP).map(([key, value]) => (
-                      <option key={key} value={key}>
-                        {key} ({value})
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="h-10 rounded-md">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(CURRENCY_SYMBOL_MAP).map(([key, value]) => (
+                        <SelectItem key={key} value={key}>
+                          {key} ({value})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="vat_rate">{t('vatRate')}</Label>
@@ -216,19 +269,22 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="timezone">{t('timezone')}</Label>
-                  <select
-                    id="timezone"
+                  <Select
                     value={formData.timezone}
-                    onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                    className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                    onValueChange={(value) => setFormData({ ...formData, timezone: value })}
                   >
-                    <option value="Europe/Belgrade">Europe/Belgrade (CET)</option>
-                    <option value="Europe/London">Europe/London (GMT)</option>
-                    <option value="Europe/Paris">Europe/Paris (CET)</option>
-                    <option value="Europe/Berlin">Europe/Berlin (CET)</option>
-                    <option value="America/New_York">America/New York (EST)</option>
-                    <option value="America/Los_Angeles">America/Los Angeles (PST)</option>
-                  </select>
+                    <SelectTrigger className="h-10 rounded-md">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Europe/Belgrade">Europe/Belgrade (CET)</SelectItem>
+                      <SelectItem value="Europe/London">Europe/London (GMT)</SelectItem>
+                      <SelectItem value="Europe/Paris">Europe/Paris (CET)</SelectItem>
+                      <SelectItem value="Europe/Berlin">Europe/Berlin (CET)</SelectItem>
+                      <SelectItem value="America/New_York">America/New York (EST)</SelectItem>
+                      <SelectItem value="America/Los_Angeles">America/Los Angeles (PST)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -368,6 +424,96 @@ export default function SettingsPage() {
               <p className="text-sm text-green-700 dark:text-green-400">
                 {t('onlinePaymentsEnabled')}
               </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      </motion.div>
+
+      {/* Working Hours */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.25 }}
+      >
+        <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                <Clock className="h-5 w-5 text-blue-500" />
+              </div>
+              <div>
+                <CardTitle>{t('workingHours')}</CardTitle>
+                <CardDescription>{t('workingHoursDesc')}</CardDescription>
+              </div>
+            </div>
+            {!isEditingHours && (
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button variant="outline" onClick={() => setIsEditingHours(true)}>
+                  {t('edit')}
+                </Button>
+              </motion.div>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {isEditingHours ? (
+            <>
+              <div className="space-y-3">
+                {dayKeys.map((day) => (
+                  <div key={day} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+                    <div className="w-24 font-medium text-sm">{t(`days.${day}`)}</div>
+                    <Switch
+                      checked={workingHours[day]?.isOpen ?? true}
+                      onCheckedChange={(checked) => handleWorkingHoursChange(day, 'isOpen', checked)}
+                    />
+                    {workingHours[day]?.isOpen ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        <Input
+                          type="time"
+                          value={workingHours[day]?.open || '09:00'}
+                          onChange={(e) => handleWorkingHoursChange(day, 'open', e.target.value)}
+                          className="w-28"
+                        />
+                        <span className="text-muted-foreground">-</span>
+                        <Input
+                          type="time"
+                          value={workingHours[day]?.close || '22:00'}
+                          onChange={(e) => handleWorkingHoursChange(day, 'close', e.target.value)}
+                          className="w-28"
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">{t('closed')}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={handleSaveWorkingHours} disabled={isSavingHours}>
+                  {isSavingHours && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  {t('saveChanges')}
+                </Button>
+                <Button variant="outline" onClick={() => setIsEditingHours(false)}>
+                  {t('cancel')}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="space-y-2">
+              {dayKeys.map((day) => (
+                <div key={day} className="flex items-center gap-3 py-1">
+                  <div className="w-24 font-medium text-sm">{t(`days.${day}`)}</div>
+                  {workingHours[day]?.isOpen ? (
+                    <span className="text-sm">
+                      {workingHours[day]?.open || '09:00'} - {workingHours[day]?.close || '22:00'}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">{t('closed')}</span>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </CardContent>

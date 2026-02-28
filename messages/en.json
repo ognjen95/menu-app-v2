@@ -401,7 +401,7 @@
   },
   "menuPage": {
     "title": "Menu Management",
-    "description": "Create and manage your menus, categories, and items",
+    "description": "Start by creating categories, then add items to each category",
     "selectMenuToStart": "Select a menu to start managing your items",
     "backToMenus": "Back",
     "manageMenuDesc": "Manage categories and items for this menu",
@@ -755,6 +755,18 @@
       "advancedAnalytics": "Advanced analytics",
       "inventoryManagement": "Inventory management",
       "prioritySupport": "Priority support"
+    },
+    "workingHours": "Working Hours",
+    "workingHoursDesc": "Set your business operating hours",
+    "closed": "Closed",
+    "days": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
     }
   },
   "languagesPage": {
@@ -880,6 +892,22 @@
     "step2Desc": "This information will be shown to your customers",
     "step3Title": "Where is your business located?",
     "step3Desc": "Add your main location - you can add more later",
+    "step4Title": "Setup Hours & Languages",
+    "step4Desc": "Configure your working hours and menu languages",
+    "validation": {
+      "selectBusinessType": "Please select a business type",
+      "businessNameMin": "Business name must be at least 2 characters",
+      "slugMin": "URL slug must be at least 2 characters",
+      "slugInvalid": "Slug can only contain lowercase letters, numbers, and hyphens",
+      "emailInvalid": "Please enter a valid email address",
+      "phoneMin": "Phone number must have at least 8 characters",
+      "phoneInvalid": "Phone must start with + and contain only numbers, spaces, or hyphens",
+      "addressMin": "Please enter a valid address",
+      "cityMin": "Please enter a city",
+      "countryMin": "Please select a country",
+      "selectLanguage": "Please select at least one language",
+      "selectDefaultLanguage": "Please select a default language"
+    },
     "businessName": "Business Name",
     "businessNamePlaceholder": "e.g., The Italian Kitchen",
     "urlSlug": "URL Slug",
@@ -894,6 +922,24 @@
     "creating": "Creating...",
     "createMyBusiness": "Create My Business",
     "failedToCreate": "Failed to create business. Please try again.",
+    "languagesTitle": "Menu Languages",
+    "languagesDesc": "Select languages for your menu and website translations",
+    "default": "Default",
+    "defaultLanguage": "Default Language",
+    "workingHoursTitle": "Working Hours",
+    "workingHoursDesc": "Set your business operating hours",
+    "closed": "Closed",
+    "seedDataTitle": "Start with sample data",
+    "seedDataDesc": "Pre-populate your menu with sample categories and items based on your business type",
+    "days": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    },
     "businessTypes": {
       "restaurant": "Restaurant",
       "restaurantDesc": "Full-service dining",
@@ -1093,6 +1139,8 @@
     "draft": "Draft",
     "publish": "Publish",
     "unpublish": "Unpublish",
+    "website": "Website",
+    "menu": "Menu",
     "setupSubdomain": "Set up your subdomain",
     "panels": {
       "design": "Design",

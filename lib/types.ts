@@ -77,6 +77,7 @@ export interface Location {
   is_active: boolean
   service_modes: ServiceMode[]
   opening_hours: OpeningHours
+  working_hours: Json | null
   settings: Json
   created_at: string
   updated_at: string

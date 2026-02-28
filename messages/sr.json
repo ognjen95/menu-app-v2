@@ -401,7 +401,7 @@
   },
   "menuPage": {
     "title": "Upravljanje menijem",
-    "description": "Kreirajte i upravljajte vašim menijima, kategorijama i stavkama",
+    "description": "Počnite kreiranjem kategorija, zatim dodajte stavke u svaku kategoriju",
     "selectMenuToStart": "Izaberite meni da započnete upravljanje stavkama",
     "backToMenus": "Nazad",
     "manageMenuDesc": "Upravljajte kategorijama i stavkama ovog menija",
@@ -755,6 +755,18 @@
       "advancedAnalytics": "Napredna analitika",
       "inventoryManagement": "Upravljanje inventarom",
       "prioritySupport": "Prioritetna podrška"
+    },
+    "workingHours": "Radno vreme",
+    "workingHoursDesc": "Podesite radno vreme vašeg posla",
+    "closed": "Zatvoreno",
+    "days": {
+      "monday": "Ponedeljak",
+      "tuesday": "Utorak",
+      "wednesday": "Sreda",
+      "thursday": "Četvrtak",
+      "friday": "Petak",
+      "saturday": "Subota",
+      "sunday": "Nedelja"
     }
   },
   "languagesPage": {
@@ -880,6 +892,22 @@
     "step2Desc": "Ove informacije će biti prikazane vašim gostima",
     "step3Title": "Gde se nalazi vaš posao?",
     "step3Desc": "Dodajte glavnu lokaciju - možete dodati više kasnije",
+    "step4Title": "Podešavanje radnog vremena i jezika",
+    "step4Desc": "Podesite radno vreme i jezike menija",
+    "validation": {
+      "selectBusinessType": "Molimo izaberite vrstu posla",
+      "businessNameMin": "Naziv posla mora imati najmanje 2 karaktera",
+      "slugMin": "URL adresa mora imati najmanje 2 karaktera",
+      "slugInvalid": "URL adresa može sadržavati samo mala slova, brojeve i crte",
+      "emailInvalid": "Molimo unesite validnu email adresu",
+      "phoneMin": "Telefonski broj mora imati najmanje 8 karaktera",
+      "phoneInvalid": "Telefon mora počinjati sa + i sadržavati samo brojeve, razmake ili crte",
+      "addressMin": "Molimo unesite validnu adresu",
+      "cityMin": "Molimo unesite grad",
+      "countryMin": "Molimo izaberite državu",
+      "selectLanguage": "Molimo izaberite najmanje jedan jezik",
+      "selectDefaultLanguage": "Molimo izaberite podrazumevani jezik"
+    },
     "businessName": "Naziv posla",
     "businessNamePlaceholder": "npr. Italijanska kuhinja",
     "urlSlug": "URL adresa",
@@ -894,6 +922,24 @@
     "creating": "Kreiranje...",
     "createMyBusiness": "Kreiraj moj posao",
     "failedToCreate": "Kreiranje posla nije uspelo. Pokušajte ponovo.",
+    "languagesTitle": "Jezici menija",
+    "languagesDesc": "Izaberite jezike za prevod menija i veb sajta",
+    "default": "Podrazumevano",
+    "defaultLanguage": "Podrazumevani jezik",
+    "workingHoursTitle": "Radno vreme",
+    "workingHoursDesc": "Podesite radno vreme vašeg posla",
+    "closed": "Zatvoreno",
+    "seedDataTitle": "Počnite sa primerima",
+    "seedDataDesc": "Popunite meni sa primerima kategorija i stavki na osnovu vrste vašeg posla",
+    "days": {
+      "monday": "Ponedeljak",
+      "tuesday": "Utorak",
+      "wednesday": "Sreda",
+      "thursday": "Četvrtak",
+      "friday": "Petak",
+      "saturday": "Subota",
+      "sunday": "Nedelja"
+    },
     "businessTypes": {
       "restaurant": "Restoran",
       "restaurantDesc": "Restoran sa punom uslugom",
@@ -1093,6 +1139,8 @@
     "draft": "Nacrt",
     "publish": "Objavi",
     "unpublish": "Ukloni objavu",
+    "website": "Veb sajt",
+    "menu": "Meni",
     "setupSubdomain": "Podesite vaš poddomen",
     "panels": {
       "design": "Dizajn",

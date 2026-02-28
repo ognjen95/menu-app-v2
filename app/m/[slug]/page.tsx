@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { unstable_noStore as noStore } from 'next/cache'
 import { cookies } from 'next/headers'
+import { createClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { PublicMenuView } from '@/features/public-menu/public-menu-view'
 import { PublicIntlProvider } from '@/components/providers/public-intl-provider'
@@ -60,20 +61,35 @@ function filterMenusByAvailability<T extends Menu>(menus: T[]): T[] {
 
 type PageProps = {
   params: Promise<{ slug: string }>
-  searchParams: Promise<{ table?: string; location?: string; lang?: string }>
+  searchParams: Promise<{ table?: string; location?: string; lang?: string; preview?: string }>
 }
 
-async function getTenantData(slug: string) {
+// Admin client for preview mode (bypasses RLS)
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { persistSession: false } }
+)
+
+async function getTenantData(slug: string, isPreview: boolean = false) {
   noStore() // Disable caching to get fresh data
   const supabase = await createServerSupabaseClient()
+  
+  // Use admin client for preview mode to bypass RLS
+  const client = isPreview ? supabaseAdmin : supabase
 
-  // Get tenant by slug
-  const { data: tenant, error: tenantError } = await supabase
+  // Get tenant by slug (use admin client for preview to bypass subscription check)
+  let tenantQuery = client
     .from('tenants')
     .select('*')
     .eq('slug', slug)
-    .in('subscription_status', ['active', 'trialing'])
-    .single()
+  
+  // Only check subscription status for public access
+  if (!isPreview) {
+    tenantQuery = tenantQuery.in('subscription_status', ['active', 'trialing'])
+  }
+  
+  const { data: tenant, error: tenantError } = await tenantQuery.single()
 
   if (tenantError || !tenant) {
     return null
@@ -82,13 +98,9 @@ async function getTenantData(slug: string) {
   // Fetch all data in parallel since they all depend only on tenant.id
   // Using Promise.allSettled to handle partial failures gracefully
   const results = await Promise.allSettled([
-    // Fetch website separately (RLS requires is_published = true for public access)
-    supabase
-      .from('websites')
-      .select('*')
-      .eq('tenant_id', tenant.id)
-      .eq('is_published', true)
-      .single(),
+    // Always fetch website with admin client to get theme colors
+    // Menu page needs theme regardless of website publish status
+    supabaseAdmin.from('websites').select('*').eq('tenant_id', tenant.id).single(),
     
     // Get active menus with categories and items
     supabase
@@ -193,9 +205,12 @@ async function getTenantData(slug: string) {
 
 export default async function PublicMenuPage({ params, searchParams }: PageProps) {
   const { slug } = await params
-  const { table, location, lang } = await searchParams
+  const { table, location, lang, preview } = await searchParams
+  
+  // Preview mode allows viewing menu with unpublished website theme
+  const isPreview = preview === 'true' || preview === '1' || preview === 'yes'
 
-  const data = await getTenantData(slug)
+  const data = await getTenantData(slug, isPreview)
   if (!data) {
     notFound()
   }

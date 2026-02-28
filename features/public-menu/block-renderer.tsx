@@ -200,49 +200,171 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
       const contactLocations = getBlockLocations()
       const useLocationsForContact = content.use_locations && contactLocations.length > 0
 
-      // Single location contact card component
-      const ContactCard = ({ loc, showName = false, index = 0 }: { loc: { name?: string; address?: string | null; phone?: string | null; email?: string | null }; showName?: boolean; index?: number }) => (
-        <div 
-          className="animate-fade-in-up"
-          style={{
-            backgroundColor: theme.background,
-            padding: '1.5rem',
-            borderRadius: '1rem',
-            flex: '1',
-            minWidth: '280px',
-            maxWidth: contactLocations.length === 1 ? '500px' : undefined,
-            animationDelay: `${index * 100}ms`,
-          }}>
-          {showName && loc.name && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-              <Building2 size={20} color={theme.primary} />
-              <h3 style={{ fontFamily: theme.fontHeading, fontWeight: 600, margin: 0 }}>{loc.name}</h3>
+      // Modern contact card component with map embed
+      const ModernContactCard = ({ loc, showName = false, index = 0 }: { loc: Location; showName?: boolean; index?: number }) => {
+        const fullAddress = formatAddress(loc)
+        const mapUrl = getMapEmbedUrl(loc)
+        const hasContactInfo = loc.phone || loc.email || fullAddress
+
+        return (
+          <div 
+            className="animate-fade-in-up"
+            style={{
+              backgroundColor: theme.background,
+              borderRadius: '1rem',
+              flex: '1',
+              minWidth: '320px',
+              maxWidth: contactLocations.length === 1 ? '600px' : '450px',
+              animationDelay: `${index * 100}ms`,
+              overflow: 'hidden',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              border: `1px solid ${theme.foreground}10`,
+            }}>
+            {/* Map embed */}
+            {mapUrl && (
+              <div style={{ 
+                width: '100%', 
+                height: '180px', 
+                backgroundColor: `${theme.foreground}10`,
+              }}>
+                <iframe
+                  src={mapUrl}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title={`Map - ${loc.name}`}
+                />
+              </div>
+            )}
+
+            {/* Contact info */}
+            <div style={{ padding: '1.5rem' }}>
+              {/* Location header */}
+              {showName && (
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.75rem', 
+                  marginBottom: '1.25rem',
+                  paddingBottom: '1rem',
+                  borderBottom: `1px solid ${theme.foreground}15`,
+                }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '10px',
+                    backgroundColor: `${theme.primary}20`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <Building2 size={20} color={theme.primary} />
+                  </div>
+                  <h3 style={{ 
+                    fontFamily: theme.fontHeading, 
+                    fontWeight: 600, 
+                    margin: 0,
+                    fontSize: '1.1rem',
+                  }}>
+                    {loc.name}
+                  </h3>
+                </div>
+              )}
+
+              {hasContactInfo && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+                  {/* Address */}
+                  {fullAddress && (
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        backgroundColor: `${theme.primary}15`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}>
+                        <MapPin size={16} color={theme.primary} />
+                      </div>
+                      <div style={{ paddingTop: '0.25rem' }}>
+                        <p style={{ margin: 0, fontSize: '0.95rem' }}>{fullAddress}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Phone */}
+                  {loc.phone && (
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        backgroundColor: `${theme.primary}15`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}>
+                        <Phone size={16} color={theme.primary} />
+                      </div>
+                      <div style={{ paddingTop: '0.25rem' }}>
+                        <a 
+                          href={`tel:${loc.phone}`} 
+                          style={{ 
+                            color: theme.foreground, 
+                            textDecoration: 'none', 
+                            fontSize: '0.95rem',
+                            display: 'block',
+                          }}
+                        >
+                          {loc.phone}
+                        </a>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Email */}
+                  {loc.email && (
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '8px',
+                        backgroundColor: `${theme.primary}15`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}>
+                        <Mail size={16} color={theme.primary} />
+                      </div>
+                      <div style={{ paddingTop: '0.25rem' }}>
+                        <a 
+                          href={`mailto:${loc.email}`} 
+                          style={{ 
+                            color: theme.foreground, 
+                            textDecoration: 'none', 
+                            fontSize: '0.95rem',
+                            display: 'block',
+                            wordBreak: 'break-all',
+                          }}
+                        >
+                          {loc.email}
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          )}
-          {loc.address && (
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <MapPin size={18} color={theme.primary} style={{ flexShrink: 0, marginTop: '2px' }} />
-              <span style={{ fontSize: '0.9rem' }}>{loc.address}</span>
-            </div>
-          )}
-          {loc.phone && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <Phone size={18} color={theme.primary} />
-              <a href={`tel:${loc.phone}`} style={{ color: theme.foreground, textDecoration: 'none', fontSize: '0.9rem' }}>
-                {loc.phone}
-              </a>
-            </div>
-          )}
-          {loc.email && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Mail size={18} color={theme.primary} />
-              <a href={`mailto:${loc.email}`} style={{ color: theme.foreground, textDecoration: 'none', fontSize: '0.9rem' }}>
-                {loc.email}
-              </a>
-            </div>
-          )}
-        </div>
-      )
+          </div>
+        )
+      }
 
       return (
         <section className="animate-fade-in" style={{ padding: sectionPadding, backgroundColor: theme.secondary }}>
@@ -252,7 +374,7 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
             </h2>
 
             {useLocationsForContact ? (
-              // Location-based contact info
+              // Location-based contact info with modern cards
               <div style={{
                 display: 'flex',
                 gap: '1.5rem',
@@ -260,9 +382,9 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
                 flexWrap: 'wrap',
               }}>
                 {contactLocations.map((loc, idx) => (
-                  <ContactCard
+                  <ModernContactCard
                     key={loc.id}
-                    loc={{ name: loc.name, address: formatAddress(loc), phone: loc.phone, email: loc.email }}
+                    loc={loc}
                     showName={contactLocations.length > 1}
                     index={idx}
                   />
@@ -303,14 +425,151 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
       const hoursLocations = getBlockLocations()
       const useLocationsForHours = content.use_locations && hoursLocations.length > 0
 
-      // Format opening hours from jsonb to readable text
+      const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
+      const dayLabels: Record<string, string> = {
+        monday: t('days.mon'), tuesday: t('days.tue'), wednesday: t('days.wed'), thursday: t('days.thu'),
+        friday: t('days.fri'), saturday: t('days.sat'), sunday: t('days.sun')
+      }
+
+      // Get current day for highlighting
+      const currentDay = days[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1]
+
+      // Modern hours row component
+      const HoursRow = ({ day, hours, isToday }: { 
+        day: string; 
+        hours: { open: string; close: string; closed?: boolean } | undefined;
+        isToday: boolean;
+      }) => {
+        const isClosed = !hours || hours.closed
+        return (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '0.75rem 1rem',
+            borderRadius: '0.5rem',
+            backgroundColor: isToday ? `${theme.primary}15` : 'transparent',
+            borderLeft: isToday ? `3px solid ${theme.primary}` : '3px solid transparent',
+            transition: 'all 0.2s ease',
+          }}>
+            <span style={{
+              fontFamily: theme.fontBody,
+              fontWeight: isToday ? 600 : 400,
+              color: theme.foreground,
+              fontSize: '0.95rem',
+            }}>
+              {dayLabels[day]}
+            </span>
+            <span style={{
+              fontFamily: theme.fontBody,
+              fontWeight: isToday ? 600 : 400,
+              color: isClosed ? `${theme.foreground}80` : theme.foreground,
+              fontSize: '0.95rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}>
+              {isClosed ? (
+                <span style={{ color: `${theme.foreground}60`, fontStyle: 'italic' }}>{t('closed')}</span>
+              ) : (
+                <>
+                  <span style={{ 
+                    width: '8px', 
+                    height: '8px', 
+                    borderRadius: '50%', 
+                    backgroundColor: '#22c55e',
+                    display: 'inline-block',
+                  }} />
+                  {hours.open} – {hours.close}
+                </>
+              )}
+            </span>
+          </div>
+        )
+      }
+
+      // Modern hours card component for a single location
+      const ModernHoursCard = ({ loc, showName = false }: { loc: Location; showName?: boolean }) => (
+        <div style={{
+          backgroundColor: theme.secondary,
+          padding: '1.5rem',
+          borderRadius: '1rem',
+          flex: '1',
+          minWidth: '300px',
+          maxWidth: hoursLocations.length === 1 ? '420px' : '380px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+          border: `1px solid ${theme.foreground}10`,
+        }}>
+          {showName && (
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.75rem', 
+              marginBottom: '1.25rem',
+              paddingBottom: '1rem',
+              borderBottom: `1px solid ${theme.foreground}15`,
+            }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                backgroundColor: `${theme.primary}20`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Building2 size={20} color={theme.primary} />
+              </div>
+              <div>
+                <h3 style={{ 
+                  fontFamily: theme.fontHeading, 
+                  fontWeight: 600, 
+                  margin: 0,
+                  fontSize: '1.1rem',
+                }}>
+                  {loc.name}
+                </h3>
+                {loc.address && (
+                  <p style={{ 
+                    margin: 0, 
+                    fontSize: '0.85rem', 
+                    color: `${theme.foreground}70`,
+                    marginTop: '0.25rem',
+                  }}>
+                    {loc.address}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+          
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.5rem', 
+            marginBottom: '1rem',
+            color: `${theme.foreground}80`,
+          }}>
+            <Clock size={16} color={theme.primary} />
+            <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>{t('openingHours')}</span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            {days.map(day => (
+              <HoursRow 
+                key={day} 
+                day={day} 
+                hours={loc.opening_hours?.[day]} 
+                isToday={day === currentDay}
+              />
+            ))}
+          </div>
+        </div>
+      )
+
+      // Format opening hours for manual text fallback
       const formatOpeningHours = (hours: Record<string, { open: string; close: string; closed?: boolean }> | null | undefined): string => {
         if (!hours) return ''
-        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-        const dayLabels: Record<string, string> = {
-          monday: t('days.mon'), tuesday: t('days.tue'), wednesday: t('days.wed'), thursday: t('days.thu'),
-          friday: t('days.fri'), saturday: t('days.sat'), sunday: t('days.sun')
-        }
         return days
           .map(day => {
             const h = hours[day]
@@ -322,48 +581,21 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
           .join('\n')
       }
 
-      // Hours card component for a single location
-      const HoursCard = ({ loc, showName = false }: { loc: Location; showName?: boolean }) => (
-        <div style={{
-          backgroundColor: theme.secondary,
-          padding: '1.5rem',
-          borderRadius: '1rem',
-          flex: '1',
-          minWidth: '260px',
-          maxWidth: hoursLocations.length === 1 ? '400px' : undefined,
-          textAlign: 'center',
-        }}>
-          {showName && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-              <Building2 size={20} color={theme.primary} />
-              <h3 style={{ fontFamily: theme.fontHeading, fontWeight: 600, margin: 0 }}>{loc.name}</h3>
-            </div>
-          )}
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: '0.75rem' }}>
-            <Clock size={20} color={theme.primary} style={{ flexShrink: 0, marginTop: '2px' }} />
-            <pre style={{
-              fontFamily: theme.fontBody,
-              whiteSpace: 'pre-wrap',
-              margin: 0,
-              opacity: 0.8,
-              textAlign: 'left',
-              fontSize: '0.9rem',
-            }}>
-              {formatOpeningHours(loc.opening_hours)}
-            </pre>
-          </div>
-        </div>
-      )
-
       return (
         <section style={{ padding: sectionPadding }}>
           <div style={contentStyle}>
-            <h2 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '1.5rem', textAlign: 'center' }}>
+            <h2 style={{ 
+              fontFamily: theme.fontHeading, 
+              fontSize: '2rem', 
+              marginBottom: '2rem', 
+              textAlign: 'center',
+              fontWeight: 600,
+            }}>
               {String(content.title || t('openingHours'))}
             </h2>
 
             {useLocationsForHours ? (
-              // Location-based hours
+              // Location-based hours with modern cards
               <div style={{
                 display: 'flex',
                 gap: '1.5rem',
@@ -371,7 +603,7 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
                 flexWrap: 'wrap',
               }}>
                 {hoursLocations.map(loc => (
-                  <HoursCard key={loc.id} loc={loc} showName={hoursLocations.length > 1} />
+                  <ModernHoursCard key={loc.id} loc={loc} showName={hoursLocations.length > 1} />
                 ))}
               </div>
             ) : (

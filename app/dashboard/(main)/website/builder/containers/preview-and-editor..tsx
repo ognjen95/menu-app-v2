@@ -53,11 +53,14 @@ type WebsiteCache = { data: { website: Website | null } }
 type PagesCache = { data: { pages: WebsitePage[] } }
 type BlocksCache = { data: { blocks: WebsiteBlock[] } }
 
+export type PreviewTarget = 'website' | 'menu'
+
 type PreviewAndEditorContainerProps = {
   website: Website | null | undefined
   initialPages?: WebsitePage[]
   sidebarOpen: boolean
   previewMode: 'desktop' | 'tablet' | 'mobile'
+  previewTarget: PreviewTarget
   activePanel: 'design' | 'pages' | 'blocks' | 'settings'
   setActivePanel: (panel: 'design' | 'pages' | 'blocks' | 'settings') => void
   setShowTemplateModal: (show: boolean) => void
@@ -68,6 +71,7 @@ export function PreviewAndEditorContainer({
   initialPages,
   sidebarOpen,
   previewMode,
+  previewTarget,
   activePanel,
   setActivePanel,
   setShowTemplateModal,
@@ -108,14 +112,25 @@ export function PreviewAndEditorContainer({
     return response?.data?.blocks?.length || 0
   }, [])
 
-  // Get the current page slug for preview URL
+  // Get the current preview URL based on target (website or menu)
   const getPreviewUrl = useCallback(() => {
+    if (!website?.subdomain) return null
+    
+    if (previewTarget === 'menu') {
+      // Menu preview: /m/{subdomain}?preview=true
+      const baseUrl = typeof window !== 'undefined' 
+        ? `${window.location.origin}/m/${website.subdomain}`
+        : `/m/${website.subdomain}`
+      return `${baseUrl}?preview=true`
+    }
+    
+    // Website preview: /site/{subdomain}?preview=true&page={slug}
     const baseUrl = getWebsiteUrl(website)
     if (!baseUrl) return null
     const selectedPage = pages.find(p => p.id === selectedPageId)
     const pageParam = selectedPage?.slug && selectedPage.slug !== 'home' ? `&page=${selectedPage.slug}` : ''
     return `${baseUrl}?preview=true${pageParam}`
-  }, [website, pages, selectedPageId])
+  }, [website, pages, selectedPageId, previewTarget])
 
   // Debounced preview refresh
   const refreshPreview = useCallback((immediate = false) => {
@@ -334,9 +349,9 @@ export function PreviewAndEditorContainer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pages.length, selectedPageId])
 
-  // Update iframe when selected page changes
+  // Update iframe when selected page or preview target changes
   useEffect(() => {
-    if (selectedPageId && iframeRef.current) {
+    if (iframeRef.current) {
       const url = getPreviewUrl()
       if (url && iframeRef.current.src !== url) {
         iframeRef.current.src = url
