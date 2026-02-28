@@ -614,7 +614,9 @@
       "cancel": "Cancel"
     },
     "acceptFailed": "Failed to accept order",
-    "ordersAccepted": "Orders accepted"
+    "ordersAccepted": "Orders accepted",
+    "viewDetails": "View Details",
+    "notes": "Notes"
   },
   "kitchenPage": {
     "title": "Kitchen Display",

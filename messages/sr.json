@@ -614,7 +614,9 @@
       "cancel": "Otkaži"
     },
     "acceptFailed": "Greška pri prihvatanju porudžbine",
-    "ordersAccepted": "Porudžbine prihvaćene"
+    "ordersAccepted": "Porudžbine prihvaćene",
+    "viewDetails": "Pogledaj detalje",
+    "notes": "Napomene"
   },
   "kitchenPage": {
     "title": "Kuhinjski ekran",

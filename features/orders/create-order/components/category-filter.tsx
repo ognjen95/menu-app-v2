@@ -15,7 +15,7 @@ export function CategoryFilter({
       {isLoading ? (
         <CategoryButtonsRowSkeleton count={6} />
       ) : (
-        <div className="flex gap-2 pb-2">
+        <div className="flex gap-2 ">
           <Button
             variant={selectedCategoryId === null ? 'default' : 'outline'}
             size="sm"

@@ -1,11 +1,13 @@
 import { Button } from '@/components/ui/button'
 import { Minus, Plus, Trash2 } from 'lucide-react'
 import type { CartItemRowProps } from '../types'
+import CurrencyFormat from '@/components/CurrencyFormat'
 
 export function CartItemRow({
   item,
   onUpdateQuantity,
   onRemove,
+  currency
 }: CartItemRowProps) {
   return (
     <div className="flex items-center gap-3 bg-background p-3 rounded-lg">
@@ -17,7 +19,7 @@ export function CartItemRow({
           </p>
         )}
         <p className="text-sm text-muted-foreground">
-          €{(item.calculatedPrice * item.quantity).toFixed(2)}
+          <CurrencyFormat currency={currency} value={item.calculatedPrice * item.quantity} />
         </p>
       </div>
       <div className="flex items-center gap-2">

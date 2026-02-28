@@ -1,6 +1,7 @@
 import { CompactMenuItemsGridSkeleton } from '@/components/ui/skeletons'
 import { MenuItemCard } from './menu-item-card'
 import type { MenuItemsGridProps } from '../types'
+import { useTenant } from '@/lib/contexts';
 
 export function MenuItemsGrid({
   items,
@@ -12,6 +13,9 @@ export function MenuItemsGrid({
   onRemoveOne,
   t,
 }: MenuItemsGridProps) {
+  const { tenant } = useTenant();
+  const currency = tenant?.default_currency || 'EUR';
+
   if (isLoading) {
     return <CompactMenuItemsGridSkeleton count={8} />
   }
@@ -28,6 +32,7 @@ export function MenuItemsGrid({
           onQuantityChange={onQuantityChange}
           onRemoveOne={onRemoveOne}
           t={t}
+          currency={currency}
         />
       ))}
       {items.length === 0 && (

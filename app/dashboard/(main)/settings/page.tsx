@@ -23,6 +23,8 @@ import {
 } from 'lucide-react'
 import { motion } from '@/components/ui/animated'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Currency } from '@/lib/types'
+import { CURRENCY_SYMBOL_MAP } from '@/lib/constants/currency'
 
 type TenantSettings = {
   online_payments_enabled?: boolean
@@ -42,7 +44,7 @@ export default function SettingsPage() {
     email: string
     phone: string
     timezone: string
-    default_currency: string
+    default_currency: Currency
     vat_rate: number
   } | null>(null)
 
@@ -183,15 +185,14 @@ export default function SettingsPage() {
                   <select
                     id="currency"
                     value={formData.default_currency}
-                    onChange={(e) => setFormData({ ...formData, default_currency: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, default_currency: e.target.value as Currency })}
                     className="w-full h-10 px-3 rounded-md border border-input bg-background"
                   >
-                    <option value="EUR">EUR (€)</option>
-                    <option value="USD">USD ($)</option>
-                    <option value="GBP">GBP (£)</option>
-                    <option value="RSD">RSD (din.)</option>
-                    <option value="BAM">BAM (KM)</option>
-                    <option value="HRK">HRK (kn)</option>
+                    {Object.entries(CURRENCY_SYMBOL_MAP).map(([key, value]) => (
+                      <option key={key} value={key}>
+                        {key} ({value})
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="space-y-2">

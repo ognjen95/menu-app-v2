@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button'
 import { UtensilsCrossed, Settings2, Minus, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { MenuItemCardProps } from '../types'
+import CurrencyFormat from '@/components/CurrencyFormat'
+import { Currency } from '@/lib/types'
 
 export function MenuItemCard({
   item,
@@ -12,6 +14,7 @@ export function MenuItemCard({
   onItemClick,
   onQuantityChange,
   onRemoveOne,
+  currency,
   t,
 }: MenuItemCardProps) {
   const isSelected = quantity > 0
@@ -53,7 +56,7 @@ export function MenuItemCard({
 
       {/* Price badge - top left */}
       <div className="absolute top-2 left-2 z-10 bg-primary text-primary-foreground font-bold h-7 rounded-full flex items-center justify-center px-2 shadow-lg text-sm">
-        €{item.base_price.toFixed(2)}
+        <CurrencyFormat currency={currency as Currency} value={item.base_price} />
       </div>
 
       {/* Bottom bar - text and controls */}
@@ -81,7 +84,7 @@ export function MenuItemCard({
             >
               <Minus className="h-4 w-4" />
             </Button>
-            <span className="font-bold text-white text-sm min-w-[20px] text-center">{quantity}</span>
+            <span className="font-bold text-primary text-sm min-w-[20px] text-center">{quantity}</span>
             <Button
               size="icon"
               variant={'secondary'}

@@ -4,24 +4,27 @@ import { useTranslations } from 'next-intl'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { 
-  Accordion, 
-  AccordionContent, 
-  AccordionItem, 
-  AccordionTrigger 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
 } from '@/components/ui/accordion'
 import { motion } from '@/components/ui/animated'
 import { Clock, Store, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { OrderWithRelations } from '@/lib/types'
+import type { Currency, OrderWithRelations } from '@/lib/types'
 import { statusConfig, typeIcons, formatTimeElapsed, getTimerColor } from './order-card'
+import CurrencyFormat from '@/components/CurrencyFormat'
+import { useTenant } from '@/lib/contexts'
 
 interface OrdersListCardsProps {
   orders: OrderWithRelations[]
   onSelectOrder: (order: OrderWithRelations) => void
+  currency?: Currency
 }
 
-export function OrdersListCards({ orders, onSelectOrder }: OrdersListCardsProps) {
+export function OrdersListCards({ orders, onSelectOrder, currency }: OrdersListCardsProps) {
   const t = useTranslations('ordersPage')
 
   if (orders.length === 0) {
@@ -54,11 +57,11 @@ export function OrdersListCards({ orders, onSelectOrder }: OrdersListCardsProps)
               <Card className="overflow-hidden relative">
                 {/* Status Bar - Left Edge */}
                 <div className={cn('absolute left-0 top-0 bottom-0 w-1 rounded-l-lg', config?.color)} />
-                
+
                 {/* Main Card Content */}
                 <div className="pl-4 md:pl-5">
                   <AccordionTrigger className="p-3 md:p-4 hover:no-underline [&[data-state=open]>div>.chevron]:rotate-180">
-                    <div 
+                    <div
                       className="flex items-center gap-3 flex-1"
                       onClick={(e) => {
                         e.stopPropagation()
@@ -84,7 +87,9 @@ export function OrdersListCards({ orders, onSelectOrder }: OrdersListCardsProps)
                         <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground mt-0.5">
                           <span>{totalItems} {t('items')}</span>
                           <span>•</span>
-                          <span className="font-medium text-foreground">€{order.total?.toFixed(2) || '0.00'}</span>
+                          <span className="font-medium text-foreground">
+                            <CurrencyFormat value={order.total || 0} currency={currency} />
+                          </span>
                         </div>
                       </div>
 
@@ -117,7 +122,10 @@ export function OrdersListCards({ orders, onSelectOrder }: OrdersListCardsProps)
                                 )}
                               </div>
                               <span className="text-muted-foreground shrink-0 ml-2">
-                                €{((item.price || 0) * item.quantity).toFixed(2)}
+                                <CurrencyFormat
+                                  value={((item.price || 0) * item.quantity)}
+                                  currency={currency}
+                                />
                               </span>
                             </div>
                           ))}

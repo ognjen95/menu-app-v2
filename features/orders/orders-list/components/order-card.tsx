@@ -21,8 +21,9 @@ import {
   Info,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { OrderStatus, OrderWithRelations } from '@/lib/types'
+import type { Currency, OrderStatus, OrderWithRelations } from '@/lib/types'
 import { OfflineBadge, PendingSyncBadge } from '@/components/ui/offline-sync-indicator'
+import CurrencyFormat from '@/components/CurrencyFormat'
 
 export const statusConfig: Record<OrderStatus, { label: string; color: string; badgeColor: string; buttonColor: string; icon: React.ElementType }> = {
   draft: { label: 'Draft', color: 'bg-gray-500', badgeColor: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300', buttonColor: 'bg-gray-500 hover:bg-gray-600 text-white', icon: Clock },
@@ -65,10 +66,11 @@ interface OrderCardProps {
   onComplete?: (orderId: string) => void
   onCancel?: (orderId: string) => void
   isOfflineOrder?: boolean
+  currency?: Currency
   hasPendingSync?: boolean
 }
 
-export function OrderCard({ order, onSelect, onComplete, onCancel, isOfflineOrder, hasPendingSync }: OrderCardProps) {
+export function OrderCard({ order, onSelect, onComplete, onCancel, isOfflineOrder, hasPendingSync, currency }: OrderCardProps) {
   const t = useTranslations('ordersPage')
   const [isExpanded, setIsExpanded] = useState(false)
   const StatusIcon = statusConfig[order.status]?.icon || Clock
@@ -154,7 +156,10 @@ export function OrderCard({ order, onSelect, onComplete, onCancel, isOfflineOrde
                     )}
                   </div>
                   <span className="text-muted-foreground shrink-0 ml-2">
-                    €{item.total_price?.toFixed(2) || '0.00'}
+                    <CurrencyFormat 
+                      value={item.total_price || 0}
+                      currency={currency}
+                    />
                   </span>
                 </div>
 
@@ -273,7 +278,10 @@ export function OrderCard({ order, onSelect, onComplete, onCancel, isOfflineOrde
         <div className="flex items-center justify-between pt-2 border-t">
           <div>
             <span className="text-lg font-bold">
-              €{order.total?.toFixed(2) || '0.00'}
+              <CurrencyFormat
+                value={order.total || 0}
+                currency={currency}
+              />
             </span>
           </div>
           <Badge className={statusConfig[order.status]?.badgeColor}>

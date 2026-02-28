@@ -17,7 +17,7 @@ import {
 } from '@dnd-kit/core'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import type { OrderStatus, OrderWithRelations } from '@/lib/types'
+import type { Currency, OrderStatus, OrderWithRelations } from '@/lib/types'
 import { OrderCard, statusConfig } from './order-card'
 import { motion, staggerContainer, staggerItemScale } from '@/components/ui/animated'
 import { getKanbanGridTemplate } from './orders-kanban-grid'
@@ -27,6 +27,7 @@ const ACTIVE_STATUSES: OrderStatus[] = ['placed', 'accepted', 'preparing', 'read
 
 interface OrdersKanbanProps {
   orders: OrderWithRelations[]
+  currency?: Currency
   selectedStatuses: Set<OrderStatus>
   onSelectOrder: (order: OrderWithRelations) => void
   onUpdateStatus: (orderId: string, status: OrderStatus) => Promise<void>
@@ -35,20 +36,22 @@ interface OrdersKanbanProps {
 }
 
 // Draggable Order Card wrapper
-function DraggableOrderCard({ 
-  order, 
+function DraggableOrderCard({
+  order,
+  currency,
   onSelect,
   onComplete,
   onCancel,
   isOfflineOrder,
   hasPendingSync,
-}: { 
+}: {
   order: OrderWithRelations
   onSelect: (order: OrderWithRelations) => void
   onComplete?: (orderId: string) => void
   onCancel?: (orderId: string) => void
   isOfflineOrder?: boolean
   hasPendingSync?: boolean
+  currency?: Currency
 }) {
   const {
     attributes,
@@ -72,8 +75,9 @@ function DraggableOrderCard({
       {...listeners}
       className="touch-none cursor-grab active:cursor-grabbing"
     >
-      <OrderCard 
-        order={order} 
+      <OrderCard
+        currency={currency}
+        order={order}
         onSelect={onSelect}
         onComplete={onComplete}
         onCancel={onCancel}
@@ -88,6 +92,7 @@ function DraggableOrderCard({
 function KanbanColumn({
   status,
   orders,
+  currency,
   onSelectOrder,
   onCompleteOrder,
   onCancelOrder,
@@ -99,6 +104,7 @@ function KanbanColumn({
   onCompleteOrder?: (orderId: string) => void
   onCancelOrder?: (orderId: string) => void
   pendingStatusOrderIds: Set<string>
+  currency?: Currency
 }) {
   const t = useTranslations('ordersPage')
   const { setNodeRef, isOver } = useDroppable({ id: status })
@@ -121,7 +127,7 @@ function KanbanColumn({
           // Check if this order is offline or has pending status update
           const isOfflineOrder = order.id.startsWith('local_') || (order as any)._isOffline
           const hasPendingSync = pendingStatusOrderIds.has(order.id)
-          
+
           return (
             <DraggableOrderCard
               key={order.id}
@@ -131,6 +137,7 @@ function KanbanColumn({
               onCancel={onCancelOrder}
               isOfflineOrder={isOfflineOrder}
               hasPendingSync={hasPendingSync}
+              currency={currency}
             />
           )
         })}
@@ -155,6 +162,7 @@ export const OrdersKanban = memo(function OrdersKanban({
   onUpdateStatus,
   onCompleteOrder,
   onCancelOrder,
+  currency
 }: OrdersKanbanProps) {
   const t = useTranslations('ordersPage')
   const kanbanRef = useRef<HTMLDivElement>(null)
@@ -162,7 +170,7 @@ export const OrdersKanban = memo(function OrdersKanban({
   const [startX, setStartX] = useState(0)
   const [scrollLeft, setScrollLeft] = useState(0)
   const [activeOrder, setActiveOrder] = useState<OrderWithRelations | null>(null)
-  
+
   // Optimistic state - tracks pending status changes
   const [optimisticUpdates, setOptimisticUpdates] = useState<Record<string, OrderStatus>>({})
 
@@ -191,7 +199,7 @@ export const OrdersKanban = memo(function OrdersKanban({
         return order && order.status === status
       }
     )
-    
+
     if (staleUpdates.length > 0) {
       // Schedule cleanup for next tick to avoid state update during render
       setTimeout(() => {
@@ -292,10 +300,10 @@ export const OrdersKanban = memo(function OrdersKanban({
 
     try {
       await onUpdateStatus(orderId, newStatus)
-      
+
       // Don't clear optimistic update here - let it stay until server data arrives
       // The useMemo above will auto-cleanup when server state matches optimistic state
-      
+
       toast.success(t('statusChanged') || 'Status updated', {
         description: `Order moved to ${statusLabel}`,
       })
@@ -306,7 +314,7 @@ export const OrdersKanban = memo(function OrdersKanban({
         delete next[orderId]
         return next
       })
-      
+
       toast.error(t('statusChangeFailed') || 'Failed to update status', {
         description: error instanceof Error ? error.message : 'Please try again',
       })
@@ -344,6 +352,7 @@ export const OrdersKanban = memo(function OrdersKanban({
             >
               <KanbanColumn
                 status={status}
+                currency={currency}
                 orders={ordersByStatus[status] || []}
                 onSelectOrder={onSelectOrder}
                 onCompleteOrder={onCompleteOrder}
@@ -358,7 +367,7 @@ export const OrdersKanban = memo(function OrdersKanban({
       <DragOverlay>
         {activeOrder && (
           <div className="rotate-3 scale-105">
-            <OrderCard order={activeOrder} onSelect={() => {}} />
+            <OrderCard order={activeOrder} onSelect={() => { }} />
           </div>
         )}
       </DragOverlay>

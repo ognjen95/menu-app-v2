@@ -66,7 +66,7 @@ export function TableSelect({
     <Select value={selectedTableId} onValueChange={onTableChange} disabled={orderType !== 'dine_in'}>
       <SelectTrigger className={cn(
         "w-full",
-        !selectedTableId && "border-destructive focus:border-destructive"
+        !selectedTableId && "border border-red-500 focus:border-destructive"
       )}>
         {selectedTableId ?
           <UtensilsCrossed className="h-4 w-4 mr-2 shrink-0" /> :

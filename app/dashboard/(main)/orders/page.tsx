@@ -61,8 +61,9 @@ import { OfflineSyncIndicator } from '@/components/ui/offline-sync-indicator'
 import { useInitOfflineSync, useOfflineUpdateOrderStatus } from '@/lib/hooks/use-offline-orders'
 import LiveAlert from '@/features/orders/orders-list/components/live-alert'
 import { useTables } from '@/features/tables'
-import { useAllMenuItems, useLocations, useMenuItems } from '@/lib/hooks'
+import { useAllMenuItems, useLocations, useMenuItems, useTenantUsers } from '@/lib/hooks'
 import { useTeams } from '@/features/teams/services/use-teams'
+import { useTenant } from '@/lib/contexts'
 
 const ACTIVE_STATUSES: OrderStatus[] = ['placed', 'accepted', 'preparing', 'ready', 'served']
 
@@ -92,6 +93,9 @@ export default function OrdersPage() {
 
   const lastOrderCountRef = useRef(0)
   const updateOrderStatus = useOfflineUpdateOrderStatus()
+
+  const { tenant } = useTenant();
+  const currency = tenant?.default_currency;
 
   // Track if screen is mobile
 
@@ -685,12 +689,12 @@ export default function OrdersPage() {
         </div>
       </motion.div>
 
-      <div 
+      <div
         className='md:hidden fixed right-4 z-10 transition-[bottom] duration-300 ease-in-out'
         style={{ bottom: isScrollingDown ? '1rem' : '100px' }}
       >
-        <Button 
-          className='transition-all duration-300 shadow-lg' 
+        <Button
+          className='transition-all duration-300 shadow-lg'
           onClick={() => setIsCreateOrderOpen(true)}
           size={isScrollingDown ? 'icon' : 'default'}
         >
@@ -723,7 +727,7 @@ export default function OrdersPage() {
           return (
             <Button
               key={status}
-              variant="outline"
+              variant="ghost"
               onClick={() => toggleStatus(status)}
               className={cn(
                 "h-9 px-3 text-sm gap-1.5 md:h-14 md:px-6 md:text-lg md:gap-3 relative",
@@ -759,11 +763,13 @@ export default function OrdersPage() {
           /* List Layout - Responsive Cards */
           <OrdersListCards
             orders={sortedOrders}
+            currency={currency}
             onSelectOrder={setSelectedOrderForDetail}
           />
         ) : (
           /* Kanban Layout */
           <OrdersKanban
+            currency={currency}
             orders={filteredOrders}
             selectedStatuses={selectedStatuses}
             onSelectOrder={setSelectedOrderForDetail}

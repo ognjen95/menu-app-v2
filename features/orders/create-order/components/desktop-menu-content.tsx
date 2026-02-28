@@ -37,7 +37,7 @@ export function DesktopMenuContent({
   cartTotal,
   onShowCart,
   t,
-}: DesktopMenuContentProps) {
+}: DesktopMenuContentProps) {  
   return (
     <div className="flex flex-col h-full">
       {/* Top bar - Location, Table, Staff, Order Type */}

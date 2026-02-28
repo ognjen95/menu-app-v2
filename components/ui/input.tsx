@@ -3,10 +3,31 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {}
+  extends React.InputHTMLAttributes<HTMLInputElement> {
+  icon?: React.ReactNode
+}
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, ...props }, ref) => {
+  ({ className, type, icon, ...props }, ref) => {
+    if (icon) {
+      return (
+        <div className="relative w-full">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+            {icon}
+          </div>
+          <input
+            type={type}
+            className={cn(
+              "flex h-12 w-full rounded-full border border-secondary bg-secondary pl-14 pr-5 py-3 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary focus-visible:bg-background disabled:cursor-not-allowed disabled:opacity-50",
+              className
+            )}
+            ref={ref}
+            {...props}
+          />
+        </div>
+      )
+    }
+
     return (
       <input
         type={type}

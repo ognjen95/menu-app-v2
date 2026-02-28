@@ -22,6 +22,7 @@ export type PaymentProvider = 'stripe' | 'monri' | 'bank_psp' | 'cash' | 'card_p
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded'
 export type StockAdjustmentReason = 'purchase' | 'sale' | 'waste' | 'adjustment' | 'transfer'
 export type WebsiteBlockType = 'hero' | 'gallery' | 'menu_preview' | 'about' | 'testimonials' | 'contact' | 'hours' | 'social' | 'custom'
+export type Currency = 'EUR' | 'USD' | 'RSD' | 'BAM' | 'GBP'
 
 // Core entities
 export interface Tenant {
@@ -34,7 +35,7 @@ export interface Tenant {
   email: string | null
   phone: string | null
   timezone: string
-  default_currency: string
+  default_currency: Currency
   country: string
   vat_rate: number
   tax_id: string | null
@@ -292,7 +293,7 @@ export interface Order {
   tip_amount: number
   delivery_fee: number
   total: number
-  currency: string
+  currency: Currency
   delivery_address: string | null
   delivery_city: string | null
   delivery_postal_code: string | null
@@ -355,7 +356,7 @@ export interface OrderPayment {
   provider: PaymentProvider
   status: PaymentStatus
   amount: number
-  currency: string
+  currency: Currency
   provider_payment_id: string | null
   provider_data: Json
   paid_at: string | null

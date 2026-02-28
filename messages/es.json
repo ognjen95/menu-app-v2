@@ -614,7 +614,9 @@
       "cancel": "Cancelar"
     },
     "acceptFailed": "Error al aceptar pedido",
-    "ordersAccepted": "Pedidos aceptados"
+    "ordersAccepted": "Pedidos aceptados",
+    "viewDetails": "Ver Detalles",
+    "notes": "Notas"
   },
   "kitchenPage": {
     "title": "Pantalla de Cocina",

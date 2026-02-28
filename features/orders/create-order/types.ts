@@ -1,6 +1,6 @@
 import type { RefObject } from 'react'
 import type { Control } from 'react-hook-form'
-import type { Location, Table, MenuItem } from '@/lib/types'
+import type { Location, Table, MenuItem, Currency } from '@/lib/types'
 import type { SelectedVariantInfo, MenuItemVariant } from '@/lib/hooks/use-variant-selection'
 
 export type MenuItemWithVariants = MenuItem & {
@@ -42,6 +42,7 @@ export type Category = {
 
 // Component Props Types
 export type MenuItemCardProps = {
+  currency?: string
   item: MenuItemWithVariants
   quantity: number
   isHighlighted: boolean
@@ -66,6 +67,7 @@ export type CartItemRowProps = {
   item: CartItem
   onUpdateQuantity: (cartItemId: string, delta: number) => void
   onRemove: (cartItemId: string) => void
+  currency?: Currency
 }
 
 export type CartSidebarProps = {

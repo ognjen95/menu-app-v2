@@ -16,6 +16,8 @@ import { cn } from '@/lib/utils'
 import { CartItemRow } from './cart-item-row'
 import type { CartSidebarProps, CustomerInfoValues } from '../types'
 import type { Control } from 'react-hook-form'
+import { useTenant } from '@/lib/contexts'
+import CurrencyFormat from '@/components/CurrencyFormat'
 
 type CustomerInfoAccordionProps = {
   t: (key: string) => string
@@ -114,6 +116,9 @@ export function CartSidebar({
   className,
   t,
 }: CartSidebarProps) {
+  const {tenant} = useTenant();
+  const currency = tenant?.default_currency;
+
   return (
     <div className={cn("flex flex-col h-full overflow-hidden", className)}>
       {/* Cart header */}
@@ -143,6 +148,7 @@ export function CartSidebar({
                   item={item}
                   onUpdateQuantity={onUpdateQuantity}
                   onRemove={onRemoveItem}
+                  currency={currency}
                 />
               ))}
               <div className="flex justify-center">
@@ -176,7 +182,7 @@ export function CartSidebar({
           {/* Total */}
           <div className="flex items-center justify-between text-lg font-semibold pt-2">
             <span>{t('total')}</span>
-            <span>€{cartTotal.toFixed(2)}</span>
+            <CurrencyFormat value={cartTotal} currency={currency} />
           </div>
 
           {/* Submit */}
