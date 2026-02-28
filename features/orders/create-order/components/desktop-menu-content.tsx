@@ -12,13 +12,12 @@ import type { DesktopMenuContentProps } from '../types'
 export function DesktopMenuContent({
   locations,
   selectedLocationId,
-  onLocationChange,
   tables,
   selectedTableId,
   onTableChange,
   teamMembers,
-  selectedStaffId,
-  onStaffChange,
+  selectedUserId,
+  onUserChange,
   orderType,
   onOrderTypeChange,
   searchQuery,
@@ -30,6 +29,8 @@ export function DesktopMenuContent({
   filteredItems,
   itemQuantities,
   recentlyAddedId,
+  onQuantityChange,
+  onRemoveOne,
   onItemClick,
   isMobile,
   cartItemsCount,
@@ -40,12 +41,22 @@ export function DesktopMenuContent({
   return (
     <div className="flex flex-col h-full">
       {/* Top bar - Location, Table, Staff, Order Type */}
-      <div className="p-4 border-b space-y-3">
+      <div className="p-4 space-y-3">
         <div className="grid grid-cols-3 gap-2">
+          <StaffSelect
+            teamMembers={teamMembers}
+            selectedUserId={selectedUserId}
+            onUserChange={onUserChange}
+            t={t}
+          />
           <LocationSelect
+            disabled
             locations={locations}
             selectedLocationId={selectedLocationId}
-            onLocationChange={onLocationChange}
+            // onLocationChange={onLocationChange}
+            // * [INFO]: This should be just informational, user should not change location here.
+            // * [INFO]: Eventually implement onChange but sync with location on main screen
+            onLocationChange={() => { }}
             t={t}
           />
           <TableSelect
@@ -53,12 +64,6 @@ export function DesktopMenuContent({
             selectedTableId={selectedTableId}
             orderType={orderType}
             onTableChange={onTableChange}
-            t={t}
-          />
-          <StaffSelect
-            teamMembers={teamMembers}
-            selectedStaffId={selectedStaffId}
-            onStaffChange={onStaffChange}
             t={t}
           />
         </div>
@@ -90,8 +95,10 @@ export function DesktopMenuContent({
       </div>
 
       {/* Menu items */}
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 p-4 ">
         <MenuItemsGrid
+          onQuantityChange={onQuantityChange}
+          onRemoveOne={onRemoveOne}
           items={filteredItems}
           itemQuantities={itemQuantities}
           recentlyAddedId={recentlyAddedId}

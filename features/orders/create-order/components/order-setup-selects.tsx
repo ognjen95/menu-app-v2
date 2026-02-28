@@ -13,6 +13,7 @@ import type { TeamMember, OrderType } from '../types'
 
 type LocationSelectProps = {
   locations: Location[]
+  disabled?: boolean
   selectedLocationId: string
   onLocationChange: (locationId: string) => void
   t: (key: string) => string
@@ -20,12 +21,13 @@ type LocationSelectProps = {
 
 export function LocationSelect({
   locations,
+  disabled,
   selectedLocationId,
   onLocationChange,
   t,
 }: LocationSelectProps) {
   return (
-    <Select value={selectedLocationId} onValueChange={onLocationChange}>
+    <Select value={selectedLocationId} onValueChange={onLocationChange} disabled={disabled}>
       <SelectTrigger className="w-full">
         <MapPin className="h-4 w-4 mr-2 shrink-0" />
         <SelectValue placeholder={t('selectLocation')} />
@@ -61,7 +63,7 @@ export function TableSelect({
   }
 
   return (
-    <Select value={selectedTableId} onValueChange={onTableChange}>
+    <Select value={selectedTableId} onValueChange={onTableChange} disabled={orderType !== 'dine_in'}>
       <SelectTrigger className={cn(
         "w-full",
         !selectedTableId && "border-destructive focus:border-destructive"
@@ -84,19 +86,19 @@ export function TableSelect({
 
 type StaffSelectProps = {
   teamMembers: TeamMember[]
-  selectedStaffId: string
-  onStaffChange: (staffId: string) => void
+  selectedUserId: string
+  onUserChange: (userId: string) => void
   t: (key: string) => string
 }
 
 export function StaffSelect({
   teamMembers,
-  selectedStaffId,
-  onStaffChange,
+  selectedUserId,
+  onUserChange,
   t,
 }: StaffSelectProps) {
   return (
-    <Select value={selectedStaffId} onValueChange={onStaffChange}>
+    <Select value={selectedUserId} onValueChange={onUserChange}>
       <SelectTrigger className="w-full">
         <User className="h-4 w-4 mr-2 shrink-0" />
         <SelectValue placeholder={t('selectStaff')} />

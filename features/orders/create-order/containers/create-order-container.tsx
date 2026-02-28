@@ -1,206 +1,132 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
-import { UtensilsCrossed, ChevronLeft } from 'lucide-react'
+import { useMemo, useCallback, useState } from 'react'
+import dynamic from 'next/dynamic'
 
-import { useCreateOrderState } from '../hooks/use-create-order-state'
-import { CartSidebar } from '../components/cart-sidebar'
-import { VariantSelectionDialog } from '../components/variant-selection-dialog'
-import { DesktopMenuContent } from '../components/desktop-menu-content'
-import { MobileSetupStep } from '../components/mobile-setup-step'
-import { MobileMenuStep } from '../components/mobile-menu-step'
-import { Location, MenuItem, Table } from '@/lib/types'
-import { MenuItemWithVariants, TeamMember } from '../types'
+import {
+  useLocationState,
+  useTeamState,
+  useTableState,
+  useMenuItemsState,
+  useCreateOrder,
+  useOrderUIState,
+} from '../hooks'
+import { buildMenuContentProps } from '../utils/build-menu-content-props'
+import type { Location, Table } from '@/lib/types'
+import type { MenuItemWithVariants, OrderType, TeamMember } from '../types'
+
+// Lazy load mobile and desktop components
+const MobileOrderSheet = dynamic(
+  () => import('../components/mobile-order-sheet').then(mod => ({ default: mod.MobileOrderSheet })),
+  { ssr: false }
+)
+
+const DesktopOrderDialog = dynamic(
+  () => import('../components/desktop-order-dialog').then(mod => ({ default: mod.DesktopOrderDialog })),
+  { ssr: false }
+)
 
 interface CreateOrderDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   locations: Location[]
+  selectedLocationId?: string
   tables: Table[]
   team: TeamMember[]
   menuItems: MenuItemWithVariants[]
 }
 
-export function CreateOrderContainer({ open, onOpenChange, locations, tables, team, menuItems }: CreateOrderDialogProps) {
+export function CreateOrderContainer({ open, onOpenChange, selectedLocationId: initialLocationId, locations, tables, team, menuItems }: CreateOrderDialogProps) {
   const t = useTranslations('createOrder')
   const tCommon = useTranslations('common')
 
-  const state = useCreateOrderState({ open, onOpenChange, t, locations, tables, team, menuItems })
+  // Data state hooks
+  const locationState = useLocationState({ locations, initialLocationId })
+  const teamState = useTeamState({ team, isOpen: open })
+  const tableState = useTableState({ tables })
+  const menuState = useMenuItemsState({ menuItems })
 
-  // Shared props for menu content
-  const menuContentProps = {
-    locations: state.locations,
-    selectedLocationId: state.selectedLocationId,
-    onLocationChange: state.setSelectedLocationId,
-    tables: state.tables,
-    selectedTableId: state.selectedTableId,
-    onTableChange: state.setSelectedTableId,
-    teamMembers: state.team,
-    selectedStaffId: state.selectedStaffId,
-    onStaffChange: state.setSelectedStaffId,
-    orderType: state.orderType,
-    onOrderTypeChange: state.setOrderType,
-    searchQuery: state.searchQuery,
-    onSearchChange: state.handleSearchChange,
-    categories: state.categories,
-    selectedCategoryId: state.selectedCategoryId,
-    onCategorySelect: state.setSelectedCategoryId,
-    isLoadingItems: false,
-    filteredItems: state.filteredItems,
-    itemQuantities: state.itemQuantities,
-    recentlyAddedId: state.recentlyAddedId,
-    onItemClick: state.handleItemClick,
-    onQuantityChange: state.updateItemQuantity,
-    onRemoveOne: state.removeOneByItemId,
-    cartItemsCount: state.cartItemsCount,
-    cartTotal: state.cartTotal,
-    onShowCart: () => state.setShowCart(true),
+  // Order type state (needed before both hooks)
+  const [orderType, setOrderType] = useState<OrderType>('dine_in')
+
+  // Order creation hook
+  const orderCreation = useCreateOrder({
+    locationState,
+    tableState,
+    menuState,
+    teamState,
+    orderType,
+    onSuccess: () => onOpenChange(false),
     t,
-  }
+  })
 
-  // Mobile view with Sheet
-  if (state.isMobile) {
+  // UI state hook
+  const uiState = useOrderUIState({
+    open,
+    onResetMenuState: menuState.resetMenuState,
+    onResetCustomerForm: useCallback(() =>
+      orderCreation.customerInfoForm.reset({ name: '', phone: '', notes: '' }),
+      [orderCreation.customerInfoForm]),
+    searchQuery: menuState.searchQuery,
+  })
+
+  // Build props for menu content components
+  const menuContentProps = useMemo(() => buildMenuContentProps({
+    locationState,
+    tableState,
+    teamState,
+    teamMembers: team,
+    menuState,
+    orderType,
+    setOrderType,
+    setShowCart: uiState.setShowCart,
+    t,
+  }), [locationState, tableState, teamState, team, menuState, orderType, uiState.setShowCart, t])
+
+  // Shared props for both mobile and desktop
+  const sharedProps = useMemo(() => ({
+    menuContentProps,
+    isCustomerInfoOpen: uiState.isCustomerInfoOpen,
+    setIsCustomerInfoOpen: uiState.setIsCustomerInfoOpen,
+    cart: menuState.cart,
+    cartTotal: menuState.cartTotal,
+    cartItemsCount: menuState.cartItemsCount,
+    isSubmitting: orderCreation.isSubmitting,
+    customerInfoControl: orderCreation.customerInfoForm.control,
+    updateQuantity: menuState.updateQuantity,
+    removeFromCart: menuState.removeFromCart,
+    clearCart: menuState.clearCart,
+    handleCreateOrder: orderCreation.handleCreateOrder,
+    itemForVariants: menuState.itemForVariants,
+    setItemForVariants: menuState.setItemForVariants,
+    addToCartDirect: menuState.addToCartDirect,
+    t,
+    tCommon,
+  }), [menuContentProps, uiState.isCustomerInfoOpen, uiState.setIsCustomerInfoOpen, menuState.cart, menuState.cartTotal, menuState.cartItemsCount, menuState.updateQuantity, menuState.removeFromCart, menuState.clearCart, menuState.itemForVariants, menuState.setItemForVariants, menuState.addToCartDirect, orderCreation.isSubmitting, orderCreation.customerInfoForm.control, orderCreation.handleCreateOrder, t, tCommon])
+
+  if (uiState.isMobile) {
     return (
-      <>
-        <Sheet
-          open={open}
-          onOpenChange={(isOpen) => {
-            if (!isOpen) state.setMobileStep(1)
-            onOpenChange(isOpen)
-          }}
-        >
-          <SheetContent
-            side="bottom"
-            fullHeight
-            className="p-0 flex flex-col"
-          >
-            <SheetHeader className="px-4 pt-2 pb-3 shrink-0">
-              <SheetTitle className="flex items-center justify-center gap-2 text-base">
-                <UtensilsCrossed className="h-4 w-4" />
-                {state.mobileStep === 1 ? t('orderSetup') : t('title')}
-              </SheetTitle>
-              {/* Progress line */}
-              <div className="flex gap-1 mt-1.5">
-                <div className="h-1 flex-1 rounded-full bg-primary" />
-                <div className={`h-1 flex-1 rounded-full transition-colors ${state.mobileStep === 2 ? 'bg-primary' : 'bg-muted'}`} />
-              </div>
-            </SheetHeader>
-            <div className="flex-1 min-h-0 overflow-hidden">
-              {state.mobileStep === 1 ? (
-                <MobileSetupStep
-                  {...menuContentProps}
-                  onContinue={() => state.setMobileStep(2)}
-                  onBack={() => onOpenChange(false)}
-                />
-              ) : (
-                <MobileMenuStep
-                  {...menuContentProps}
-                  searchInputRef={state.mobileSearchInputRef}
-                  onSearchFocus={() => state.setIsMobileSearchFocused(true)}
-                  onSearchBlur={() => state.setIsMobileSearchFocused(false)}
-                  onBack={() => state.setMobileStep(1)}
-                />
-              )}
-            </div>
-            
-            {/* Variant Selection Dialog - nested inside parent sheet */}
-            <VariantSelectionDialog
-              item={state.itemForVariants}
-              onClose={() => state.setItemForVariants(null)}
-              onAddToCart={state.addToCartDirect}
-              t={t}
-              tCommon={tCommon}
-            />
-          </SheetContent>
-        </Sheet>
-
-        {/* Cart sheet for mobile */}
-        <Sheet open={state.showCart} onOpenChange={state.setShowCart}>
-          <SheetContent
-            side="bottom"
-            fullHeight
-            className="p-0 flex flex-col"
-          >
-            <CartSidebar
-              cart={state.cart}
-              cartTotal={state.cartTotal}
-              cartItemsCount={state.cartItemsCount}
-              isSubmitting={state.isSubmitting}
-              customerInfoControl={state.customerInfoForm.control}
-              isCustomerInfoOpen={state.isCustomerInfoOpen}
-              onCustomerInfoToggle={state.setIsCustomerInfoOpen}
-              onUpdateQuantity={state.updateQuantity}
-              onRemoveItem={state.removeFromCart}
-              onClearCart={state.clearCart}
-              onSubmit={state.handleCreateOrder}
-              onClose={() => state.setShowCart(false)}
-              t={t}
-            />
-          </SheetContent>
-        </Sheet>
-      </>
+      <MobileOrderSheet
+        open={open}
+        onOpenChange={onOpenChange}
+        {...sharedProps}
+        mobileStep={uiState.mobileStep}
+        setMobileStep={uiState.setMobileStep}
+        mobileSearchInputRef={uiState.mobileSearchInputRef}
+        setIsMobileSearchFocused={uiState.setIsMobileSearchFocused}
+        showCart={uiState.showCart}
+        setShowCart={uiState.setShowCart}
+      />
     )
   }
 
-  // Desktop view with Dialog
   return (
-    <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent size="full">
-          <DialogHeader className="p-4 border-b shrink-0">
-            <DialogTitle className="flex items-center gap-2">
-              <UtensilsCrossed className="h-5 w-5" />
-              {t('title')}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-1 min-h-0 overflow-hidden">
-            {/* Menu section */}
-            <div className="flex-1 border-r min-w-0">
-              <DesktopMenuContent {...menuContentProps} isMobile={state.isMobile} />
-            </div>
-
-            {/* Cart sidebar */}
-            <div className="w-96 xl:w-[420px] shrink-0">
-              <CartSidebar
-                cart={state.cart}
-                cartTotal={state.cartTotal}
-                cartItemsCount={state.cartItemsCount}
-                isSubmitting={state.isSubmitting}
-                customerInfoControl={state.customerInfoForm.control}
-                isCustomerInfoOpen={state.isCustomerInfoOpen}
-                onCustomerInfoToggle={state.setIsCustomerInfoOpen}
-                onUpdateQuantity={state.updateQuantity}
-                onRemoveItem={state.removeFromCart}
-                onClearCart={state.clearCart}
-                onSubmit={state.handleCreateOrder}
-                t={t}
-              />
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Variant Selection Dialog */}
-      <VariantSelectionDialog
-        item={state.itemForVariants}
-        onClose={() => state.setItemForVariants(null)}
-        onAddToCart={state.addToCartDirect}
-        t={t}
-        tCommon={tCommon}
-      />
-    </>
+    <DesktopOrderDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      {...sharedProps}
+    />
   )
 }
+

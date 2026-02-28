@@ -145,7 +145,7 @@ export function CartSidebar({
                   onRemove={onRemoveItem}
                 />
               ))}
-              <div className="flex justify-center pt-3 border-t">
+              <div className="flex justify-center">
                 <Button className="w-full" variant="ghost" onClick={onClearCart}>
                   <Trash2 className="h-4 w-4 mr-1" />
                   {t('clear')}
@@ -166,7 +166,13 @@ export function CartSidebar({
             onToggle={onCustomerInfoToggle}
             control={customerInfoControl}
           />
-
+          
+          {/* VAT */}
+          {/* <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>{t('vat')}</span>
+            <span>{t('vatInfo')}</span>
+          </div>
+           */}
           {/* Total */}
           <div className="flex items-center justify-between text-lg font-semibold pt-2">
             <span>{t('total')}</span>
@@ -175,7 +181,7 @@ export function CartSidebar({
 
           {/* Submit */}
           <div className='flex items-center justify-between gap-3'>
-            <Button onClick={onClose} variant={'secondary'} className="h-12 px-4">
+            <Button onClick={onClose} variant={'secondary'} className="h-12 px-4 md:hidden">
               <ChevronLeft className="h-5 w-5" />
             </Button>
 

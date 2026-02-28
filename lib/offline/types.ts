@@ -19,6 +19,7 @@ export interface CreateOrderPayload {
   table_id?: string
   type: string
   status?: OrderStatus
+  user_id?: string
   customer_name?: string
   customer_phone?: string
   customer_email?: string

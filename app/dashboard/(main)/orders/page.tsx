@@ -799,6 +799,7 @@ export default function OrdersPage() {
       <CreateOrderDialog
         open={isCreateOrderOpen}
         locations={locations}
+        selectedLocationId={selectedLocationId}
         tables={availableTables}
         team={team}
         menuItems={menuItems}

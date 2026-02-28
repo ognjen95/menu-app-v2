@@ -40,7 +40,8 @@ type CreateOrderInput = {
   location_id: string
   table_id?: string
   type: string
-  status?: OrderStatus;
+  status?: OrderStatus
+  user_id?: string
   customer_name?: string
   customer_phone?: string
   customer_email?: string
@@ -57,6 +58,7 @@ type CreateOrderInput = {
 type UpdateOrderStatusInput = {
   id: string
   status: OrderStatus
+  user_id?: string
   cancellation_reason?: string
 }
 
@@ -133,8 +135,8 @@ export function useUpdateOrderStatus() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, status, cancellation_reason }: UpdateOrderStatusInput) =>
-      apiPatch<OrderResponse>(`/orders/${id}/status`, { status, cancellation_reason }),
+    mutationFn: ({ id, status, user_id, cancellation_reason }: UpdateOrderStatusInput) =>
+      apiPatch<OrderResponse>(`/orders/${id}/status`, { status, user_id, cancellation_reason }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() })
       queryClient.invalidateQueries({ queryKey: orderKeys.detail(variables.id) })

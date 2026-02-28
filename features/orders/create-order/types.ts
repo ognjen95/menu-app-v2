@@ -105,11 +105,11 @@ export type OrderSetupFormProps = {
   teamMembers: TeamMember[]
   selectedLocationId: string
   selectedTableId: string
-  selectedStaffId: string
+  selectedUserId: string
   orderType: OrderType
   onLocationChange: (locationId: string) => void
   onTableChange: (tableId: string) => void
-  onStaffChange: (staffId: string) => void
+  onUserChange: (userId: string) => void
   onOrderTypeChange: (type: OrderType) => void
   t: (key: string) => string
 }
@@ -130,8 +130,8 @@ export type DesktopMenuContentProps = {
   selectedTableId: string
   onTableChange: (tableId: string) => void
   teamMembers: TeamMember[]
-  selectedStaffId: string
-  onStaffChange: (staffId: string) => void
+  selectedUserId: string
+  onUserChange: (userId: string) => void
   orderType: OrderType
   onOrderTypeChange: (type: OrderType) => void
   searchQuery: string
@@ -148,6 +148,8 @@ export type DesktopMenuContentProps = {
   cartItemsCount: number
   cartTotal: number
   onShowCart: () => void
+  onQuantityChange: (itemId: string, delta: number) => void
+  onRemoveOne: (itemId: string) => void
   t: (key: string) => string
 }
 
@@ -156,8 +158,8 @@ export type MobileSetupStepProps = {
   selectedLocationId: string
   onLocationChange: (locationId: string) => void
   teamMembers: TeamMember[]
-  selectedStaffId: string
-  onStaffChange: (staffId: string) => void
+  selectedUserId: string
+  onUserChange: (userId: string) => void
   orderType: OrderType
   onOrderTypeChange: (type: OrderType) => void
   tables: Table[]

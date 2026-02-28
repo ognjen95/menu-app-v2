@@ -6,7 +6,7 @@ import { OrderStatus } from '@/lib/types'
 export async function GET(request: NextRequest) {
   return queryHandler(request, async (supabase, user, params) => {
     const tenantId = requireTenant(user)
-    
+
     const locationId = params.get('location_id')
     const status = params.get('status')
     const type = params.get('type')
@@ -69,30 +69,36 @@ export async function GET(request: NextRequest) {
       limit,
     }
   })
+
+}
+
+type OrderCreateInput = {
+  location_id: string
+  table_id?: string
+  type: string
+  user_id?: string
+  status?: OrderStatus
+  customer_name?: string
+  customer_phone?: string
+  customer_email?: string
+  customer_notes?: string
+  items: {
+    menu_item_id: string
+    variant_id?: string
+    quantity: number
+    selected_options?: { option_id: string }[]
+    notes?: string
+  }[]
 }
 
 // POST - Create new order
 export async function POST(request: NextRequest) {
   return mutationHandler(request, async (supabase, user, body) => {
     const tenantId = requireTenant(user)
+    const orderData = body as OrderCreateInput;
 
-    const orderData = body as {
-      location_id: string
-      table_id?: string
-      type: string
-      status?: OrderStatus
-      customer_name?: string
-      customer_phone?: string
-      customer_email?: string
-      customer_notes?: string
-      items: {
-        menu_item_id: string
-        variant_id?: string
-        quantity: number
-        selected_options?: { option_id: string }[]
-        notes?: string
-      }[]
-    }
+    // Or assigned user or the one who is logged in
+    const userId = orderData?.user_id || user.id;
 
     if (!orderData.location_id) {
       throw new Error('Location ID is required')
@@ -112,43 +118,43 @@ export async function POST(request: NextRequest) {
     // Build order data with appropriate timestamps based on status
     const status = orderData.status || 'placed'
     const now = new Date().toISOString()
-    
+
     // Map status to timestamp fields
     const statusTimestamps: Record<string, unknown> = {
       placed_at: now, // Always set placed_at
     }
-    
+
     // Set additional timestamps and user tracking based on initial status
     if (status === 'accepted') {
       statusTimestamps.accepted_at = now
-      statusTimestamps.accepted_by = user.id
+      statusTimestamps.accepted_by = userId
     } else if (status === 'preparing') {
       statusTimestamps.accepted_at = now
-      statusTimestamps.accepted_by = user.id
+      statusTimestamps.accepted_by = userId
       statusTimestamps.preparing_at = now
-      statusTimestamps.prepared_by = user.id
+      statusTimestamps.prepared_by = userId
     } else if (status === 'ready') {
       statusTimestamps.accepted_at = now
-      statusTimestamps.accepted_by = user.id
+      statusTimestamps.accepted_by = userId
       statusTimestamps.preparing_at = now
-      statusTimestamps.prepared_by = user.id
+      statusTimestamps.prepared_by = userId
       statusTimestamps.ready_at = now
     } else if (status === 'served') {
       statusTimestamps.accepted_at = now
-      statusTimestamps.accepted_by = user.id
+      statusTimestamps.accepted_by = userId
       statusTimestamps.preparing_at = now
-      statusTimestamps.prepared_by = user.id
+      statusTimestamps.prepared_by = userId
       statusTimestamps.ready_at = now
       statusTimestamps.served_at = now
-      statusTimestamps.served_by = user.id
+      statusTimestamps.served_by = userId
     } else if (status === 'completed') {
       statusTimestamps.accepted_at = now
-      statusTimestamps.accepted_by = user.id
+      statusTimestamps.accepted_by = userId
       statusTimestamps.preparing_at = now
-      statusTimestamps.prepared_by = user.id
+      statusTimestamps.prepared_by = userId
       statusTimestamps.ready_at = now
       statusTimestamps.served_at = now
-      statusTimestamps.served_by = user.id
+      statusTimestamps.served_by = userId
       statusTimestamps.completed_at = now
     }
 
@@ -196,7 +202,7 @@ export async function POST(request: NextRequest) {
           .select('name, price_modifier')
           .eq('id', item.variant_id)
           .single()
-        
+
         if (variant) {
           variantName = variant.name
           variantPrice = variant.price_modifier || 0
@@ -206,7 +212,7 @@ export async function POST(request: NextRequest) {
       // Calculate options price
       let optionsPrice = 0
       const selectedOptions: { option_id: string; name: string; price: number }[] = []
-      
+
       if (item.selected_options) {
         for (const opt of item.selected_options) {
           const { data: option } = await supabase
@@ -214,7 +220,7 @@ export async function POST(request: NextRequest) {
             .select('name, price')
             .eq('id', opt.option_id)
             .single()
-          
+
           if (option) {
             optionsPrice += option.price || 0
             selectedOptions.push({

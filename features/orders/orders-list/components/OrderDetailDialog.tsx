@@ -136,13 +136,18 @@ export function OrderDetailDialog({ order, open, onOpenChange }: OrderDetailDial
   })
   const teamMembers = teamData?.data?.members || []
 
-  // Reset state when order changes
+  // Reset state when order changes - pre-select user based on last status change
   useEffect(() => {
     if (order) {
       setSelectedStatus(order.status as OrderStatus)
-      // Pre-select current user for assignment
-      if (currentUserId) {
-        setSelectedUserId(currentUserId)
+      // Pre-select user who last handled this order based on status
+      const lastHandler = order.status_updated_by || 
+        order.served_by || 
+        order.prepared_by || 
+        order.accepted_by || 
+        currentUserId
+      if (lastHandler) {
+        setSelectedUserId(lastHandler)
       }
     }
   }, [order, currentUserId])
@@ -198,6 +203,7 @@ export function OrderDetailDialog({ order, open, onOpenChange }: OrderDetailDial
     await updateStatus.mutateAsync({ 
       id: order.id, 
       status: selectedStatus,
+      user_id: selectedUserId || undefined,
     })
     onOpenChange(false)
   }

@@ -12,7 +12,6 @@ export function OrderTypeSelector({
     <div className="flex gap-2">
       <Button
         variant={orderType === 'dine_in' ? 'default' : 'outline'}
-        size="lg"
         onClick={() => onOrderTypeChange('dine_in')}
         className="flex-1"
       >
@@ -21,7 +20,6 @@ export function OrderTypeSelector({
       </Button>
       <Button
         variant={orderType === 'takeaway' ? 'default' : 'outline'}
-        size="lg"
         onClick={() => onOrderTypeChange('takeaway')}
         className="flex-1"
       >
@@ -30,7 +28,6 @@ export function OrderTypeSelector({
       </Button>
       <Button
         variant={orderType === 'delivery' ? 'default' : 'outline'}
-        size="lg"
         onClick={() => onOrderTypeChange('delivery')}
         className="flex-1"
       >

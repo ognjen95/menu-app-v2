@@ -21,8 +21,8 @@ export function MobileSetupStep({
   selectedLocationId,
   onLocationChange,
   teamMembers,
-  selectedStaffId,
-  onStaffChange,
+  selectedUserId,
+  onUserChange,
   orderType,
   onOrderTypeChange,
   tables,
@@ -35,13 +35,13 @@ export function MobileSetupStep({
   const [staffDrawerOpen, setStaffDrawerOpen] = useState(false)
   
   const selectedLocation = locations.find(l => l.id === selectedLocationId)
-  const selectedStaff = teamMembers.find(m => m.user_id === selectedStaffId)
+  const selectedStaff = teamMembers.find(m => m.user_id === selectedUserId)
 
-  const canContinue = selectedLocationId && selectedStaffId && 
+  const canContinue = selectedLocationId && selectedUserId && 
     (orderType !== 'dine_in' || selectedTableId)
 
   const handleStaffSelect = (userId: string) => {
-    onStaffChange(userId)
+    onUserChange(userId)
     setStaffDrawerOpen(false)
   }
 
@@ -101,7 +101,7 @@ export function MobileSetupStep({
                     <Button
                       key={member.user_id}
                       size="lg"
-                      variant={selectedStaffId === member.user_id ? "default" : "secondary"}
+                      variant={selectedUserId === member.user_id ? "default" : "secondary"}
                       onClick={() => handleStaffSelect(member.user_id)}
                       className="h-12 rounded-xl gap-3 justify-start px-4"
                     >
