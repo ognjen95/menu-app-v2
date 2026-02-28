@@ -698,7 +698,9 @@
     "background": "Fondo",
     "saveStyle": "Guardar Estilo",
     "cancel": "Cancelar",
-    "deleteTable": "¿Eliminar esta mesa?",
+    "deleteTable": "Eliminar Mesa",
+    "deleteTableTitle": "Eliminar Mesa",
+    "deleteTableDescription": "¿Estás seguro de que deseas eliminar esta mesa? Esta acción no se puede deshacer.",
     "duplicateTableName": "Ya existe una mesa con este nombre en esta zona",
     "addTableDesc": "Añadir una nueva mesa a esta ubicación",
     "status": {

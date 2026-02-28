@@ -19,8 +19,10 @@ import {
 } from '../services/use-tables'
 import { useTablesDialogs } from './tables-dialogs'
 import { validateTableForm } from '../domains/types'
+import { ConfirmDeleteDialog } from '@/components/ui/confirm-delete-dialog'
 import type { TablesPageData } from '../services/tables-server'
 import type { Location } from '@/lib/types'
+import type { Table } from '../domains/types'
 
 interface TablesPageContainerProps {
   initialData: TablesPageData
@@ -67,6 +69,9 @@ export function TablesPageContainer({ initialData }: TablesPageContainerProps) {
 
   const generateQrCode = useGenerateQrCode(selectedLocationId)
   const deleteTable = useDeleteTable(selectedLocationId)
+
+  // Delete confirmation state
+  const [deleteConfirm, setDeleteConfirm] = useState<Table | null>(null)
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
@@ -123,6 +128,52 @@ export function TablesPageContainer({ initialData }: TablesPageContainerProps) {
     setFormData(data)
   }, [setFormData])
 
+  // Handle delete confirmation
+  const handleDeleteConfirm = useCallback(() => {
+    if (deleteConfirm) {
+      deleteTable.mutate(deleteConfirm.id)
+      setDeleteConfirm(null)
+    }
+  }, [deleteConfirm, deleteTable])
+
+  // Download all QR codes as a zip
+  const handleExportAllQr = useCallback(async () => {
+    if (qrCodes.length === 0) return
+    
+    const JSZip = (await import('jszip')).default
+    const zip = new JSZip()
+    
+    for (const qrCode of qrCodes) {
+      const svg = document.getElementById(`qr-${qrCode.id}`)
+      if (!svg) continue
+      
+      const svgData = new XMLSerializer().serializeToString(svg)
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = new Image()
+      
+      await new Promise<void>((resolve) => {
+        img.onload = () => {
+          canvas.width = 512
+          canvas.height = 512
+          ctx?.drawImage(img, 0, 0, 512, 512)
+          const dataUrl = canvas.toDataURL('image/png')
+          const base64 = dataUrl.split(',')[1]
+          zip.file(`qr-${qrCode.code}.png`, base64, { base64: true })
+          resolve()
+        }
+        img.src = 'data:image/svg+xml;base64,' + btoa(svgData)
+      })
+    }
+    
+    const blob = await zip.generateAsync({ type: 'blob' })
+    const link = document.createElement('a')
+    link.download = 'qr-codes.zip'
+    link.href = URL.createObjectURL(blob)
+    link.click()
+    URL.revokeObjectURL(link.href)
+  }, [qrCodes])
+
   return (
     <div className="space-y-4 md:space-y-6">
       <TablesPageHeader
@@ -132,6 +183,7 @@ export function TablesPageContainer({ initialData }: TablesPageContainerProps) {
         addLabel={t('addTable')}
         canAdd={!!selectedLocationId}
         onAdd={() => setIsCreateOpen(true)}
+        onExport={handleExportAllQr}
       />
 
       <LocationSelector
@@ -150,6 +202,7 @@ export function TablesPageContainer({ initialData }: TablesPageContainerProps) {
         hasLocation={!!selectedLocationId}
         copiedId={copiedId}
         isGeneratingQr={generateQrCode.isPending}
+        deletingTableId={deleteTable.isPending ? (deleteTable.variables as string) : null}
         translations={{
           selectLocation: t('selectLocation'),
           noTables: t('noTables'),
@@ -176,7 +229,7 @@ export function TablesPageContainer({ initialData }: TablesPageContainerProps) {
         onDownloadQr={downloadQr}
         onEditQr={handleOpenEditQr}
         onGenerateQr={(id: string) => generateQrCode.mutate(id)}
-        onDeleteTable={(id: string) => deleteTable.mutate(id)}
+        onDeleteClick={(table: Table) => setDeleteConfirm(table)}
       />
 
       <CreateTableDialog
@@ -233,6 +286,15 @@ export function TablesPageContainer({ initialData }: TablesPageContainerProps) {
           cancel: t('cancel'),
           saveStyle: t('saveStyle'),
         }}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!deleteConfirm}
+        onOpenChange={(open) => !open && setDeleteConfirm(null)}
+        title={t('deleteTableTitle')}
+        description={t('deleteTableDescription')}
+        onConfirm={handleDeleteConfirm}
+        isLoading={deleteTable.isPending}
       />
     </div>
   )

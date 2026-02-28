@@ -698,7 +698,9 @@
     "background": "Pozadina",
     "saveStyle": "Sačuvaj stil",
     "cancel": "Otkaži",
-    "deleteTable": "Obrisati ovaj sto?",
+    "deleteTable": "Obriši sto",
+    "deleteTableTitle": "Obriši sto",
+    "deleteTableDescription": "Da li ste sigurni da želite da obrišete ovaj sto? Ova akcija se ne može poništiti.",
     "duplicateTableName": "Sto sa ovim imenom već postoji u ovoj zoni",
     "addTableDesc": "Dodajte novi sto na ovu lokaciju",
     "status": {

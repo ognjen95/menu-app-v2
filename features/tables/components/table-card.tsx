@@ -25,6 +25,7 @@ interface TableCardProps {
   index: number
   copiedId: string | null
   isGenerating: boolean
+  isDeleting?: boolean
   translations: {
     capacity: string
     status: Record<string, string>
@@ -40,7 +41,7 @@ interface TableCardProps {
   onDownloadQr: (qr: QrCode) => void
   onEditQr: (qr: QrCode) => void
   onGenerateQr: (tableId: string) => void
-  onDelete: (tableId: string) => void
+  onDeleteClick: (table: Table) => void
 }
 
 export function TableCard({
@@ -49,13 +50,14 @@ export function TableCard({
   index,
   copiedId,
   isGenerating,
+  isDeleting,
   translations: t,
   onPreviewQr,
   onCopyUrl,
   onDownloadQr,
   onEditQr,
   onGenerateQr,
-  onDelete,
+  onDeleteClick,
 }: TableCardProps) {
   return (
     <motion.div variants={staggerItemScale} custom={index}>
@@ -162,7 +164,11 @@ export function TableCard({
                   size="icon"
                   variant="ghost"
                   className="h-8 w-8 shrink-0"
-                  onClick={() => window.open(qrCode.url, '_blank')}
+                  onClick={() => {
+                    // Extract path from stored URL and use current origin
+                    const url = new URL(qrCode.url)
+                    window.open(`${window.location.origin}${url.pathname}${url.search}`, '_blank')
+                  }}
                   title={t.openMenu}
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
@@ -174,9 +180,10 @@ export function TableCard({
               size="icon"
               variant="ghost"
               className="h-8 w-8 text-destructive"
-              onClick={() => { if (confirm(t.deleteTable)) onDelete(table.id) }}
+              onClick={() => onDeleteClick(table)}
+              disabled={isDeleting}
             >
-              <Trash2 className="h-4 w-4" />
+              {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
             </Button>
           </div>
         </CardContent>

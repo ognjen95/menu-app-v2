@@ -17,6 +17,7 @@ interface TablesGridProps {
   hasLocation: boolean
   copiedId: string | null
   isGeneratingQr: boolean
+  deletingTableId: string | null
   translations: {
     selectLocation: string
     noTables: string
@@ -39,7 +40,7 @@ interface TablesGridProps {
   onDownloadQr: (qr: QrCode) => void
   onEditQr: (qr: QrCode) => void
   onGenerateQr: (tableId: string) => void
-  onDeleteTable: (tableId: string) => void
+  onDeleteClick: (table: Table) => void
 }
 
 export function TablesGrid({
@@ -49,6 +50,7 @@ export function TablesGrid({
   hasLocation,
   copiedId,
   isGeneratingQr,
+  deletingTableId,
   translations: t,
   onAddTable,
   onPreviewQr,
@@ -56,7 +58,7 @@ export function TablesGrid({
   onDownloadQr,
   onEditQr,
   onGenerateQr,
-  onDeleteTable,
+  onDeleteClick,
 }: TablesGridProps) {
   const tablesByZone = useMemo(() => tables.reduce((acc, table) => {
     const zone = table.zone || t.noZone
@@ -126,6 +128,7 @@ export function TablesGrid({
                 index={tableIndex}
                 copiedId={copiedId}
                 isGenerating={isGeneratingQr}
+                isDeleting={deletingTableId === table.id}
                 translations={{
                   capacity: t.capacity,
                   status: t.status,
@@ -141,17 +144,17 @@ export function TablesGrid({
                 onDownloadQr={onDownloadQr}
                 onEditQr={onEditQr}
                 onGenerateQr={onGenerateQr}
-                onDelete={onDeleteTable}
+                onDeleteClick={onDeleteClick}
               />
             ))}
 
             {/* Add table card */}
             <motion.div variants={staggerContainer} custom={zoneTables.length}>
               <Card
-                className="border-dashed cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+                className="border-dashed cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors h-full hover:opacity-95 transition-all"
                 onClick={() => onAddTable(zone === t.noZone ? '' : zone)}
               >
-                <CardContent className="py-12 flex flex-col items-center justify-center text-center">
+                <CardContent className="py-12 flex flex-col items-center justify-center text-center h-full">
                   <Plus className="h-8 w-8 text-muted-foreground mb-2" />
                   <span className="text-sm text-muted-foreground">{t.addTable}</span>
                 </CardContent>
