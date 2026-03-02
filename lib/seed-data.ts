@@ -22,11 +22,29 @@ export type SeedVariantCategory = {
   variants: { name: string; price_adjustment: number }[]
 }
 
+export type SeedTable = {
+  name: string
+  zone: string
+  capacity: number
+}
+
 export type SeedData = {
   menuName: string
   categories: SeedCategory[]
   variantCategories: SeedVariantCategory[]
 }
+
+// Default zones and tables seed data
+export const defaultZonesAndTables: SeedTable[] = [
+  // Indoor zone - 3 tables
+  { name: 'Table 1', zone: 'Indoor', capacity: 4 },
+  { name: 'Table 2', zone: 'Indoor', capacity: 4 },
+  { name: 'Table 3', zone: 'Indoor', capacity: 4 },
+  // Outdoor zone - 3 tables
+  { name: 'Table 1', zone: 'Outdoor', capacity: 4 },
+  { name: 'Table 2', zone: 'Outdoor', capacity: 4 },
+  { name: 'Table 3', zone: 'Outdoor', capacity: 4 },
+]
 
 // Restaurant seed data
 const restaurantSeedData: SeedData = {

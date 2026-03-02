@@ -175,10 +175,20 @@ export async function POST(request: NextRequest) {
     await supabaseAdmin.from('tenant_languages').insert(languageInserts)
 
     // Seed initial data if requested
+    let locationId: string | undefined
+    if (location) {
+      const { data: locData } = await supabaseAdmin
+        .from('locations')
+        .select('id')
+        .eq('tenant_id', tenant.id)
+        .single()
+      locationId = locData?.id
+    }
+
     if (seedData && menuId) {
-      console.log('Seeding data for type:', type, 'menuId:', menuId)
+      console.log('Seeding data for type:', type, 'menuId:', menuId, 'locationId:', locationId)
       
-      const seedResult = await seedTenantData(tenant.id, menuId, type as TenantType)
+      const seedResult = await seedTenantData(tenant.id, menuId, type as TenantType, locationId)
       
       if (seedResult.success) {
         console.log('Seed data created:', {
@@ -186,6 +196,7 @@ export async function POST(request: NextRequest) {
           menuItems: seedResult.menuItems.length,
           variantCategories: seedResult.variantCategories.length,
           variants: seedResult.variants.length,
+          tables: seedResult.tables.length,
         })
       } else {
         console.error('Seed data errors:', seedResult.errors)

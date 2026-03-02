@@ -161,6 +161,7 @@ export function useRealtimeOrders(
       cleanup()
       setStatus('disconnected')
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]) // Only depend on enabled
 
   // Auto-reconnect on error with exponential backoff

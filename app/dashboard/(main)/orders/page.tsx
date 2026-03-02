@@ -100,7 +100,7 @@ export default function OrdersPage() {
   // Track if screen is mobile
 
   const { data: locationsData } = useLocations()
-  const locations = locationsData?.data?.locations || []
+  const locations = useMemo(() => locationsData?.data?.locations || [], [locationsData])
 
   const { data: tablesData } = useTables(selectedLocationId !== 'all' ? selectedLocationId : null)
   const availableTables = tablesData || []

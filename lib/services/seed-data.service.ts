@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
-import { getSeedDataForType } from '@/lib/seed-data'
+import { getSeedDataForType, defaultZonesAndTables } from '@/lib/seed-data'
 import type { TenantType } from '@/lib/types'
 
 // =============================================================================
@@ -65,6 +65,17 @@ const MenuItemVariantInsertSchema = z.object({
   sort_order: z.number().int().default(0),
 })
 
+// Tables insert schema
+const TableInsertSchema = z.object({
+  tenant_id: z.string().uuid(),
+  location_id: z.string().uuid(),
+  name: z.string().min(1),
+  zone: z.string().nullable().optional(),
+  capacity: z.number().int().default(4),
+  is_active: z.boolean().default(true),
+  status: z.string().default('available'),
+})
+
 // =============================================================================
 // Types derived from schemas
 // =============================================================================
@@ -73,6 +84,7 @@ export type CategoryInsert = z.input<typeof CategoryInsertSchema>
 export type MenuItemInsert = z.input<typeof MenuItemInsertSchema>
 export type VariantCategoryInsert = z.input<typeof VariantCategoryInsertSchema>
 export type MenuItemVariantInsert = z.input<typeof MenuItemVariantInsertSchema>
+export type TableInsert = z.input<typeof TableInsertSchema>
 
 // =============================================================================
 // Seed Result Types
@@ -84,6 +96,7 @@ export type SeedResult = {
   menuItems: { id: string; name: string; categoryId: string }[]
   variantCategories: { id: string; name: string }[]
   variants: { id: string; name: string; categoryId: string }[]
+  tables: { id: string; name: string; zone: string }[]
   errors: string[]
 }
 
@@ -95,15 +108,17 @@ export class SeedDataService {
   private supabaseAdmin: SupabaseClient
   private tenantId: string
   private menuId: string
+  private locationId: string | null
   private errors: string[] = []
 
-  constructor(tenantId: string, menuId: string) {
+  constructor(tenantId: string, menuId: string, locationId?: string) {
     this.supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
     this.tenantId = tenantId
     this.menuId = menuId
+    this.locationId = locationId || null
   }
 
   async seedForBusinessType(type: TenantType): Promise<SeedResult> {
@@ -114,90 +129,112 @@ export class SeedDataService {
       menuItems: [],
       variantCategories: [],
       variants: [],
+      tables: [],
       errors: [],
     }
 
     try {
-      // Step 1: Create categories and their items
+      // Step 1: Bulk create categories
+      const categoryInserts: CategoryInsert[] = seedData.categories.map((cat) => ({
+        tenant_id: this.tenantId,
+        menu_id: this.menuId,
+        name: cat.name,
+        description: cat.description || null,
+        sort_order: cat.sort_order,
+        is_active: true,
+      }))
+
+      const categories = await this.bulkCreateCategories(categoryInserts)
+      result.categories = categories.map((c) => ({ id: c.id, name: c.name }))
+
+      // Step 2: Bulk create menu items for all categories
+      const menuItemInserts: MenuItemInsert[] = []
       for (const category of seedData.categories) {
-        const categoryResult = await this.createCategory({
-          tenant_id: this.tenantId,
-          menu_id: this.menuId,
-          name: category.name,
-          description: category.description || null,
-          sort_order: category.sort_order,
-          is_active: true,
-        })
+        const createdCat = categories.find((c) => c.name === category.name)
+        if (!createdCat) continue
 
-        if (!categoryResult) continue
-
-        result.categories.push({ id: categoryResult.id, name: categoryResult.name })
-
-        // Create items for this category
         for (const item of category.items) {
-          const itemResult = await this.createMenuItem({
+          menuItemInserts.push({
             tenant_id: this.tenantId,
-            category_id: categoryResult.id,
+            category_id: createdCat.id,
             name: item.name,
             description: item.description || null,
             base_price: item.price,
             sort_order: item.sort_order,
             is_active: true,
           })
-
-          if (itemResult) {
-            result.menuItems.push({
-              id: itemResult.id,
-              name: itemResult.name,
-              categoryId: categoryResult.id,
-            })
-          }
         }
       }
 
-      // Step 2: Create variant categories and variants
+      const menuItems = await this.bulkCreateMenuItems(menuItemInserts)
+      result.menuItems = menuItems.map((m) => ({
+        id: m.id,
+        name: m.name,
+        categoryId: m.category_id,
+      }))
+
+      // Step 3: Bulk create variant categories and their variants
       if (seedData.variantCategories.length > 0 && result.menuItems.length > 0) {
         const firstItemId = result.menuItems[0].id
 
+        const variantCatInserts: VariantCategoryInsert[] = seedData.variantCategories.map((vc, idx) => ({
+          tenant_id: this.tenantId,
+          name: vc.name,
+          description: vc.description || null,
+          is_required: vc.is_required,
+          allow_multiple: vc.allow_multiple,
+          sort_order: idx,
+          is_active: true,
+        }))
+
+        const variantCategories = await this.bulkCreateVariantCategories(variantCatInserts)
+        result.variantCategories = variantCategories.map((vc) => ({ id: vc.id, name: vc.name }))
+
+        // Bulk create variants for all variant categories
+        const variantInserts: MenuItemVariantInsert[] = []
         for (const variantCat of seedData.variantCategories) {
-          const variantCatResult = await this.createVariantCategory({
-            tenant_id: this.tenantId,
-            name: variantCat.name,
-            description: variantCat.description || null,
-            is_required: variantCat.is_required,
-            allow_multiple: variantCat.allow_multiple,
-            is_active: true,
-          })
+          const createdVarCat = variantCategories.find((vc) => vc.name === variantCat.name)
+          if (!createdVarCat) continue
 
-          if (!variantCatResult) continue
-
-          result.variantCategories.push({
-            id: variantCatResult.id,
-            name: variantCatResult.name,
-          })
-
-          // Create variants for this category
           for (let idx = 0; idx < variantCat.variants.length; idx++) {
             const variant = variantCat.variants[idx]
-            const variantResult = await this.createMenuItemVariant({
+            variantInserts.push({
               tenant_id: this.tenantId,
               menu_item_id: firstItemId,
-              category_id: variantCatResult.id,
+              category_id: createdVarCat.id,
               name: variant.name,
               price_adjustment: variant.price_adjustment,
               sort_order: idx,
               is_available: true,
             })
-
-            if (variantResult) {
-              result.variants.push({
-                id: variantResult.id,
-                name: variantResult.name,
-                categoryId: variantCatResult.id,
-              })
-            }
           }
         }
+
+        const variants = await this.bulkCreateMenuItemVariants(variantInserts)
+        result.variants = variants.map((v) => ({
+          id: v.id,
+          name: v.name,
+          categoryId: v.category_id,
+        }))
+      }
+
+      // Step 4: Bulk create tables
+      if (this.locationId) {
+        const tableInserts: TableInsert[] = defaultZonesAndTables.map((t) => ({
+          tenant_id: this.tenantId,
+          location_id: this.locationId!,
+          name: t.name,
+          zone: t.zone,
+          capacity: t.capacity,
+          is_active: true,
+        }))
+
+        const tables = await this.bulkCreateTables(tableInserts)
+        result.tables = tables.map((t) => ({
+          id: t.id,
+          name: t.name,
+          zone: t.zone || '',
+        }))
       }
 
       result.errors = this.errors
@@ -211,92 +248,89 @@ export class SeedDataService {
     return result
   }
 
-  private async createCategory(data: CategoryInsert): Promise<{ id: string; name: string } | null> {
-    const validation = CategoryInsertSchema.safeParse(data)
-    
-    if (!validation.success) {
-      this.errors.push(`Category validation failed: ${validation.error.message}`)
-      return null
-    }
+  private async bulkCreateCategories(data: CategoryInsert[]): Promise<{ id: string; name: string }[]> {
+    if (data.length === 0) return []
 
+    const validated = data.map((d) => CategoryInsertSchema.parse(d))
     const { data: result, error } = await this.supabaseAdmin
       .from('categories')
-      .insert(validation.data)
+      .insert(validated)
       .select('id, name')
-      .single()
 
     if (error) {
-      this.errors.push(`Category creation failed (${data.name}): ${error.message}`)
-      return null
+      this.errors.push(`Bulk category creation failed: ${error.message}`)
+      return []
     }
 
-    return result
+    return result || []
   }
 
-  private async createMenuItem(data: MenuItemInsert): Promise<{ id: string; name: string } | null> {
-    const validation = MenuItemInsertSchema.safeParse(data)
-    
-    if (!validation.success) {
-      this.errors.push(`MenuItem validation failed: ${validation.error.message}`)
-      return null
-    }
+  private async bulkCreateMenuItems(data: MenuItemInsert[]): Promise<{ id: string; name: string; category_id: string }[]> {
+    if (data.length === 0) return []
 
+    const validated = data.map((d) => MenuItemInsertSchema.parse(d))
     const { data: result, error } = await this.supabaseAdmin
       .from('menu_items')
-      .insert(validation.data)
-      .select('id, name')
-      .single()
+      .insert(validated)
+      .select('id, name, category_id')
 
     if (error) {
-      this.errors.push(`MenuItem creation failed (${data.name}): ${error.message}`)
-      return null
+      this.errors.push(`Bulk menu item creation failed: ${error.message}`)
+      return []
     }
 
-    return result
+    return result || []
   }
 
-  private async createVariantCategory(data: VariantCategoryInsert): Promise<{ id: string; name: string } | null> {
-    const validation = VariantCategoryInsertSchema.safeParse(data)
-    
-    if (!validation.success) {
-      this.errors.push(`VariantCategory validation failed: ${validation.error.message}`)
-      return null
-    }
+  private async bulkCreateVariantCategories(data: VariantCategoryInsert[]): Promise<{ id: string; name: string }[]> {
+    if (data.length === 0) return []
 
+    const validated = data.map((d) => VariantCategoryInsertSchema.parse(d))
     const { data: result, error } = await this.supabaseAdmin
       .from('variant_categories')
-      .insert(validation.data)
+      .insert(validated)
       .select('id, name')
-      .single()
 
     if (error) {
-      this.errors.push(`VariantCategory creation failed (${data.name}): ${error.message}`)
-      return null
+      this.errors.push(`Bulk variant category creation failed: ${error.message}`)
+      return []
     }
 
-    return result
+    return result || []
   }
 
-  private async createMenuItemVariant(data: MenuItemVariantInsert): Promise<{ id: string; name: string } | null> {
-    const validation = MenuItemVariantInsertSchema.safeParse(data)
-    
-    if (!validation.success) {
-      this.errors.push(`MenuItemVariant validation failed: ${validation.error.message}`)
-      return null
-    }
+  private async bulkCreateMenuItemVariants(data: MenuItemVariantInsert[]): Promise<{ id: string; name: string; category_id: string }[]> {
+    if (data.length === 0) return []
 
+    const validated = data.map((d) => MenuItemVariantInsertSchema.parse(d))
     const { data: result, error } = await this.supabaseAdmin
       .from('menu_item_variants')
-      .insert(validation.data)
-      .select('id, name')
-      .single()
+      .insert(validated)
+      .select('id, name, category_id')
 
     if (error) {
-      this.errors.push(`MenuItemVariant creation failed (${data.name}): ${error.message}`)
-      return null
+      this.errors.push(`Bulk menu item variant creation failed: ${error.message}`)
+      return []
     }
 
-    return result
+    return result || []
+  }
+
+  private async bulkCreateTables(data: TableInsert[]): Promise<{ id: string; name: string; zone: string | null }[]> {
+    if (data.length === 0) return []
+
+    const validated = data.map((d) => TableInsertSchema.parse(d))
+    const { data: result, error } = await this.supabaseAdmin
+      .from('tables')
+      .insert(validated)
+      .select('id, name, zone')
+
+    if (error) {
+      this.errors.push(`Bulk table creation failed: ${error.message}`)
+      return []
+    }
+
+    return result || []
   }
 }
 
@@ -307,8 +341,9 @@ export class SeedDataService {
 export async function seedTenantData(
   tenantId: string,
   menuId: string,
-  businessType: TenantType
+  businessType: TenantType,
+  locationId?: string
 ): Promise<SeedResult> {
-  const service = new SeedDataService(tenantId, menuId)
+  const service = new SeedDataService(tenantId, menuId, locationId)
   return service.seedForBusinessType(businessType)
 }
