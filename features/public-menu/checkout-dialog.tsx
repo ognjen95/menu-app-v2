@@ -18,6 +18,8 @@ import {
   AlertCircle,
   Truck,
 } from 'lucide-react'
+import CurrencyFormat from '@/components/CurrencyFormat'
+import { Currency } from '@/lib/types'
 
 type SelectedVariantInfo = {
   id: string
@@ -228,8 +230,6 @@ export const CheckoutDialog = memo(function CheckoutDialog({
   }
 
   if (!isOpen) return null
-
-  const currencySymbol = currency === 'EUR' ? '€' : currency
 
   return (
     <div 
@@ -499,7 +499,7 @@ export const CheckoutDialog = memo(function CheckoutDialog({
                               <div className="text-xs opacity-70">{variantNames.join(', ')}</div>
                             )}
                           </div>
-                          <span>{currencySymbol}{totalPrice.toFixed(2)}</span>
+                          <CurrencyFormat value={totalPrice} currency={currency as Currency} />
                         </div>
                       )
                     })}
@@ -509,7 +509,7 @@ export const CheckoutDialog = memo(function CheckoutDialog({
                     style={{ borderTop: `1px solid ${colors.foreground}15`, color: colors.foreground }}
                   >
                     <span>{t('total')}</span>
-                    <span>{currencySymbol}{cartTotal.toFixed(2)}</span>
+                    <CurrencyFormat value={cartTotal} currency={currency as Currency} />
                   </div>
                 </div>
 
@@ -571,7 +571,7 @@ export const CheckoutDialog = memo(function CheckoutDialog({
                   </>
                 ) : (
                   <>
-                    {formData.paymentMethod === 'online' ? t('proceedToPayment') : t('placeOrder')} - {currencySymbol}{cartTotal.toFixed(2)}
+                    {formData.paymentMethod === 'online' ? t('proceedToPayment') : t('placeOrder')} - <CurrencyFormat value={cartTotal} currency={currency as Currency} />
                   </>
                 )}
               </button>

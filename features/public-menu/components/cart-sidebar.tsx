@@ -136,7 +136,8 @@ export const CartSidebar = memo(function CartSidebar(props: CartSidebarProps) {
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
-        side="right"
+        side="bottom"
+        fullHeight
         className="w-full p-0 flex flex-col h-full overflow-hidden"
         style={{ backgroundColor: theme.background, borderColor }}
         renderCloseButton={() => (
