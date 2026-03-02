@@ -38,7 +38,7 @@ interface TableCardProps {
   }
   onPreviewQr: (qr: QrCode) => void
   onCopyUrl: (url: string, id: string) => void
-  onDownloadQr: (qr: QrCode) => void
+  onDownloadQr: (qr: QrCode, tableName: string, zone?: string) => void
   onEditQr: (qr: QrCode) => void
   onGenerateQr: (tableId: string) => void
   onDeleteClick: (table: Table) => void
@@ -146,7 +146,7 @@ export function TableCard({
                   size="icon"
                   variant="ghost"
                   className="h-8 w-8 shrink-0"
-                  onClick={() => onDownloadQr(qrCode)}
+                  onClick={() => onDownloadQr(qrCode, table.name, table.zone || undefined)}
                   title={t.downloadQr}
                 >
                   <Download className="h-3.5 w-3.5" />

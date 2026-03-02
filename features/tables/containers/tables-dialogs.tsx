@@ -42,7 +42,7 @@ export function useTablesDialogs(locationId: string | null) {
     setTimeout(() => setCopiedId(null), 2000)
   }, [])
 
-  const downloadQr = useCallback((qrCode: QrCode) => {
+  const downloadQr = useCallback((qrCode: QrCode, tableName?: string, zone?: string) => {
     const svg = document.getElementById(`qr-${qrCode.id}`)
     if (!svg) return
     const svgData = new XMLSerializer().serializeToString(svg)
@@ -54,7 +54,9 @@ export function useTablesDialogs(locationId: string | null) {
       canvas.height = 512
       ctx?.drawImage(img, 0, 0, 512, 512)
       const link = document.createElement('a')
-      link.download = `qr-${qrCode.code}.png`
+      // Format: [table name]-[zone].png or [table name].png if no zone
+      const filename = zone ? `${tableName}-${zone}.png` : `${tableName || qrCode.code}.png`
+      link.download = filename.replace(/\s+/g, '_')
       link.href = canvas.toDataURL('image/png')
       link.click()
     }

@@ -37,7 +37,7 @@ interface TablesGridProps {
   onAddTable: (zone?: string) => void
   onPreviewQr: (qr: QrCode) => void
   onCopyUrl: (url: string, id: string) => void
-  onDownloadQr: (qr: QrCode) => void
+  onDownloadQr: (qr: QrCode, tableName: string, zone?: string) => void
   onEditQr: (qr: QrCode) => void
   onGenerateQr: (tableId: string) => void
   onDeleteClick: (table: Table) => void

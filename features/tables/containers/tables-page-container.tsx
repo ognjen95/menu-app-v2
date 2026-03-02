@@ -143,9 +143,17 @@ export function TablesPageContainer({ initialData }: TablesPageContainerProps) {
     const JSZip = (await import('jszip')).default
     const zip = new JSZip()
     
+    // Create a map for O(1) table lookups instead of O(n) find in loop
+    const tableMap = new Map(tables.map(t => [t.id, t]))
+    
     for (const qrCode of qrCodes) {
       const svg = document.getElementById(`qr-${qrCode.id}`)
       if (!svg) continue
+      
+      // O(1) lookup
+      const table = qrCode.table_id ? tableMap.get(qrCode.table_id) : undefined
+      const tableName = table?.name || qrCode.code
+      const zone = table?.zone
       
       const svgData = new XMLSerializer().serializeToString(svg)
       const canvas = document.createElement('canvas')
@@ -159,7 +167,9 @@ export function TablesPageContainer({ initialData }: TablesPageContainerProps) {
           ctx?.drawImage(img, 0, 0, 512, 512)
           const dataUrl = canvas.toDataURL('image/png')
           const base64 = dataUrl.split(',')[1]
-          zip.file(`qr-${qrCode.code}.png`, base64, { base64: true })
+          // Format: [table name]-[zone].png or [table name].png if no zone
+          const filename = zone ? `${tableName}-${zone}.png` : `${tableName}.png`
+          zip.file(filename.replace(/\s+/g, '_'), base64, { base64: true })
           resolve()
         }
         img.src = 'data:image/svg+xml;base64,' + btoa(svgData)
@@ -172,7 +182,7 @@ export function TablesPageContainer({ initialData }: TablesPageContainerProps) {
     link.href = URL.createObjectURL(blob)
     link.click()
     URL.revokeObjectURL(link.href)
-  }, [qrCodes])
+  }, [qrCodes, tables])
 
   return (
     <div className="space-y-4 md:space-y-6">
