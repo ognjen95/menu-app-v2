@@ -1,4 +1,153 @@
 {
+  "landing": {
+    "nav": {
+      "home": "Home",
+      "features": "Features",
+      "pricing": "Pricing",
+      "contact": "Contact",
+      "getStarted": "Get Started"
+    },
+    "hero": {
+      "title": "POS Lite is all your business needs.",
+      "subtitle": "Simplify ordering and payments for your customers and your staff. No extra hardware, all you need is internet & phone or laptop.",
+      "cta": "Get Started",
+      "viewPricing": "View Pricing",
+      "freeBadge": "Free for 3 months!",
+      "trustedBy": "KLOPAY.APP HAS BEEN TRUSTED BY"
+    },
+    "features": {
+      "title": "Transform Your Restaurant",
+      "subtitle": "Klopay.app offers an integrated platform to boost efficiency, enhance customer experience, and drive your business forward.",
+      "qrMenu": {
+        "title": "Interactive QR Menu",
+        "description": "Give your customers a modern ordering experience with beautiful digital menus accessed via QR."
+      },
+      "fastOrdering": {
+        "title": "Fast & Accurate Ordering",
+        "description": "Reduce errors and speed up service with intuitive digital ordering, whether from customers' phones or your waitstaff's devices."
+      },
+      "growBusiness": {
+        "title": "Grow Your Business",
+        "description": "Gain valuable insights into sales trends and customer preferences, helping you optimize your menu and marketing strategies."
+      },
+      "workflow": {
+        "title": "Streamlined Workflow",
+        "description": "Manage your entire restaurant, from inventory to payments, with a system designed for maximum operational efficiency."
+      },
+      "realtime": {
+        "title": "Real-Time Communication",
+        "description": "Ensure perfect coordination between front-of-house and kitchen with instant, reliable order transmission."
+      },
+      "viewDemo": "View Demo"
+    },
+    "reimagined": {
+      "title": "Your Restaurant, Reimagined for the Digital Age.",
+      "subtitle": "Klopay.app offers an integrated platform to boost efficiency, enhance customer experience, and drive your business forward.",
+      "easyOrder": "Easy Order & Pay",
+      "secure": "Trustworthy & Secure",
+      "waiterApp": "Waiter ordering app"
+    },
+    "websiteBuilder": {
+      "title": "Build Your Restaurant's Online Presence.",
+      "subtitle": "No need to hire expensive web designers. Klopay.app's intuitive website builder allows you to effortlessly create a professional online home for your restaurant. Select from predefined themes and sections, add your text, images, and colors to perfectly match your brand – all in minutes.",
+      "brandControl": "Complete Brand Control",
+      "translation": "Multi-Language Support",
+      "uptime": "99.99% Uptime guarantee",
+      "seo": "SEO Optimized"
+    },
+    "translations": {
+      "title": "Themes & Translations",
+      "subtitle": "Klopay.app ensures your restaurant's digital presence is accessible and appealing to everyone. Choose from a variety of stunning themes to perfectly brand your menu and website, then effortlessly reach a wider audience with built-in multi-language support.",
+      "tryNow": "Try It Now"
+    },
+    "statistics": {
+      "title": "Know Your Business Inside Out",
+      "subtitle": "Get powerful analytics and insights to make data-driven decisions.",
+      "bestWaiter": "Best Performing Waiter",
+      "bestWaiterDesc": "Track staff performance and reward your top performers.",
+      "mostSold": "Most Sold Items",
+      "mostSoldDesc": "Identify your bestsellers and optimize your menu.",
+      "revenue": "Revenue Analytics",
+      "revenueDesc": "Monitor daily, weekly, and monthly revenue trends.",
+      "realtime": "Real-Time Dashboard",
+      "realtimeDesc": "See what's happening in your restaurant right now."
+    },
+    "ai": {
+      "title": "AI-Powered Features",
+      "subtitle": "Let artificial intelligence help you create stunning menus and reach global audiences.",
+      "translation": "AI Translation",
+      "translationDesc": "Automatically translate your menu to any language with one click.",
+      "images": "AI Image Generation",
+      "imagesDesc": "Generate beautiful food images for your menu items.",
+      "comingSoon": "Coming Soon"
+    },
+    "pricing": {
+      "title": "Simple, Transparent Pricing",
+      "subtitle": "Start free for 3 months. No credit card required.",
+      "free": {
+        "title": "Free Trial",
+        "price": "€0",
+        "period": "for 3 months",
+        "features": ["Unlimited orders", "QR code menus", "Basic analytics", "1 location", "Email support"],
+        "cta": "Start Free Trial"
+      },
+      "basic": {
+        "title": "Basic",
+        "price": "€29",
+        "period": "/month",
+        "features": ["Everything in Free", "Website builder", "Advanced analytics", "Priority support", "Custom branding"],
+        "cta": "Get Started"
+      },
+      "pro": {
+        "title": "Pro",
+        "price": "€79",
+        "period": "/month",
+        "features": ["Everything in Basic", "Multiple locations", "AI features", "API access", "Dedicated support"],
+        "cta": "Contact Sales",
+        "popular": "Most Popular"
+      }
+    },
+    "testimonials": {
+      "title": "What our users say?",
+      "items": [
+        {
+          "quote": "Klopay transformed how we handle orders. Our customers love scanning QR codes and ordering directly from their phones!",
+          "author": "Marko P.",
+          "role": "Restaurant Owner"
+        },
+        {
+          "quote": "The analytics helped us identify our best-selling dishes. We increased revenue by 30% in just 2 months.",
+          "author": "Ana S.",
+          "role": "Cafe Manager"
+        },
+        {
+          "quote": "Finally, a POS system that doesn't require expensive hardware. Setup took 15 minutes and we were live!",
+          "author": "Stefan M.",
+          "role": "Bar Owner"
+        }
+      ]
+    },
+    "cta": {
+      "title": "Ready to Transform Your Restaurant?",
+      "subtitle": "Join hundreds of restaurants already using Klopay to streamline their operations.",
+      "button": "Get Started Free"
+    },
+    "footer": {
+      "tagline": "POS Lite for modern restaurants",
+      "product": "Product",
+      "features": "Features",
+      "pricing": "Pricing",
+      "demo": "Demo",
+      "company": "Company",
+      "about": "About",
+      "contact": "Contact",
+      "blog": "Blog",
+      "legal": "Legal",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "copyright": "© 2024 Klopay.app. All rights reserved."
+    }
+  },
   "checkoutDialog": {
     "checkout": "Checkout",
     "payment": "Payment",

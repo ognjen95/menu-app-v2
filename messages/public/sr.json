@@ -1,4 +1,153 @@
 {
+  "landing": {
+    "nav": {
+      "home": "Početna",
+      "features": "Funkcije",
+      "pricing": "Cene",
+      "contact": "Kontakt",
+      "getStarted": "Započni"
+    },
+    "hero": {
+      "title": "POS Lite je sve što vašem biznisu treba.",
+      "subtitle": "Pojednostavite naručivanje i plaćanje za vaše goste i osoblje. Bez dodatne opreme, sve što vam treba je internet i telefon ili laptop.",
+      "cta": "Započni",
+      "viewPricing": "Pogledaj cene",
+      "freeBadge": "Besplatno 3 meseca!",
+      "trustedBy": "KLOPAY.APP KORISTE"
+    },
+    "features": {
+      "title": "Transformišite Vaš Restoran",
+      "subtitle": "Klopay.app nudi integrisanu platformu za povećanje efikasnosti, poboljšanje korisničkog iskustva i unapređenje vašeg poslovanja.",
+      "qrMenu": {
+        "title": "Interaktivni QR Meni",
+        "description": "Pružite gostima moderno iskustvo naručivanja sa prelepim digitalnim menijima dostupnim putem QR koda."
+      },
+      "fastOrdering": {
+        "title": "Brzo i Precizno Naručivanje",
+        "description": "Smanjite greške i ubrzajte uslugu sa intuitivnim digitalnim naručivanjem, bilo sa telefona gostiju ili uređaja vašeg osoblja."
+      },
+      "growBusiness": {
+        "title": "Razvijajte Svoj Biznis",
+        "description": "Dobijte vredne uvide u trendove prodaje i preferencije kupaca, što vam pomaže da optimizujete meni i marketing strategije."
+      },
+      "workflow": {
+        "title": "Pojednostavljen Radni Tok",
+        "description": "Upravljajte celim restoranom, od inventara do plaćanja, sa sistemom dizajniranim za maksimalnu operativnu efikasnost."
+      },
+      "realtime": {
+        "title": "Komunikacija u Realnom Vremenu",
+        "description": "Osigurajte savršenu koordinaciju između sale i kuhinje sa trenutnim, pouzdanim prenosom porudžbina."
+      },
+      "viewDemo": "Pogledaj Demo"
+    },
+    "reimagined": {
+      "title": "Vaš Restoran, Redizajniran za Digitalno Doba.",
+      "subtitle": "Klopay.app nudi integrisanu platformu za povećanje efikasnosti, poboljšanje korisničkog iskustva i unapređenje vašeg poslovanja.",
+      "easyOrder": "Lako Naručivanje i Plaćanje",
+      "secure": "Pouzdano i Sigurno",
+      "waiterApp": "Aplikacija za Konobare"
+    },
+    "websiteBuilder": {
+      "title": "Izgradite Online Prisustvo Vašeg Restorana.",
+      "subtitle": "Nema potrebe za skupim web dizajnerima. Klopay.app-ov intuitivan website builder vam omogućava da bez napora kreirate profesionalnu online prezentaciju vašeg restorana. Izaberite unapred definisane teme i sekcije, dodajte svoj tekst, slike i boje kako biste savršeno uskladili sa vašim brendom – sve za nekoliko minuta.",
+      "brandControl": "Potpuna Kontrola Brenda",
+      "translation": "Višejezična Podrška",
+      "uptime": "99.99% Garancija dostupnosti",
+      "seo": "SEO Optimizovano"
+    },
+    "translations": {
+      "title": "Teme i Prevodi",
+      "subtitle": "Klopay.app osigurava da digitalno prisustvo vašeg restorana bude dostupno i privlačno svima. Izaberite između raznih atraktivnih tema za savršeno brendiranje menija i sajta, zatim bez napora dođite do šire publike sa ugrađenom višejezičnom podrškom.",
+      "tryNow": "Probaj Sada"
+    },
+    "statistics": {
+      "title": "Poznajte Svoj Biznis u Potpunosti",
+      "subtitle": "Dobijte moćnu analitiku i uvide za donošenje odluka zasnovanih na podacima.",
+      "bestWaiter": "Najbolji Konobar",
+      "bestWaiterDesc": "Pratite performanse osoblja i nagradite najbolje.",
+      "mostSold": "Najprodavaniji Artikli",
+      "mostSoldDesc": "Identifikujte bestselere i optimizujte meni.",
+      "revenue": "Analitika Prihoda",
+      "revenueDesc": "Pratite dnevne, nedeljne i mesečne trendove prihoda.",
+      "realtime": "Dashboard u Realnom Vremenu",
+      "realtimeDesc": "Vidite šta se dešava u vašem restoranu upravo sada."
+    },
+    "ai": {
+      "title": "AI Funkcije",
+      "subtitle": "Neka vam veštačka inteligencija pomogne da kreirate upečatljive menije i dođete do globalne publike.",
+      "translation": "AI Prevod",
+      "translationDesc": "Automatski prevedite meni na bilo koji jezik jednim klikom.",
+      "images": "AI Generisanje Slika",
+      "imagesDesc": "Generišite prelepe slike hrane za stavke vašeg menija.",
+      "comingSoon": "Uskoro"
+    },
+    "pricing": {
+      "title": "Jednostavne, Transparentne Cene",
+      "subtitle": "Počnite besplatno 3 meseca. Nije potrebna kartica.",
+      "free": {
+        "title": "Besplatna Proba",
+        "price": "€0",
+        "period": "za 3 meseca",
+        "features": ["Neograničene porudžbine", "QR kod meniji", "Osnovna analitika", "1 lokacija", "Email podrška"],
+        "cta": "Započni Besplatno"
+      },
+      "basic": {
+        "title": "Basic",
+        "price": "€29",
+        "period": "/mesečno",
+        "features": ["Sve iz Free", "Website builder", "Napredna analitika", "Prioritetna podrška", "Prilagođeni brend"],
+        "cta": "Započni"
+      },
+      "pro": {
+        "title": "Pro",
+        "price": "€79",
+        "period": "/mesečno",
+        "features": ["Sve iz Basic", "Više lokacija", "AI funkcije", "API pristup", "Dedicirani support"],
+        "cta": "Kontaktiraj Prodaju",
+        "popular": "Najpopularniji"
+      }
+    },
+    "testimonials": {
+      "title": "Šta kažu naši korisnici?",
+      "items": [
+        {
+          "quote": "Klopay je transformisao način na koji obrađujemo porudžbine. Naši gosti obožavaju skeniranje QR kodova i naručivanje direktno sa telefona!",
+          "author": "Marko P.",
+          "role": "Vlasnik Restorana"
+        },
+        {
+          "quote": "Analitika nam je pomogla da identifikujemo najprodavanije jela. Povećali smo prihod za 30% za samo 2 meseca.",
+          "author": "Ana S.",
+          "role": "Menadžer Kafića"
+        },
+        {
+          "quote": "Konačno, POS sistem koji ne zahteva skupu opremu. Postavka je trajala 15 minuta i bili smo online!",
+          "author": "Stefan M.",
+          "role": "Vlasnik Bara"
+        }
+      ]
+    },
+    "cta": {
+      "title": "Spremni da Transformišete Vaš Restoran?",
+      "subtitle": "Pridružite se stotinama restorana koji već koriste Klopay za pojednostavljenje operacija.",
+      "button": "Započni Besplatno"
+    },
+    "footer": {
+      "tagline": "POS Lite za moderne restorane",
+      "product": "Proizvod",
+      "features": "Funkcije",
+      "pricing": "Cene",
+      "demo": "Demo",
+      "company": "Kompanija",
+      "about": "O nama",
+      "contact": "Kontakt",
+      "blog": "Blog",
+      "legal": "Pravno",
+      "privacy": "Politika Privatnosti",
+      "terms": "Uslovi Korišćenja",
+      "copyright": "© 2024 Klopay.app. Sva prava zadržana."
+    }
+  },
   "checkoutDialog": {
     "checkout": "Plaćanje",
     "payment": "Plaćanje",

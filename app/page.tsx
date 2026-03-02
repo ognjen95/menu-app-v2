@@ -1,7 +1,16 @@
-import { redirect } from 'next/navigation'
+import { getLocale } from 'next-intl/server'
+import { NextIntlClientProvider } from 'next-intl'
+import { LandingPageClient } from './landing-client'
 
-const url = process.env.NEXT_PUBLIC_LANDING_PAGE || 'https://klopay-app-landing.webflow.io';
+export default async function LandingPage() {
+  const locale = await getLocale()
+  
+  // Load public translations directly from the public folder
+  const messages = (await import(`../messages/public/${locale}.json`)).default
 
-export default function LandingPage() {
-  redirect(url)
+  return (
+    <NextIntlClientProvider locale={locale} messages={messages}>
+      <LandingPageClient />
+    </NextIntlClientProvider>
+  )
 }

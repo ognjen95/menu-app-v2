@@ -330,14 +330,14 @@ export const OrdersKanban = memo(function OrdersKanban({
     >
       <div
         ref={kanbanRef}
-        className="overflow-x-auto cursor-grab select-none"
+        className="overflow-x-auto lg:overflow-x-hidden cursor-grab select-none"
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
         <motion.div
-          className="grid  min-h-[calc(100vh-280px)] pb-4 items-stretch"
+          className="grid  min-h-[calc(100vh-280px)] pb-4 items-stretch gap-3"
           style={{ gridTemplateColumns: gridTemplate }}
           initial="initial"
           animate="animate"

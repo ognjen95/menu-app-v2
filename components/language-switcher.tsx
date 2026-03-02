@@ -9,7 +9,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
-import { Globe } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
+
+const localeFlags: Record<Locale, string> = {
+  en: '🇬🇧',
+  es: '🇪🇸',
+  sr: '🇷🇸',
+}
 
 export function LanguageSwitcher() {
   const locale = useLocale() as Locale
@@ -22,8 +28,9 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Globe className="h-5 w-5" />
+        <Button variant="ghost" size="sm" className="gap-1.5">
+          <span className="text-lg">{localeFlags[locale]}</span>
+          <ChevronDown className="h-3.5 w-3.5 opacity-50" />
           <span className="sr-only">Switch language</span>
         </Button>
       </DropdownMenuTrigger>
@@ -34,6 +41,7 @@ export function LanguageSwitcher() {
             onClick={() => setLocale(loc)}
             className={locale === loc ? 'bg-muted' : ''}
           >
+            <span className="text-lg mr-2">{localeFlags[loc]}</span>
             {localeLabels[loc]}
           </DropdownMenuItem>
         ))}
