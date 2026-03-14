@@ -1,7 +1,7 @@
 'use client'
 
 import { useLocale } from 'next-intl'
-import { locales, localeLabels, type Locale } from '@/i18n/config'
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,43 +9,71 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
-import { ChevronDown } from 'lucide-react'
+import { useAllActiveLanguages, useAllActivePublicLanguages, useTenantPublicLanguages } from '@/features/translations'
+import { Language } from '@/lib/types'
+import { CookieLocale } from '@/i18n/config'
 
-const localeFlags: Record<Locale, string> = {
-  en: '🇬🇧',
-  es: '🇪🇸',
-  sr: '🇷🇸',
+interface LanguageSwitcherProps {
+  languages: Language[]
+  isPublic: boolean
 }
 
-export function LanguageSwitcher() {
-  const locale = useLocale() as Locale
+function LanguageSwitcherComponent({ languages, isPublic }: LanguageSwitcherProps) {
+  const locale = useLocale()
+  const cookieKey = isPublic ? CookieLocale.PUBLIC : CookieLocale.APP
 
-  const setLocale = (newLocale: Locale) => {
-    document.cookie = `NEXT_LOCALE=${newLocale};path=/;max-age=31536000`
-    window.location.reload()
+  const setLocale = (newLocale: string) => {
+    document.cookie = `${cookieKey}=${newLocale};path=/;max-age=31536000`
+
+    const url = new URL(window.location.href)
+    window.location.href = url.toString()
+  }
+
+  const getCountryFlag = (localeCode: string) => {
+    const country = languages.find((lang) => lang.code === localeCode)
+    return country?.flag_emoji || '🌐'
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-1.5">
-          <span className="text-lg">{localeFlags[locale]}</span>
-          <ChevronDown className="h-3.5 w-3.5 opacity-50" />
-          <span className="sr-only">Switch language</span>
+        <Button variant="ghost" size="icon" className="gap-1.5">
+          <span className="text-xl">{getCountryFlag(locale)}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {locales.map((loc) => (
+        {languages.map((lang) => (
           <DropdownMenuItem
-            key={loc}
-            onClick={() => setLocale(loc)}
-            className={locale === loc ? 'bg-muted' : ''}
+            key={lang.code}
+            onClick={() => setLocale(lang.code)}
+            className={locale === lang.code ? 'bg-muted' : ''}
           >
-            <span className="text-lg mr-2">{localeFlags[loc]}</span>
-            {localeLabels[loc]}
+            <span className="text-lg mr-2">{getCountryFlag(lang.code)}</span>
+            {lang.native_name}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
   )
+}
+
+export const AppLanguagesSwitcher = () => {
+  const { data: allLangsData } = useAllActiveLanguages()
+  const languages = allLangsData?.data?.languages || []
+
+  return <LanguageSwitcherComponent languages={languages} isPublic={false} />
+}
+
+export const PublicLanguagesSwitcher = () => {
+  const { data: allLangsData } = useAllActivePublicLanguages()
+  const languages = allLangsData?.data?.languages || []
+
+  return <LanguageSwitcherComponent languages={languages} isPublic={true} />
+}
+
+export const TenantPublicLanguagesSwitcher = ({ tenantId }: { tenantId: string }) => {
+  const { data: tenantLangsData } = useTenantPublicLanguages(tenantId)
+  const languages = tenantLangsData?.data?.languages.filter((lang) => lang.is_enabled)?.map((lang) => lang.language) || []
+
+  return <LanguageSwitcherComponent languages={languages} isPublic={true} />
 }

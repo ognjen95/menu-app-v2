@@ -1,0 +1,303 @@
+{
+  "landing": {
+    "nav": {
+      "home": "Home",
+      "features": "Caratteristiche",
+      "pricing": "Prezzi",
+      "contact": "Contatti",
+      "getStarted": "Inizia Ora"
+    },
+    "hero": {
+      "title": "POS Lite è tutto ciò di cui la tua attività ha bisogno.",
+      "subtitle": "Semplifica gli ordini e i pagamenti per i tuoi clienti e il tuo staff. Nessun hardware aggiuntivo, tutto ciò che serve è internet e un telefono o un laptop.",
+      "cta": "Inizia Ora",
+      "viewPricing": "Visualizza Prezzi",
+      "freeBadge": "Gratis per 3 mesi!",
+      "trustedBy": "KLOPAY.APP È STATO SCELTO DA"
+    },
+    "features": {
+      "title": "Trasforma il Tuo Ristorante",
+      "subtitle": "Klopay.app offre una piattaforma integrata per aumentare l'efficienza, migliorare l'esperienza del cliente e far crescere la tua attività.",
+      "qrMenu": {
+        "title": "Menu QR Interattivo",
+        "description": "Offri ai tuoi clienti un'esperienza di ordinazione moderna con bellissimi menu digitali accessibili tramite codice QR."
+      },
+      "fastOrdering": {
+        "title": "Ordinazione Veloce e Precisa",
+        "description": "Riduci gli errori e accelera il servizio con ordinazione digitale intuitiva, sia dai telefoni dei clienti che dai dispositivi del tuo staff."
+      },
+      "growBusiness": {
+        "title": "Fai Crescere la Tua Attività",
+        "description": "Ottieni preziose informazioni sulle tendenze di vendita e le preferenze dei clienti, aiutandoti a ottimizzare il tuo menu e le strategie di marketing."
+      },
+      "workflow": {
+        "title": "Flusso di Lavoro Semplificato",
+        "description": "Gestisci l'intero ristorante, dall'inventario ai pagamenti, con un sistema progettato per la massima efficienza operativa."
+      },
+      "realtime": {
+        "title": "Comunicazione in Tempo Reale",
+        "description": "Assicura una perfetta coordinazione tra la sala e la cucina con trasmissione degli ordini istantanea e affidabile."
+      },
+      "viewDemo": "Visualizza Demo"
+    },
+    "reimagined": {
+      "title": "Il Tuo Ristorante, Ripensato per l'Era Digitale.",
+      "subtitle": "Klopay.app offre una piattaforma integrata per aumentare l'efficienza, migliorare l'esperienza del cliente e far crescere la tua attività.",
+      "easyOrder": "Ordinazione e Pagamento Facili",
+      "secure": "Affidabile e Sicuro",
+      "waiterApp": "App di ordinazione per camerieri"
+    },
+    "websiteBuilder": {
+      "title": "Costruisci la Presenza Online del Tuo Ristorante.",
+      "subtitle": "Non è necessario assumere costosi designer web. Il builder di siti web intuitivo di Klopay.app ti consente di creare facilmente una home online professionale per il tuo ristorante. Scegli tra temi e sezioni predefiniti, aggiungi il tuo testo, immagini e colori per abbinare perfettamente il tuo marchio – tutto in pochi minuti.",
+      "brandControl": "Controllo Completo del Marchio",
+      "translation": "Supporto Multilingue",
+      "uptime": "Garanzia di disponibilità 99,99%",
+      "seo": "Ottimizzato per SEO"
+    },
+    "translations": {
+      "title": "Temi e Traduzioni",
+      "subtitle": "Klopay.app assicura che la presenza digitale del tuo ristorante sia accessibile e attraente per tutti. Scegli tra una varietà di temi straordinari per personalizzare perfettamente il tuo menu e il tuo sito web, quindi raggiungi facilmente un pubblico più ampio con il supporto multilingue integrato.",
+      "tryNow": "Prova Ora"
+    },
+    "statistics": {
+      "title": "Conosci la Tua Attività a Fondo",
+      "subtitle": "Ottieni analitiche potenti e approfondimenti per prendere decisioni basate sui dati.",
+      "bestWaiter": "Cameriere Migliore",
+      "bestWaiterDesc": "Traccia le prestazioni del personale e premia i tuoi migliori performer.",
+      "mostSold": "Articoli Più Venduti",
+      "mostSoldDesc": "Identifica i tuoi bestseller e ottimizza il tuo menu.",
+      "revenue": "Analitiche di Ricavi",
+      "revenueDesc": "Monitora le tendenze dei ricavi giornalieri, settimanali e mensili.",
+      "realtime": "Dashboard in Tempo Reale",
+      "realtimeDesc": "Vedi cosa sta accadendo nel tuo ristorante in questo momento."
+    },
+    "ai": {
+      "title": "Funzionalità Alimentate da IA",
+      "subtitle": "Lascia che l'intelligenza artificiale ti aiuti a creare menu straordinari e raggiungere un pubblico globale.",
+      "translation": "Traduzione IA",
+      "translationDesc": "Traduci automaticamente il tuo menu in qualsiasi lingua con un solo clic.",
+      "images": "Generazione di Immagini IA",
+      "imagesDesc": "Genera bellissime immagini di cibo per gli articoli del tuo menu.",
+      "comingSoon": "Prossimamente"
+    },
+    "pricing": {
+      "title": "Prezzi Semplici e Trasparenti",
+      "subtitle": "Inizia gratuitamente per 3 mesi. Nessuna carta di credito richiesta.",
+      "free": {
+        "title": "Prova Gratuita",
+        "price": "€0",
+        "period": "per 3 mesi",
+        "features": ["Ordini illimitati", "Menu codice QR", "Analitiche di base", "1 ubicazione", "Supporto email"],
+        "cta": "Inizia Prova Gratuita"
+      },
+      "basic": {
+        "title": "Base",
+        "price": "€29",
+        "period": "/mese",
+        "features": ["Tutto in Gratuito", "Builder di siti web", "Analitiche avanzate", "Supporto prioritario", "Branding personalizzato"],
+        "cta": "Inizia Ora"
+      },
+      "pro": {
+        "title": "Pro",
+        "price": "€79",
+        "period": "/mese",
+        "features": ["Tutto in Base", "Più ubicazioni", "Funzionalità IA", "Accesso API", "Supporto dedicato"],
+        "cta": "Contatta Vendite",
+        "popular": "Più Popolare"
+      }
+    },
+    "testimonials": {
+      "title": "Cosa dicono i nostri utenti?",
+      "items": [
+        {
+          "quote": "Klopay ha trasformato il modo in cui gestiamo gli ordini. I nostri clienti adorano scansionare i codici QR e ordinare direttamente dai loro telefoni!",
+          "author": "Marko P.",
+          "role": "Proprietario di Ristorante"
+        },
+        {
+          "quote": "Le analitiche ci hanno aiutato a identificare i nostri piatti più venduti. Abbiamo aumentato i ricavi del 30% in soli 2 mesi.",
+          "author": "Ana S.",
+          "role": "Responsabile Caffetteria"
+        },
+        {
+          "quote": "Finalmente, un sistema POS che non richiede hardware costoso. La configurazione ha richiesto 15 minuti e siamo stati online!",
+          "author": "Stefan M.",
+          "role": "Proprietario di Bar"
+        }
+      ]
+    },
+    "cta": {
+      "title": "Pronto a Trasformare il Tuo Ristorante?",
+      "subtitle": "Unisciti a centinaia di ristoranti che già utilizzano Klopay per semplificare le loro operazioni.",
+      "button": "Inizia Gratuitamente"
+    },
+    "footer": {
+      "tagline": "POS Lite per ristoranti moderni",
+      "product": "Prodotto",
+      "features": "Caratteristiche",
+      "pricing": "Prezzi",
+      "demo": "Demo",
+      "company": "Azienda",
+      "about": "Chi Siamo",
+      "contact": "Contatti",
+      "blog": "Blog",
+      "legal": "Legale",
+      "privacy": "Politica sulla Privacy",
+      "terms": "Termini di Servizio",
+      "copyright": "© 2024 Klopay.app. Tutti i diritti riservati."
+    }
+  },
+  "checkoutDialog": {
+    "checkout": "Cassa",
+    "payment": "Pagamento",
+    "orderConfirmed": "Ordine Confermato",
+    "yourOrder": "Il Tuo Ordine",
+    "items": "articoli",
+    "orderDetails": "Dettagli Ordine",
+    "orderType": "Tipo di Ordine",
+    "dineIn": "Consumazione al Tavolo",
+    "takeaway": "Asporto",
+    "delivery": "Consegna",
+    "dineInOrder": "Ordine Consumazione al Tavolo",
+    "takeawayOrder": "Ordine Asporto",
+    "deliveryOrder": "Ordine Consegna",
+    "tableNumber": "Numero Tavolo",
+    "selectTable": "Seleziona un tavolo",
+    "customerInfo": "Informazioni Cliente",
+    "yourDetailsRequired": "I Tuoi Dati (Obbligatori)",
+    "yourDetailsOptional": "I Tuoi Dati (Opzionali)",
+    "deliveryRequiredMessage": "Nome, telefono e indirizzo di consegna sono obbligatori per gli ordini di consegna",
+    "name": "Nome",
+    "nameRequired": "Nome *",
+    "namePlaceholder": "Il tuo nome",
+    "phone": "Numero di telefono",
+    "phoneRequired": "Numero di telefono *",
+    "phonePlaceholder": "Il tuo numero di telefono",
+    "email": "Email (per ricevuta)",
+    "deliveryAddress": "Indirizzo di consegna *",
+    "addressPlaceholder": "Il tuo indirizzo di consegna",
+    "specialRequests": "Richieste Speciali",
+    "specialRequestsPlaceholder": "Allergie o richieste speciali...",
+    "specialInstructions": "Istruzioni Speciali",
+    "instructionsPlaceholder": "Richieste speciali?",
+    "paymentMethod": "Metodo di Pagamento",
+    "payAtCounter": "Paga al Banco",
+    "payAtCounterDesc": "Contanti o carta quando pronto",
+    "payAtCounterMessage": "Si prega di pagare al banco quando l'ordine è pronto.",
+    "payOnDelivery": "Paga alla Consegna",
+    "payOnline": "Paga Online",
+    "payOnlineDesc": "Pagamento sicuro con carta",
+    "paymentConfirmed": "Pagamento confermato. Grazie!",
+    "orderSummary": "Riepilogo Ordine",
+    "subtotal": "Subtotale",
+    "tax": "Tasse",
+    "total": "Totale",
+    "placeOrder": "Effettua Ordine",
+    "proceedToPayment": "Procedi al Pagamento",
+    "placingOrder": "Effettuazione Ordine...",
+    "processing": "Elaborazione...",
+    "orderPlaced": "Ordine Effettuato!",
+    "orderSentTo": "Il tuo ordine è stato inviato a {tenantName}",
+    "orderNumber": "Numero Ordine",
+    "emptyCart": "Il tuo carrello è vuoto",
+    "remove": "Rimuovi",
+    "done": "Fatto"
+  },
+  "publicMenuView": {
+    "searchPlaceholder": "Cerca nel menu...",
+    "all": "Tutto",
+    "noItemsFound": "Nessun articolo trovato",
+    "tryDifferentSearch": "Prova un termine di ricerca diverso",
+    "addToCart": "Aggiungi al Carrello",
+    "addToOrder": "Aggiungi all'ordine",
+    "outOfStock": "Esaurito",
+    "popular": "Popolare",
+    "new": "Nuovo",
+    "sale": "Offerta",
+    "spicy": "Piccante",
+    "dietary": "Dietetico",
+    "allergens": "Allergeni",
+    "size": "Dimensione",
+    "yourOrder": "Il Tuo Ordine",
+    "cart": "Carrello",
+    "viewCart": "Visualizza Carrello",
+    "viewOrder": "Visualizza ordine",
+    "cartEmpty": "Il tuo carrello è vuoto",
+    "clearCart": "Svuota Carrello",
+    "total": "Totale",
+    "checkout": "Cassa",
+    "placeOrder": "Effettua Ordine",
+    "selectOptions": "Seleziona Opzioni",
+    "selectMultiple": "seleziona multipli",
+    "required": "Obbligatorio",
+    "optional": "Opzionale",
+    "add": "Aggiungi",
+    "customize": "Personalizza",
+    "quantity": "Quantità",
+    "notes": "Note",
+    "notesPlaceholder": "Richieste speciali...",
+    "save": "Salva",
+    "min": "min",
+    "kcal": "kcal",
+    "history": "Cronologia Ordini",
+    "noHistory": "Nessun ordine attivo per questo tavolo",
+    "orderStatus": {
+      "draft": "Bozza",
+      "placed": "Effettuato",
+      "accepted": "Accettato",
+      "preparing": "In Preparazione",
+      "ready": "Pronto",
+      "served": "Servito"
+    }
+  },
+  "infoSidebar": {
+    "about": "Chi Siamo",
+    "website": "Sito Web",
+    "review": "Recensione",
+    "bookTable": "Prenota Tavolo",
+    "pay": "Paga",
+    "cart": "Carrello",
+    "contact": "Contatti",
+    "openingHours": "Orari di Apertura",
+    "followUs": "Seguici",
+    "poweredBy": "Powered by",
+    "closed": "Chiuso",
+    "mon": "Lun",
+    "tue": "Mar",
+    "wed": "Mer",
+    "thu": "Gio",
+    "fri": "Ven",
+    "sat": "Sab",
+    "sun": "Dom"
+  },
+  "dietaryTags": {
+    "vegetarian": "Vegetariano",
+    "vegan": "Vegano",
+    "gluten-free": "Senza Glutine",
+    "halal": "Halal",
+    "kosher": "Kosher",
+    "dairy-free": "Senza Latticini",
+    "nut-free": "Senza Frutta Secca"
+  },
+  "allergens": {
+    "celery": "Sedano",
+    "dairy": "Latticini",
+    "eggs": "Uova",
+    "fish": "Pesce",
+    "gluten": "Glutine",
+    "lupin": "Lupino",
+    "molluscs": "Molluschi",
+    "mustard": "Senape",
+    "peanuts": "Arachidi",
+    "sesame": "Sesamo",
+    "shellfish": "Crostacei",
+    "soy": "Soia",
+    "sulphites": "Solfiti",
+    "nuts": "Frutta Secca"
+  },
+  "gallery": {
+    "clickToView": "Clicca per visualizzare",
+    "navigateHint": "← → per navigare • +/- per ingrandire • Esc per chiudere"
+  }
+}

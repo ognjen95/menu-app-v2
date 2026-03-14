@@ -131,7 +131,9 @@
       "createBusiness": "Create My Business"
     },
     "errors": {
-      "createFailed": "Failed to create business. Please try again."
+      "createFailed": "Failed to create business. Please try again.",
+      "businessNameExists": "Business name already exists",
+      "businessNameExistsDesc": "This business name is already taken. Please choose a different name."
     }
   },
   "order": {

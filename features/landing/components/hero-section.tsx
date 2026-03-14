@@ -8,7 +8,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 const HERO_IMAGE_HORIZONTAL = '/screenshots/orders-desktop.png'
-const HERO_IMAGE_VERTICAL = '/hero-vertical.png'
+const HERO_IMAGE_VERTICAL = '/screenshots/menu-mobile.jpg'
 
 export function HeroSection() {
   const t = useTranslations('landing.hero')
@@ -68,8 +68,7 @@ export function HeroSection() {
               transition={{ delay: 0.3 }}
               className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight"
             >
-              <span className="text-primary">POS</span> Lite is all your{' '}
-              <span className="text-primary">business needs.</span>
+              <span className="text-primary">{t('titlePart1')}</span> & <br/><span className="text-primary">{t('titlePart2')}</span>{' '}
             </motion.h1>
 
             {/* Subtitle */}
@@ -119,15 +118,15 @@ export function HeroSection() {
                 <motion.div
                   animate={{ y: [0, -5, 0] }}
                   transition={{ duration: 4, repeat: Infinity }}
-                  className="rounded-2xl shadow-2xl overflow-hidden border border-border bg-card"
+                  className="rounded-2xl overflow-hidden border border-border bg-card"
                 >
                   <Image
                     src={HERO_IMAGE_HORIZONTAL}
                     alt="Dashboard Preview"
                     width={600}
                     height={400}
-                    className="w-full h-auto"
                     priority
+                    className="w-full h-auto "
                   />
                 </motion.div>
 
@@ -135,7 +134,7 @@ export function HeroSection() {
                 <motion.div
                   animate={{ y: [0, 8, 0] }}
                   transition={{ duration: 5, repeat: Infinity }}
-                  className="absolute -right-4 -bottom-8 w-24 sm:w-32 rounded-xl shadow-2xl overflow-hidden border border-border bg-card"
+                  className="absolute -right-4 -bottom-8 w-24 sm:w-32 rounded-xl shadow-2xl shadow-primary overflow-hidden border border-border bg-card"
                 >
                   <Image
                     src={HERO_IMAGE_VERTICAL}
@@ -160,7 +159,7 @@ export function HeroSection() {
           initial={{ opacity: 0, x: 100 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.6, duration: 0.8 }}
-          className="hidden md:flex items-center absolute inset-y-0 right-0 md:-right-[30%] lg:-right-[10%] shadow-2xl shadow-primary"
+          className="hidden md:flex items-center absolute inset-y-0 right-0 md:-right-[30%] lg:-right-[10%]"
         >
           <div className="relative" style={{ width: 'clamp(550px, 60vw, 1000px)' }}>
             {/* Main Dashboard Mockup */}

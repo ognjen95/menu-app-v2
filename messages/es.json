@@ -131,7 +131,9 @@
       "createBusiness": "Crear Mi Negocio"
     },
     "errors": {
-      "createFailed": "Error al crear el negocio. Por favor, inténtalo de nuevo."
+      "createFailed": "Error al crear el negocio. Por favor, inténtalo de nuevo.",
+      "businessNameExists": "El nombre del negocio ya existe",
+      "businessNameExistsDesc": "Este nombre de negocio ya está en uso. Por favor, elige un nombre diferente."
     }
   },
   "order": {

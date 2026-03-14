@@ -1,10 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase-middleware'
+import { RESERVED_SUBDOMAINS, ROOT_DOMAIN } from './lib/constants/domains'
 
-// Main domain and allowed subdomains that should NOT be treated as tenant subdomains
-const ROOT_DOMAIN = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'klopay.app'
-const RESERVED_SUBDOMAINS = ['www', 'app', 'api', 'admin', 'dashboard', 'staging', 'dev']
-console.log("NODE_ENV", process.env.NODE_ENV)
 /**
  * Extract subdomain from hostname
  * Examples:

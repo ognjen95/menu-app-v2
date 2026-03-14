@@ -18,7 +18,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Sun, Moon, type LucideIcon } from 'lucide-react'
-import { locales, localeLabels, type Locale } from '@/i18n/config'
+import { useTenant } from '@/lib/contexts'
+import { AppLanguagesSwitcher } from '@/components/language-switcher'
 
 interface NavItem {
   key: string
@@ -38,7 +39,7 @@ interface MoreOptionsSheetProps {
   items: NavItem[]
   isNavItemActive: (href: string) => boolean
   t: (key: string) => string
-  locale: Locale
+  locale: string
   resolvedTheme: string | undefined
   setTheme: (theme: string) => void
   user: User | null
@@ -61,7 +62,7 @@ export function MoreOptionsSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-auto max-h-[80vh] rounded-t-3xl">
+      <SheetContent side="bottom" className="h-auto max-h-[80vh] rounded-t-3xl px-3">
         <SheetHeader className="mb-6">
           <SheetTitle>{t('moreOptions') || 'More Options'}</SheetTitle>
         </SheetHeader>
@@ -121,41 +122,12 @@ export function MoreOptionsSheet({
               </Button>
             </div>
           </div>
-
-          {/* Language Select */}
-          <div className="space-y-2 px-4">
-            <label className="text-sm font-medium text-muted-foreground px-4">
-              {t('languages') || 'Language'}
-            </label>
-            <Select
-              value={locale}
-              onValueChange={(newLocale) => {
-                document.cookie = `NEXT_LOCALE=${newLocale};path=/;max-age=31536000`
-                onOpenChange(false)
-                setTimeout(() => {
-                  window.location.reload()
-                }, 150)
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {locales.map((loc) => (
-                  <SelectItem key={loc} value={loc}>
-                    {localeLabels[loc]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Profile */}
-          <div className="space-y-2">
+          <div className="space-x-2 flex items-center">
             <button
               onClick={() => {
                 onOpenChange(false)
-                setTimeout(() => router.push('/dashboard/settings'), 150)
+                setTimeout(() => router.push('/dashboard/settings/profile'), 150)
               }}
               className="flex items-center gap-3 rounded-xl px-4 py-3 font-medium transition-all duration-200 text-muted-foreground hover:bg-accent hover:text-foreground w-full text-left"
             >
@@ -170,6 +142,7 @@ export function MoreOptionsSheet({
                 {user?.email && <span className="text-xs text-muted-foreground">{user.email}</span>}
               </div>
             </button>
+            <AppLanguagesSwitcher />
           </div>
         </div>
       </SheetContent>

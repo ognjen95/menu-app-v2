@@ -4,12 +4,14 @@ import { createClient } from '@supabase/supabase-js'
 import { getSeedDataForType } from '@/lib/seed-data'
 import { seedTenantData } from '@/lib/services/seed-data.service'
 import type { TenantType } from '@/lib/types'
+import { getTrialEndDate } from '@/lib/utils/subscriptions'
 
 // Service role client for bypassing RLS during tenant creation
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+
 
 // POST - Create new tenant (during onboarding)
 export async function POST(request: NextRequest) {
@@ -46,7 +48,8 @@ export async function POST(request: NextRequest) {
       workingHours,
       languages = ['en'],
       defaultLanguage = 'en',
-      seedData = false
+      seedData = false,
+      // trialPeriod = '90'
     } = body
 
     if (!name || !slug || !type) {
@@ -76,7 +79,7 @@ export async function POST(request: NextRequest) {
         country: country || 'RS',
         plan: 'basic',
         subscription_status: 'trialing',
-        trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days trial
+        trial_ends_at: getTrialEndDate(),
       })
       .select()
       .single()

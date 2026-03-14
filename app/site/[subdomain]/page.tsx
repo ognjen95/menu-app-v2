@@ -8,8 +8,13 @@ import { WebsiteNavbar } from '@/features/public-menu/website-navbar'
 import { WebsiteBlocksContent } from './components/website-blocks-content'
 import { WebsiteBlocksSkeleton } from './components/website-blocks-skeleton'
 import { WebsiteFooter } from './components/website-footer'
+import { PublicIntlProvider } from '@/components/providers/public-intl-provider'
+import { CookieLocale, defaultLocale } from '@/i18n/config'
 import type { Translation } from '@/lib/types'
 import { getWebsiteBySubdomain, supabase } from './utils'
+import { getPublicLocaleFromCookies } from '@/i18n/request-public'
+
+export const revalidate = 300 // Revalidate every 10 minutes
 
 // Lazy load PreviewSync - only needed in preview mode
 const PreviewSync = dynamic(
@@ -32,18 +37,14 @@ type PageProps = {
 }
 
 export default async function PublicWebsitePage({ params, searchParams }: PageProps) {
-  // Disable caching to always get fresh data
-  noStore()
-
   const { subdomain } = await params
   const resolvedSearchParams = await searchParams
   const { page: pageSlug, lang, preview } = resolvedSearchParams
   const t = await getTranslations('blockRenderer')
-  
+
   // Preview mode allows viewing unpublished websites in the builder iframe
   // Handle various truthy values for preview parameter
   const isPreview = preview === 'true' || preview === '1' || preview === 'yes'
-  console.log('[PublicWebsitePage] subdomain:', subdomain, 'searchParams:', JSON.stringify(resolvedSearchParams), 'isPreview:', isPreview)
 
   const { tenant, website } = await getWebsiteBySubdomain(subdomain, isPreview)
   const tenantId = tenant.id
@@ -98,9 +99,6 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
       .order('name')
   ])
 
-  // Get cookies separately (critical for language detection)
-  const cookieStore = cookies()
-
   // Extract results with graceful fallbacks
   const tenantLanguages = tenantLanguagesResult.status === 'fulfilled' ? tenantLanguagesResult.value.data : null
   const pages = pagesResult.status === 'fulfilled' ? pagesResult.value.data : null
@@ -116,16 +114,9 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
     flagEmoji: (tl.languages as any)?.flag_emoji || '',
   })) || []
 
-  // Determine current language
-  const cookieLocale = cookieStore.get('WEBSITE_LOCALE')?.value
-  const defaultLang = languages.find((l: PublicLanguage) => l.isDefault)?.code || languages[0]?.code || 'en'
+  const { locale, messages } = await getPublicLocaleFromCookies()
+  const currentLanguage = locale
 
-  const getValidLanguage = (langCode: string | undefined) => {
-    if (!langCode) return null
-    return languages.some((l: PublicLanguage) => l.code === langCode) ? langCode : null
-  }
-
-  const currentLanguage = getValidLanguage(lang) || getValidLanguage(cookieLocale) || defaultLang
 
   // Get the current page (default to first page or 'home')
   const currentSlug = pageSlug || pages?.[0]?.slug || 'home'
@@ -161,81 +152,53 @@ export default async function PublicWebsitePage({ params, searchParams }: PagePr
   const menuLink = `/m/${tenantSlug}`
 
   return (
-    <>
-      {/* Preview sync - notifies builder of page navigation */}
-      {isPreview && <PreviewSync pageSlug={currentSlug} />}
+    <PublicIntlProvider locale={locale} messages={messages}>
+      <>
+        {/* Preview sync - notifies builder of page navigation */}
+        {isPreview && <PreviewSync pageSlug={currentSlug} />}
 
-      {/* Navigation */}
-      <WebsiteNavbar
-        subdomain={subdomain}
-        tenantName={tenantName}
-        tenantSlug={tenantSlug}
-        logoUrl={website.logo_url}
-        navPages={navPages}
-        currentSlug={currentSlug}
-        languages={languages}
-        currentLanguage={currentLanguage}
-        theme={theme}
-        viewMenuText={t('viewMenu')}
-      />
+        {/* Navigation */}
+        <WebsiteNavbar
+          subdomain={subdomain}
+          tenantName={tenantName}
+          tenantSlug={tenantSlug}
+          tenantId={tenantId}
+          logoUrl={website.logo_url}
+          navPages={navPages}
+          currentSlug={currentSlug}
+          languages={languages}
+          currentLanguage={locale}
+          theme={theme}
+          viewMenuText={t('viewMenu')}
+        />
 
-      {/* Page Content - Stream Blocks with Suspense */}
-      <Suspense fallback={<WebsiteBlocksSkeleton theme={theme} />}>
-        <main>
-          {currentPage ? (
-            <WebsiteBlocksContent
-              pageId={currentPage.id}
-              theme={theme}
-              menuLink={menuLink}
-              locations={locations || []}
-              translations={translations}
-              currentLanguage={currentLanguage}
-              tenantName={tenantName}
-              t={t}
-            />
-          ) : (
-            <div style={{
-              padding: '4rem 2rem',
-              textAlign: 'center',
-              minHeight: '50vh',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <h1 style={{ fontFamily: theme.fontHeading, fontSize: '2rem', marginBottom: '1rem' }}>
-                Welcome to {tenantName}
-              </h1>
-              <p style={{ color: theme.foreground, opacity: 0.7 }}>
-                This page is being set up. Check back soon!
-              </p>
-              <Link
-                href={`/m/${tenantSlug}`}
-                style={{
-                  marginTop: '2rem',
-                  backgroundColor: theme.primary,
-                  color: '#fff',
-                  padding: '0.75rem 1.5rem',
-                  borderRadius: '0.5rem',
-                  textDecoration: 'none',
-                  fontWeight: 500,
-                }}
-              >
-                View Our Menu
-              </Link>
-            </div>
-          )}
-        </main>
-      </Suspense>
+        {/* Page Content - Stream Blocks with Suspense */}
+        <Suspense fallback={<WebsiteBlocksSkeleton theme={theme} />}>
+          <main>
+            {currentPage?.id && (
+              <WebsiteBlocksContent
+                pageId={currentPage.id}
+                theme={theme}
+                menuLink={menuLink}
+                locations={locations || []}
+                translations={translations}
+                currentLanguage={currentLanguage}
+                tenantName={tenantName}
+                t={t}
+              />
+            )}
+          </main>
+        </Suspense>
 
-      {/* Footer */}
-      <WebsiteFooter
-        tenantName={tenantName}
-        seoDescription={website.seo_description}
-        socialLinks={website.social_links}
-        theme={theme}
-      />
-    </>
+        {/* Footer */}
+        <WebsiteFooter
+          tenantName={tenantName}
+          seoDescription={website.seo_description}
+          socialLinks={website.social_links}
+          theme={theme}
+        />
+      </>
+    </PublicIntlProvider>
   )
 }
 

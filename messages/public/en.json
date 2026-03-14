@@ -8,8 +8,11 @@
       "getStarted": "Get Started"
     },
     "hero": {
-      "title": "POS Lite is all your business needs.",
-      "subtitle": "Simplify ordering and payments for your customers and your staff. No extra hardware, all you need is internet & phone or laptop.",
+      "title": "POS Light & QR Menu for Modern Restaurants",
+      "titlePart1": "POS Light",
+      "titlePart2": "QR Menu",
+      "titlePart3": "for Modern Restaurants",
+      "subtitle": "Customers order via QR menu, staff manages orders in POS, waiters take payments on mobile, and you gain insights from real-time analytics.",
       "cta": "Get Started",
       "viewPricing": "View Pricing",
       "freeBadge": "Free for 3 months!",
@@ -295,5 +298,9 @@
     "soy": "Soy",
     "sulphites": "Sulphites",
     "nuts": "Tree Nuts"
+  },
+  "gallery": {
+    "clickToView": "Click to view",
+    "navigateHint": "← → to navigate • +/- to zoom • Esc to close"
   }
 }

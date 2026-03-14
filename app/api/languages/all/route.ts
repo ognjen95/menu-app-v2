@@ -4,18 +4,22 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 // GET - Fetch all available languages (for settings page)
 export async function GET(request: NextRequest) {
   const supabase = await createServerSupabaseClient(request)
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+
+  const { searchParams } = new URL(request.url)
+  const isPublicActive = searchParams.get('is_public_active') === 'true'
 
   // Get all active languages
-  const { data: languages, error } = await supabase
+  let query = supabase
     .from('languages')
     .select('*')
-    .eq('is_active', true)
-    .order('name')
+
+  if (isPublicActive) {
+    query = query.eq('is_public_active', true)
+  } else {
+    query = query.eq('is_active', true)
+  }
+
+  const { data: languages, error } = await query.order('name')
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

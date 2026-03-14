@@ -8,8 +8,11 @@
       "getStarted": "Započni"
     },
     "hero": {
-      "title": "POS Lite je sve što vašem biznisu treba.",
-      "subtitle": "Pojednostavite naručivanje i plaćanje za vaše goste i osoblje. Bez dodatne opreme, sve što vam treba je internet i telefon ili laptop.",
+      "title": "POS Light i QR Meni za Moderne Restorane",
+      "titlePart1": "POS Light",
+      "titlePart2": "QR Meni",
+      "titlePart3": "za Moderne Restorane",
+      "subtitle": "Gosti naručuju preko QR menija, osoblje upravlja narudžbinama u POS-u, konobari primaju plaćanja na mobilnom, i dobijate analitiku u realnom vremenu.",
       "cta": "Započni",
       "viewPricing": "Pogledaj cene",
       "freeBadge": "Besplatno 3 meseca!",
@@ -295,5 +298,9 @@
     "soy": "Soja",
     "sulphites": "Sulfiti",
     "nuts": "Orašasti plodovi"
+  },
+  "gallery": {
+    "clickToView": "Klikni da vidiš",
+    "navigateHint": "← → za navigaciju • +/- za zumiranje • Esc za zatvaranje"
   }
 }

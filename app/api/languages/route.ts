@@ -21,8 +21,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'No tenant found' }, { status: 404 })
   }
 
+  // Check for is_active query parameter
+  const url = new URL(request.url)
+  const isActive = url.searchParams.get('is_active') === 'true'
+
   // Get tenant languages with language details
-  const { data: tenantLanguages, error } = await supabase
+  let query = supabase
     .from('tenant_languages')
     .select(`
       tenant_id,
@@ -38,8 +42,13 @@ export async function GET(request: NextRequest) {
       )
     `)
     .eq('tenant_id', tenantUser.tenant_id)
-    .eq('is_enabled', true)
-    .order('is_default', { ascending: false })
+
+  // Filter by is_enabled if is_active is requested
+  if (isActive) {
+    query = query.eq('is_enabled', true)
+  }
+
+  const { data: tenantLanguages, error } = await query.order('is_default', { ascending: false })
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

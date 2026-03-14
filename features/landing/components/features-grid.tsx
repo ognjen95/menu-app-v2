@@ -126,12 +126,12 @@ export function FeaturesGrid() {
           {/* QR Menu - Large/Featured */}
           <motion.div
             variants={itemVariants}
-            className="group overflow-hidden bg-primary border border-primary/20 rounded-2xl p-6 pb-0 md:row-span-2 hover:border-primary/50 transition-all duration-300"
+            className="group overflow-hidden bg-primary border border-primary/20 rounded-2xl pb-0 md:row-span-2 hover:border-primary/50 transition-all duration-300"
           >
-            <h3 className="text-2xl font-bold text-white mb-2">
+            <h3 className="text-2xl font-bold text-white mb-2 p-6">
               {t('qrMenu.title')}
             </h3>
-            <p className="text-lg text-white mb-6">
+            <p className="text-lg text-white p-6 pt-0">
               {t('qrMenu.description')}
             </p>
 
@@ -142,7 +142,7 @@ export function FeaturesGrid() {
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="relative mx-auto max-w-[90%] h-[670px] overflow-hidden rounded-t-xl"
+              className="relative mx-auto w-full h-[670px] overflow-hidden rounded-t-2xl"
             >
               <video
                 ref={videoRef}
@@ -150,7 +150,7 @@ export function FeaturesGrid() {
                 loop
                 muted
                 playsInline
-                className='absolute bottom-0'
+                className='absolute bottom-0 w-full h-full object-cover'
               />
               {/* <Image
                 src={HERO_IMAGE_VERTICAL}

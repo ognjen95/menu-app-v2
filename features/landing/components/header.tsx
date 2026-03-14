@@ -6,7 +6,8 @@ import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { LanguageSwitcher } from '@/components/language-switcher'
+import { AppLanguagesSwitcher as LanguageSwitcher } from '@/components/language-switcher'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { Menu, X } from 'lucide-react'
 
 const LOGO_IMAGE = '/logo.png'
@@ -78,8 +79,9 @@ export function Header() {
             ))}
           </nav>
 
-          {/* CTA Button & Language Switcher */}
+          {/* CTA Button & Language Switcher & Theme Toggle */}
           <div className="hidden md:flex items-center gap-2">
+            <ThemeToggle />
             <LanguageSwitcher />
             <Link href="/login" prefetch>
               <Button
@@ -118,6 +120,7 @@ export function Header() {
                 </button>
               ))}
               <div className="px-4 pt-2 flex items-center gap-2">
+                <ThemeToggle />
                 <LanguageSwitcher />
                 <Link href="/login" prefetch>
                   <Button

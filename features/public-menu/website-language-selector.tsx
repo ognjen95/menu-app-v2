@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { ChevronDown } from 'lucide-react'
+import { CookieLocale } from '@/i18n/config'
 
 type PublicLanguage = {
   code: string
@@ -42,8 +43,7 @@ export function WebsiteLanguageSelector({
 
   // Handle language change
   const handleLanguageChange = (langCode: string) => {
-    // Set WEBSITE_LOCALE cookie (expires in 1 year)
-    document.cookie = `WEBSITE_LOCALE=${langCode}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
+    document.cookie = `${CookieLocale.PUBLIC}=${langCode}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
     
     // Build URL with new lang param
     const params = new URLSearchParams()

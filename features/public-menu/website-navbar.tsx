@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
 import { WebsiteLanguageSelector } from './website-language-selector'
+import { PublicLanguagesSwitcher, TenantPublicLanguagesSwitcher } from '@/components/language-switcher'
 
 type NavPage = {
   id: string
@@ -38,6 +39,7 @@ interface WebsiteNavbarProps {
   currentSlug: string
   languages: Language[]
   currentLanguage: string
+  tenantId: string
   theme: Theme
   viewMenuText?: string
 }
@@ -50,6 +52,7 @@ export function WebsiteNavbar({
   navPages,
   currentSlug,
   languages,
+  tenantId,
   currentLanguage,
   theme,
   viewMenuText = 'View Menu',
@@ -72,18 +75,18 @@ export function WebsiteNavbar({
   return (
     <>
       <nav
-      className='shadow' 
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '1rem',
-        backgroundColor: theme.background,
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        backdropFilter: 'blur(12px)',
-      }}>
+        className='shadow'
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '1rem',
+          backgroundColor: theme.background,
+          position: 'sticky',
+          top: 0,
+          zIndex: 100,
+          backdropFilter: 'blur(12px)',
+        }}>
         {/* Logo */}
         <Link href={`/site/${subdomain}`} style={{ textDecoration: 'none' }}>
           {logoUrl ? (
@@ -130,13 +133,14 @@ export function WebsiteNavbar({
         {showDesktop && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             {languages.length > 1 && (
-              <WebsiteLanguageSelector
-                languages={languages}
-                currentLanguage={currentLanguage}
-                subdomain={subdomain}
-                currentPage={currentSlug}
-                theme={theme}
-              />
+              // <WebsiteLanguageSelector
+              //   languages={languages}
+              //   currentLanguage={currentLanguage}
+              //   subdomain={subdomain}
+              //   currentPage={currentSlug}
+              //   theme={theme}
+              // />
+              <TenantPublicLanguagesSwitcher tenantId={tenantId} />
             )}
             <Link
               href={`/m/${tenantSlug}`}
@@ -163,13 +167,14 @@ export function WebsiteNavbar({
         {showMobile && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             {languages.length > 1 && (
-              <WebsiteLanguageSelector
-                languages={languages}
-                currentLanguage={currentLanguage}
-                subdomain={subdomain}
-                currentPage={currentSlug}
-                theme={theme}
-              />
+              // <WebsiteLanguageSelector
+              //   languages={languages}
+              //   currentLanguage={currentLanguage}
+              //   subdomain={subdomain}
+              //   currentPage={currentSlug}
+              //   theme={theme}
+              // />
+              <TenantPublicLanguagesSwitcher tenantId={tenantId} />
             )}
             <button
               onClick={() => setIsDrawerOpen(true)}

@@ -25,6 +25,7 @@ import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import { Button } from '@/components/ui/button'
 import type { Tenant, Location, Website, OpeningHours } from '@/lib/types'
 import { useMediaQuery } from '@/hooks/use-media-query'
+import Link from 'next/link'
 
 interface InfoSidebarProps {
   isOpen: boolean
@@ -391,7 +392,7 @@ export function InfoSidebar({
         style={{ borderColor }}
       >
         <p className="text-xs" style={{ color: mutedForeground }}>
-          {t('poweredBy')} <span style={{ color: theme.primary }}>Klopay</span>
+          {t('poweredBy')} <Link href={'https://klopay.app'} style={{ color: theme.primary }} target="_blank">Klopay</Link>
         </p>
       </div>
     </div>

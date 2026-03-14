@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { CountrySelector, PhoneSelector } from '@/features/selectors/components'
 import {
   Store,
   Coffee,
@@ -39,6 +40,7 @@ import { cn } from '@/lib/utils'
 import type { TenantType } from '@/lib/types'
 import { defaultWorkingHours, type WorkingHours } from '@/lib/seed-data'
 import Image from 'next/image'
+import { useAllActivePublicLanguages } from '@/features/translations'
 
 const businessTypeIcons: Record<TenantType, React.ElementType> = {
   restaurant: Utensils,
@@ -170,7 +172,7 @@ export default function OnboardingPage() {
     phone: '',
     address: '',
     city: '',
-    country: 'RS',
+    country: 'ES',
     workingHours: defaultWorkingHours,
     selectedLanguages: ['en'],
     defaultLanguage: 'en',
@@ -249,12 +251,7 @@ export default function OnboardingPage() {
     }
   }, [errors])
 
-  // Fetch available languages from DB
-  const { data: languagesData } = useQuery({
-    queryKey: ['available-languages'],
-    queryFn: () => apiGet<{ data: { languages: LanguageFromDB[] } }>('/languages/available'),
-    staleTime: 10 * 60 * 1000, // 10 minutes
-  })
+  const { data: languagesData } = useAllActivePublicLanguages()
 
   // Use DB languages or fallback
   const availableLanguages = languagesData?.data?.languages?.map(lang => ({
@@ -293,11 +290,11 @@ export default function OnboardingPage() {
 
       // Check for unique constraint violation
       if (errorMessage.includes('tenants_name_unique') || errorMessage.includes('duplicate key')) {
-        toast.error('Business name already exists', {
-          description: 'This business name is already taken. Please choose a different name.'
+        toast.error(t('onboarding.errors.businessNameExists'), {
+          description: t('onboarding.errors.businessNameExistsDesc')
         })
       } else {
-        toast.error('Failed to create business', {
+        toast.error(t('onboarding.errors.createFailed'), {
           description: errorMessage
         })
       }
@@ -318,11 +315,6 @@ export default function OnboardingPage() {
       slug: generateSlug(name),
     }))
   }
-
-  const canProceed = useCallback(() => {
-    const stepErrors = validateStep(step)
-    return Object.keys(stepErrors).length === 0
-  }, [step, validateStep])
 
   const handleLanguageToggle = (langCode: string) => {
     setData(prev => {
@@ -486,12 +478,10 @@ export default function OnboardingPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">{t('phone')} *</Label>
-                  <Input
-                    id="phone"
-                    placeholder="+381 11 123 4567"
+                  <PhoneSelector
+                    filterByActive={false}
                     value={data.phone}
-                    onChange={(e) => { setData(prev => ({ ...prev, phone: e.target.value })); clearError('phone') }}
-                    className={errors.phone ? 'border-destructive' : ''}
+                    onValueChange={(value) => { setData(prev => ({ ...prev, phone: value })); clearError('phone') }}
                   />
                   {errors.phone && <p className="text-destructive text-sm">{errors.phone}</p>}
                 </div>
@@ -547,29 +537,11 @@ export default function OnboardingPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="country">{t('country')} *</Label>
-                  <Select
+                  <CountrySelector
+                    filterByActive={false}
                     value={data.country}
                     onValueChange={(value) => { setData(prev => ({ ...prev, country: value })); clearError('country') }}
-                  >
-                    <SelectTrigger className={cn("h-10 rounded-md", errors.country ? 'border-destructive' : '')}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="RS">Serbia</SelectItem>
-                      <SelectItem value="BA">Bosnia and Herzegovina</SelectItem>
-                      <SelectItem value="HR">Croatia</SelectItem>
-                      <SelectItem value="SI">Slovenia</SelectItem>
-                      <SelectItem value="ME">Montenegro</SelectItem>
-                      <SelectItem value="MK">North Macedonia</SelectItem>
-                      <SelectItem value="DE">Germany</SelectItem>
-                      <SelectItem value="AT">Austria</SelectItem>
-                      <SelectItem value="IT">Italy</SelectItem>
-                      <SelectItem value="FR">France</SelectItem>
-                      <SelectItem value="ES">Spain</SelectItem>
-                      <SelectItem value="NL">Netherlands</SelectItem>
-                      <SelectItem value="GB">United Kingdom</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  />
                   {errors.country && <p className="text-destructive text-sm">{errors.country}</p>}
                 </div>
               </div>

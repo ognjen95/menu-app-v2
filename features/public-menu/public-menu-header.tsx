@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Search, X, ChevronDown, Menu } from 'lucide-react'
+import { Search, X, ChevronDown, Menu, ShoppingCart } from 'lucide-react'
+import { TenantPublicLanguagesSwitcher } from '@/components/language-switcher'
 
 interface Language {
   code: string
@@ -28,7 +29,7 @@ interface Theme {
 
 interface PublicMenuHeaderProps {
   theme: Theme
-  tenant: { name: string; logo_url?: string | null }
+  tenant: { name: string; logo_url?: string | null, id: string }
   website?: { logo_url?: string | null } | null
   tableId?: string | null
   languages: Language[]
@@ -142,69 +143,20 @@ export function PublicMenuHeader({
               {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}            </button>
 
             {/* Language selector */}
-            {languages.length > 1 && (
-              <div className="relative">
-                <button
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium"
-                  style={{
-                    // border: `1px solid ${borderColor}`,
-                    backgroundColor: 'transparent',
-                    color: theme.foreground,
-                  }}
-                  onClick={() => setLangMenuOpen(!langMenuOpen)}
-                >
-                  <span className="text-base">{currentLang?.flagEmoji}</span>
-                  <span className="hidden md:inline">{currentLang?.nativeName}</span>
-                  <ChevronDown className="h-3.5 w-3.5 hidden md:block" />
-                </button>
 
-                {/* Language dropdown */}
-                {langMenuOpen && (
-                  <>
-                    {/* Backdrop */}
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setLangMenuOpen(false)}
-                    />
-                    {/* Dropdown menu */}
-                    <div
-                      className="absolute right-0 top-full mt-1 z-50 min-w-[140px] py-1 rounded-md shadow-lg"
-                      style={{
-                        backgroundColor: theme.background,
-                        // border: `1px solid ${borderColor}`,
-                      }}
-                    >
-                      {languages.map((lang) => (
-                        <button
-                          key={lang.code}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors"
-                          style={{
-                            backgroundColor: lang.code === currentLanguage ? cardBg : 'transparent',
-                            color: theme.foreground,
-                          }}
-                          onClick={() => handleLanguageChange(lang.code)}
-                        >
-                          <span>{lang.flagEmoji}</span>
-                          <span>{lang.nativeName}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+            <TenantPublicLanguagesSwitcher tenantId={tenant?.id} />
 
-            {/* Menu/Cart button */}
+            {/* Cart button */}
             <button
               className={`relative p-2 rounded-md transition-colors ${cartAnimation.length > 0 ? 'animate-cart-shake' : ''}`}
               style={{
                 backgroundColor: 'transparent',
                 color: theme.foreground,
               }}
-              onClick={onInfoOpen}
-              aria-label="Menu"
+              onClick={onCartOpen}
+              aria-label="Cart"
             >
-              <Menu className="h-5 w-5" />
+              <ShoppingCart className="h-5 w-5" />
               {cartItemsCount > 0 && (
                 <span
                   key={cartItemsCount}
@@ -229,6 +181,19 @@ export function PublicMenuHeader({
                   +1
                 </span>
               ))}
+            </button>
+
+            {/* Menu/Info button */}
+            <button
+              className="p-2 rounded-md transition-colors"
+              style={{
+                backgroundColor: 'transparent',
+                color: theme.foreground,
+              }}
+              onClick={onInfoOpen}
+              aria-label="Menu"
+            >
+              <Menu className="h-5 w-5" />
             </button>
 
           </div>

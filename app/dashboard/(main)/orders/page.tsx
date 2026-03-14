@@ -484,6 +484,27 @@ export default function OrdersPage() {
 
   return (
     <div className="h-full">
+      {/* Live connection status alert - only render after mount to prevent hydration mismatch */}
+      {mounted && !liveAlertDismissed && !(liveEnabled && isLive) && (
+        <div className='md:pb-10 md:pb-5'>
+          <LiveAlert
+            liveEnabled={liveEnabled}
+            isLive={isLive}
+            isReconnecting={isReconnecting}
+            realtimeStatus={realtimeStatus}
+            t={t}
+            reconnectAttempts={reconnectAttempts}
+            maxReconnectAttempts={maxReconnectAttempts}
+            setReconnectAttempts={setReconnectAttempts}
+            reconnect={reconnect}
+            handleLiveToggle={handleLiveToggle}
+            setLiveAlertDismissed={setLiveAlertDismissed}
+            audioUnlocked={audioUnlocked}
+            soundEnabled={soundEnabled}
+          />
+        </div>
+      )}
+
       {/* Page header */}
       <motion.div
         className="flex items-center justify-between flex-wrap gap-4 w-full pb-5 md:pb-3 w-full"
@@ -515,21 +536,19 @@ export default function OrdersPage() {
           </Select>
 
           {/* Table selector */}
-          {availableTables.length > 0 && (
-            <Select value={selectedTableId} onValueChange={setSelectedTableId}>
-              <SelectTrigger className="md:w-[100px] md:w-[160px] text-xs md:text-sm">
-                <SelectValue placeholder={t('allTables')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('allTables')}</SelectItem>
-                {availableTables.map((table) => (
-                  <SelectItem key={table.id} value={table.id}>
-                    {table.name}{table.zone ? ` (${table.zone})` : ''}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          <Select value={selectedTableId} onValueChange={setSelectedTableId}>
+            <SelectTrigger className="md:w-[160px] text-xs md:text-sm">
+              <SelectValue placeholder={t('allTables')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('allTables')}</SelectItem>
+              {availableTables.map((table) => (
+                <SelectItem key={table.id} value={table.id}>
+                  {table.name}{table.zone ? ` (${table.zone})` : ''}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           <TooltipProvider>
             {/* Sound toggle - only show if audio is unlocked */}
@@ -693,26 +712,7 @@ export default function OrdersPage() {
         </Button>
       </div>
 
-      {/* Live connection status alert - only render after mount to prevent hydration mismatch */}
-      {mounted && !liveAlertDismissed && !(liveEnabled && isLive) && (
-        <div className='md:pb-10 md:py-5'>
-          <LiveAlert
-            liveEnabled={liveEnabled}
-            isLive={isLive}
-            isReconnecting={isReconnecting}
-            realtimeStatus={realtimeStatus}
-            t={t}
-            reconnectAttempts={reconnectAttempts}
-            maxReconnectAttempts={maxReconnectAttempts}
-            setReconnectAttempts={setReconnectAttempts}
-            reconnect={reconnect}
-            handleLiveToggle={handleLiveToggle}
-            setLiveAlertDismissed={setLiveAlertDismissed}
-            audioUnlocked={audioUnlocked}
-            soundEnabled={soundEnabled}
-          />
-        </div>
-      )}
+
 
 
       {/* Status filter tabs (multi-select) */}

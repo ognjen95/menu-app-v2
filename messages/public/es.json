@@ -8,8 +8,11 @@
       "getStarted": "Comenzar"
     },
     "hero": {
-      "title": "POS Lite es todo lo que tu negocio necesita.",
-      "subtitle": "Simplifica pedidos y pagos para tus clientes y tu personal. Sin hardware adicional, solo necesitas internet y un teléfono o laptop.",
+      "title": "POS Light y Menú QR para Restaurantes Modernos",
+      "titlePart1": "TPV Light",
+      "titlePart2": "Menú QR",
+      "titlePart3": "para Restaurantes Modernos",
+      "subtitle": "Los clientes piden a través del menú QR, el personal gestiona pedidos en TPV, los meseros cobran en móvil, y tú obtienes análisis en tiempo real.",
       "cta": "Comenzar",
       "viewPricing": "Ver Precios",
       "freeBadge": "¡Gratis por 3 meses!",
@@ -295,5 +298,9 @@
     "soy": "Soja",
     "sulphites": "Sulfitos",
     "nuts": "Frutos Secos"
+  },
+  "gallery": {
+    "clickToView": "Clic para ver",
+    "navigateHint": "← → para navegar • +/- para zoom • Esc para cerrar"
   }
 }

@@ -10,6 +10,7 @@ export type UserRoles = 'owner' | 'manager' | 'staff' | 'waiter' | 'kitchen';
 
 export type AuthenticatedUser = {
   id: string
+  full_name: string
   email: string
   tenant_id: string | null
   role: UserRoles | null
@@ -50,6 +51,7 @@ export async function queryHandler<T>(
 
     const authenticatedUser: AuthenticatedUser = {
       id: user.id,
+      full_name: user.user_metadata.full_name,
       email: user.email || '',
       tenant_id: tenantUser?.tenant_id || null,
       role: tenantUser?.role || null,
@@ -94,6 +96,7 @@ export async function mutationHandler<T>(
 
     const authenticatedUser: AuthenticatedUser = {
       id: user.id,
+      full_name: user.user_metadata.full_name,
       email: user.email || '',
       tenant_id: tenantUser?.tenant_id || null,
       role: tenantUser?.role || null,

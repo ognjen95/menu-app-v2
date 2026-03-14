@@ -1,13 +1,21 @@
-// Supported locales
+// !!! HERE ENABLE LANGUAGES FOR DASHBOARD TRANSLATIONS (LEGACY)
+// * Supported locales in Landing Page and Dashboard (APP Specific)
 export const locales = ['en', 'es', 'sr'] as const
+// * Supported locales in Tenants Websites and Menus (PUBLIC - Client Facing)
+export const publicLocales = [...locales, 'fr', 'it', 'ru']
+
 export type Locale = (typeof locales)[number]
+export type PublicLocale = (typeof publicLocales)[number]
 
 // Default locale
-export const defaultLocale: Locale = 'en'
+// ! NEVER DELETE !!!!!!!!
+export const defaultLocale: Locale | PublicLocale = 'en'
 
-// Locale labels for UI
-export const localeLabels: Record<Locale, string> = {
-  en: 'English',
-  es: 'Español',
-  sr: 'Srpski',
+if (!defaultLocale) {
+  throw new Error('Missing DEFAULT LOCALE')
 }
+
+export const CookieLocale = {
+  APP: 'NEXT_LOCALE',
+  PUBLIC: 'NEXT_PUBLIC_LOCALE',
+} as const

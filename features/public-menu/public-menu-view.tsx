@@ -14,6 +14,7 @@ import dynamic from 'next/dynamic'
 import { CategorySection } from './components/category-section'
 import { PublicMenuHeader } from './public-menu-header'
 import { DIETARY_TAG_OPTIONS } from '@/lib/constants/menu-items'
+import { CookieLocale } from '@/i18n/config'
 
 // Lazy load modals - not needed on initial render
 const CartSidebar = dynamic(() => import('./components/cart-sidebar').then(mod => mod.CartSidebar), { ssr: false })
@@ -138,12 +139,12 @@ export function PublicMenuView({
   const [infoOpen, setInfoOpen] = useState(false)
 
   // Sync language from URL on mount and when searchParams change
-  useEffect(() => {
-    const langFromUrl = searchParams.get('lang')
-    if (langFromUrl && languages.some(l => l.code === langFromUrl)) {
-      setCurrentLanguage(langFromUrl)
-    }
-  }, [searchParams, languages])
+  // useEffect(() => {
+  //   const langFromUrl = searchParams.get('lang')
+  //   if (langFromUrl && languages.some(l => l.code === langFromUrl)) {
+  //     setCurrentLanguage(langFromUrl)
+  //   }
+  // }, [searchParams, languages])
 
   // Lock body scroll when cart or checkout is open
   useEffect(() => {
@@ -175,7 +176,7 @@ export function PublicMenuView({
     setCurrentLanguage(langCode) // Immediate state update for menu content translations
 
     // Set PUBLIC_LOCALE cookie (expires in 1 year)
-    document.cookie = `PUBLIC_LOCALE=${langCode}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
+    document.cookie = `${CookieLocale.PUBLIC}=${langCode}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
 
     // Update URL param and refresh to load new UI translations from server
     const params = new URLSearchParams(searchParams.toString())

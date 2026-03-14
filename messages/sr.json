@@ -131,7 +131,9 @@
       "createBusiness": "Kreiraj moj posao"
     },
     "errors": {
-      "createFailed": "Kreiranje posla nije uspelo. Pokušajte ponovo."
+      "createFailed": "Kreiranje posla nije uspelo. Pokušajte ponovo.",
+      "businessNameExists": "Naziv posla već postoji",
+      "businessNameExistsDesc": "Ovaj naziv posla je već u upotrebi. Molimo izaberite drugačiji naziv."
     }
   },
   "order": {

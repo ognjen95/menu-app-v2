@@ -1,15 +1,14 @@
 import { notFound } from 'next/navigation'
-import { unstable_noStore as noStore } from 'next/cache'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { PublicMenuView } from '@/features/public-menu/public-menu-view'
 import { PublicIntlProvider } from '@/components/providers/public-intl-provider'
-import { locales, defaultLocale, type Locale } from '@/i18n/config'
+import { CookieLocale, defaultLocale } from '@/i18n/config'
 import type { Menu } from '@/lib/types'
+import { getPublicLocaleFromCookies } from '@/i18n/request-public'
 
-// Menu with nested categories from the query
-type MenuWithNested = Menu & { categories?: unknown[] }
+export const revalidate = 300 // Revalidate every 10 minutes
 
 /**
  * Filter menus based on availability (time and day of week)
@@ -72,9 +71,9 @@ const supabaseAdmin = createClient(
 )
 
 async function getTenantData(slug: string, isPreview: boolean = false) {
-  noStore() // Disable caching to get fresh data
+  // noStore() // Disable caching to get fresh data
   const supabase = await createServerSupabaseClient()
-  
+
   // Use admin client for preview mode to bypass RLS
   const client = isPreview ? supabaseAdmin : supabase
 
@@ -83,12 +82,12 @@ async function getTenantData(slug: string, isPreview: boolean = false) {
     .from('tenants')
     .select('*')
     .eq('slug', slug)
-  
+
   // Only check subscription status for public access
   if (!isPreview) {
     tenantQuery = tenantQuery.in('subscription_status', ['active', 'trialing'])
   }
-  
+
   const { data: tenant, error: tenantError } = await tenantQuery.single()
 
   if (tenantError || !tenant) {
@@ -101,7 +100,7 @@ async function getTenantData(slug: string, isPreview: boolean = false) {
     // Always fetch website with admin client to get theme colors
     // Menu page needs theme regardless of website publish status
     supabaseAdmin.from('websites').select('*').eq('tenant_id', tenant.id).single(),
-    
+
     // Get active menus with categories and items
     supabase
       .from('menus')
@@ -130,19 +129,19 @@ async function getTenantData(slug: string, isPreview: boolean = false) {
       .eq('tenant_id', tenant.id)
       .eq('is_active', true)
       .order('sort_order', { ascending: true }),
-    
+
     // Get locations
     supabase
       .from('locations')
       .select('*')
       .eq('tenant_id', tenant.id)
       .eq('is_active', true),
-    
+
     // Get allergens
     supabase
       .from('allergens')
       .select('*'),
-    
+
     // Get tenant languages (enabled languages for this tenant)
     supabase
       .from('tenant_languages')
@@ -160,7 +159,7 @@ async function getTenantData(slug: string, isPreview: boolean = false) {
       .eq('tenant_id', tenant.id)
       .eq('is_enabled', true)
       .order('is_default', { ascending: false }),
-    
+
     // Get translations for this tenant's menu content (items and categories)
     supabase
       .from('translations')
@@ -185,7 +184,6 @@ async function getTenantData(slug: string, isPreview: boolean = false) {
 
   // Filter menus by current time and day of week
   const availableMenus = filterMenusByAvailability(menusResult.data || [])
-
   return {
     tenant,
     menus: availableMenus,
@@ -205,8 +203,8 @@ async function getTenantData(slug: string, isPreview: boolean = false) {
 
 export default async function PublicMenuPage({ params, searchParams }: PageProps) {
   const { slug } = await params
-  const { table, location, lang, preview } = await searchParams
-  
+  const { table, location, preview } = await searchParams
+
   // Preview mode allows viewing menu with unpublished website theme
   const isPreview = preview === 'true' || preview === '1' || preview === 'yes'
 
@@ -220,30 +218,32 @@ export default async function PublicMenuPage({ params, searchParams }: PageProps
   // 2. PUBLIC_LOCALE cookie
   // 3. Tenant's default language
   // 4. Fallback to 'en'
-  const cookieStore = await cookies()
-  const cookieLocale = cookieStore.get('PUBLIC_LOCALE')?.value
-  const tenantDefaultLang = data.languages.find(l => l.isDefault)?.code || data.languages[0]?.code || 'en'
-  
+  // const cookieStore = await cookies()
+  // const cookieLocale = cookieStore.get(CookieLocale.PUBLIC)?.value
+  // const tenantDefaultLang = data.languages.find(l => l.isDefault)?.code || data.languages[0]?.code || defaultLocale
+
   // Validate the language exists in tenant's enabled languages
   const getValidLanguage = (langCode: string | undefined) => {
     if (!langCode) return null
     return data.languages.some(l => l.code === langCode) ? langCode : null
   }
 
-  const initialLanguage = getValidLanguage(lang) 
-    || getValidLanguage(cookieLocale) 
-    || tenantDefaultLang
+  // const initialLanguage = getValidLanguage(lang)
+  //   || getValidLanguage(cookieLocale)
+  //   || tenantDefaultLang
 
-  // Load public translations for the determined language
-  // Check if the locale is valid, otherwise use default
-  const publicLocale: Locale = locales.includes(initialLanguage as Locale) 
-    ? (initialLanguage as Locale) 
-    : defaultLocale
-  
-  const publicMessages = (await import(`@/messages/public/${publicLocale}.json`)).default
+  // let publicMessages = (await import(`@/messages/public/${initialLanguage}.json`)).default
+
+  // if (!publicMessages) {
+  //   publicMessages = (await import(`@/messages/public/${defaultLocale}.json`)).default
+  // }
+
+  const { locale, messages } = await getPublicLocaleFromCookies()
+
+  console.log({languagesResult: data.languages})
 
   return (
-    <PublicIntlProvider locale={publicLocale} messages={publicMessages}>
+    <PublicIntlProvider locale={locale} messages={messages}>
       <PublicMenuView
         tenant={data.tenant}
         menus={data.menus}
@@ -254,7 +254,7 @@ export default async function PublicMenuPage({ params, searchParams }: PageProps
         locationId={location}
         languages={data.languages}
         translations={data.translations}
-        initialLanguage={initialLanguage}
+        initialLanguage={locale}
         slug={slug}
       />
     </PublicIntlProvider>

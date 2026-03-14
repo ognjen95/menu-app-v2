@@ -3,7 +3,8 @@
 import { motion } from 'framer-motion'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
-import { LanguageSwitcher } from '@/components/language-switcher'
+import { AppLanguagesSwitcher as LanguageSwitcher } from '@/components/language-switcher'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 export function Footer() {
   const t = useTranslations('landing.footer')
@@ -106,7 +107,10 @@ export function Footer() {
           <p className="text-sm text-muted-foreground">
             {t('copyright')}
           </p>
-          <LanguageSwitcher />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <LanguageSwitcher />
+          </div>
         </div>
       </div>
     </footer>
