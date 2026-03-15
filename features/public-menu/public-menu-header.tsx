@@ -74,22 +74,15 @@ export function PublicMenuHeader({
   getContrastColor,
   t,
 }: PublicMenuHeaderProps) {
-  const [langMenuOpen, setLangMenuOpen] = useState(false)
   const [isCoverVisible, setIsCoverVisible] = useState(true)
   const spacerRef = useRef<HTMLDivElement>(null)
 
-  const currentLang = languages.find(l => l.code === currentLanguage)
   const haveLogo = website?.logo_url || tenant.logo_url
   const mobileHeaderImage = website?.mobile_header_image_url
 
   const borderColor = `${theme.foreground}15`
   const cardBg = `${theme.foreground}05`
   const mutedForeground = `${theme.foreground}99`
-
-  const handleLanguageChange = (code: string) => {
-    onLanguageChange(code)
-    setLangMenuOpen(false)
-  }
 
   useEffect(() => {
     if (!mobileHeaderImage) return
@@ -110,7 +103,7 @@ export function PublicMenuHeader({
 
   const ActionButtons = ({ className = '', floating = false }: { className?: string; floating?: boolean }) => (
     <div 
-      className={`flex items-center ${floating ? 'rounded-full backdrop-blur-md' : ''} ${className}`}
+      className={`flex items-center ${floating ? 'rounded-full px-2 backdrop-blur-md' : ''} ${className}`}
       style={{
         backgroundColor: floating ? 'rgba(0,0,0,0.35)' : undefined,
       }}
@@ -223,7 +216,7 @@ export function PublicMenuHeader({
       {/* Sticky Header - rounded only when cover is still visible */}
       <header
         className={`sticky top-0 z-40 transition-[border-radius] duration-200 ${
-          mobileHeaderImage && isCoverVisible ? 'md:rounded-none rounded-t-2xl' : 'shadow shadow-gray-200'
+          mobileHeaderImage && isCoverVisible ? 'md:rounded-none rounded-t-3xl' : 'shadow shadow-gray-200'
         }`}
         style={{
           backgroundColor: theme.background,
