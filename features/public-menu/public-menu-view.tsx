@@ -405,10 +405,14 @@ export function PublicMenuView({
         t={t}
       />
 
-      {/* Menu items */}
-      <main className="container mx-auto px-4 py-6 pb-24">
+      {/* Menu items - with background for parallax effect */}
+      <main 
+        className="container mx-auto px-4 py-6 pb-24 relative z-10 "
+        style={{ backgroundColor: theme.background }}
+      >
         {/* Dietary filters */}
-        <div className="flex flex-wrap gap-2 mb-6 animate-fade-in-up">
+        {/* CHECK IF NEEDED */}
+        {/* <div className="flex flex-wrap gap-2 mb-6 animate-fade-in-up">
           {DIETARY_TAG_OPTIONS.map((filter) => (
             <button
               key={filter}
@@ -430,7 +434,7 @@ export function PublicMenuView({
               {tDietary(filter)}
             </button>
           ))}
-        </div>
+        </div> */}
 
         {/* Items grouped by category */}
         {totalFilteredItems === 0 ? (

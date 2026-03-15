@@ -37,7 +37,7 @@ function LanguageSwitcherComponent({ languages, isPublic }: LanguageSwitcherProp
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="gap-1.5">
+        <Button variant="ghost" size="iconSm" className="gap-1.5">
           <span className="text-xl">{getCountryFlag(locale)}</span>
         </Button>
       </DropdownMenuTrigger>

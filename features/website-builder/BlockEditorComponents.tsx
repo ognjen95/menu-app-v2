@@ -74,6 +74,10 @@ export function ImageUpload({
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const [localPreview, setLocalPreview] = useState<string | null>(null)
+
+  // Use local preview if available, otherwise use the value prop
+  const previewUrl = localPreview || value
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -85,6 +89,7 @@ export function ImageUpload({
       const response = await fetch('/api/website/upload', { method: 'POST', body: formData })
       if (!response.ok) throw new Error('Upload failed')
       const { url } = await response.json()
+      setLocalPreview(url)
       onChange(url)
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Upload failed')
@@ -93,21 +98,31 @@ export function ImageUpload({
     }
   }
 
+  const handleClear = () => {
+    setLocalPreview(null)
+    onChange('')
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalPreview(null)
+    onChange(e.target.value)
+  }
+
   return (
     <div className="space-y-2">
       <Label className="text-zinc-300">{label}</Label>
       <div className="flex gap-2">
-        <Input value={value || ''} onChange={(e) => onChange(e.target.value)} placeholder="URL or upload" className="flex-1 bg-zinc-800 border-zinc-700 text-white" />
+        <Input value={previewUrl || ''} onChange={handleInputChange} placeholder="URL or upload" className="flex-1 bg-zinc-800 border-zinc-700 text-white" />
         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
         <Button type="button" variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="border-zinc-700 text-zinc-300">
           {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
         </Button>
       </div>
-      {value && (
+      {previewUrl && (
         <div className="relative w-full h-32 mt-2 rounded-lg overflow-hidden bg-zinc-800">
           { /* eslint-disable-next-line @next/next/no-img-element */ }
-          <img src={value} alt="Preview" className="w-full h-full object-cover" />
-          <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={() => onChange('')}>
+          <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+          <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-6 w-6" onClick={handleClear}>
             <X className="h-3 w-3" />
           </Button>
         </div>

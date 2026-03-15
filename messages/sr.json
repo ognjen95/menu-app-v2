@@ -1166,7 +1166,9 @@
       "typography": "Tipografija",
       "heading": "Naslov",
       "body": "Telo",
-      "logo": "Logo"
+      "logo": "Logo",
+      "mobileMenuHeader": "Mobilna naslovna slika",
+      "mobileMenuHeaderDesc": "Naslovna slika koja se prikazuje na vrhu menija na mobilnim uređajima. Dugmad će lebdeti preko nje."
     },
     "pages": {
       "title": "Stranice",

@@ -1166,7 +1166,9 @@
       "typography": "Tipografía",
       "heading": "Encabezado",
       "body": "Cuerpo",
-      "logo": "Logo"
+      "logo": "Logo",
+      "mobileMenuHeader": "Portada del menú móvil",
+      "mobileMenuHeaderDesc": "Imagen de portada que se muestra en la parte superior del menú en dispositivos móviles. Los botones flotarán sobre ella."
     },
     "pages": {
       "title": "Páginas",

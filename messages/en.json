@@ -1166,7 +1166,9 @@
       "typography": "Typography",
       "heading": "Heading",
       "body": "Body",
-      "logo": "Logo"
+      "logo": "Logo",
+      "mobileMenuHeader": "Mobile Menu Cover",
+      "mobileMenuHeaderDesc": "Cover image shown at the top of the menu on mobile devices. Buttons will float over it."
     },
     "pages": {
       "title": "Pages",

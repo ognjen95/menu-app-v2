@@ -385,6 +385,7 @@ export interface Website {
   font_heading: string | null
   font_body: string | null
   logo_url: string | null
+  mobile_header_image_url: string | null
   favicon_url: string | null
   seo_title: string | null
   seo_description: string | null

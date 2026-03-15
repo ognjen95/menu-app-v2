@@ -21,6 +21,7 @@ type Website = {
   font_heading?: string | null
   font_body?: string | null
   logo_url?: string | null
+  mobile_header_image_url?: string | null
   [key: string]: unknown
 }
 
@@ -214,6 +215,18 @@ export default function DesignPanel({ website, updateWebsite }: DesignPanelProps
         <ImageUpload
           value={website?.logo_url || ''}
           onChange={(url) => updateWebsite.mutate({ logo_url: url })}
+          label=""
+        />
+      </div>
+
+      <Separator />
+
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-foreground">{t('design.mobileMenuHeader')}</h3>
+        <p className="text-xs text-muted-foreground">{t('design.mobileMenuHeaderDesc')}</p>
+        <ImageUpload
+          value={website?.mobile_header_image_url || ''}
+          onChange={(url) => updateWebsite.mutate({ mobile_header_image_url: url })}
           label=""
         />
       </div>
