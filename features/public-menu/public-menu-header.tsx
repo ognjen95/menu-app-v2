@@ -216,11 +216,11 @@ export function PublicMenuHeader({
       {/* Sticky Header - rounded only when cover is still visible */}
       <header
         className={`sticky top-0 z-40 transition-[border-radius] duration-200 ${
-          mobileHeaderImage && isCoverVisible ? 'md:rounded-none rounded-t-3xl' : 'shadow shadow-gray-200'
+          mobileHeaderImage && isCoverVisible ? 'md:rounded-none rounded-t-3xl' : ''
         }`}
         style={{
           backgroundColor: theme.background,
-          // borderBottom: `1px solid ${borderColor}`,
+          borderBottom: `1px solid ${borderColor}`,
         }}
       >
         <div className="container mx-auto px-4 py-4">
