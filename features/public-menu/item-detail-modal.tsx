@@ -103,7 +103,7 @@ export const ItemDetailModal = memo(function ItemDetailModal({
           <Image
             src={item.image_urls[0]}
             alt={item.name}
-            className="w-full h-full object-cover md:rounded-t-lg"
+            className="w-full h-full object-cover md:rounded-t-3xl"
             fill
           />
         </div>
@@ -340,7 +340,7 @@ export const ItemDetailModal = memo(function ItemDetailModal({
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DrawerContent 
-        className="max-h-[95vh] rounded-t-xl overflow-hidden"
+        className="max-h-[95vh] rounded-t-3xl overflow-hidden"
         style={{ backgroundColor: theme.background }}
         hideHandle
       >
