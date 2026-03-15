@@ -8,12 +8,20 @@ const getContrastColor = (hex: string): string => {
   return luminance > 0.5 ? '#000000' : '#FFFFFF'
 }
 
-const MenuButton = ({ children, theme, setCartOpen }: { children: React.ReactNode, theme: any, setCartOpen: (open: boolean) => void }) => {
+interface MenuButtonProps {
+  children: React.ReactNode
+  theme: any
+  onClick: () => void
+  disabled?: boolean
+}
+
+const MenuButton = ({ children, theme, onClick, disabled = false }: MenuButtonProps) => {
   return (
     <button
-      className="w-full h-14 text-lg rounded-full font-semibold flex items-center justify-center gap-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
-      style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: `0 8px 24px 0 ${theme.primary}50` }}
-      onClick={() => setCartOpen(true)}
+      className="w-full h-14 text-lg rounded-full font-semibold flex items-center justify-center gap-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] disabled:opacity-50 disabled:scale-100 disabled:shadow-none disabled:cursor-not-allowed"
+      style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: disabled ? 'none' : `0 8px 24px 0 ${theme.primary}50` }}
+      onClick={() => onClick()}
+      disabled={disabled}
     >
       {children}
     </button>

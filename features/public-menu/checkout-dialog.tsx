@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import CurrencyFormat from '@/components/CurrencyFormat'
 import { Currency } from '@/lib/types'
+import MenuButton from './components/menu-button'
 
 type SelectedVariantInfo = {
   id: string
@@ -558,11 +559,10 @@ export const CheckoutDialog = memo(function CheckoutDialog({
           {/* Footer */}
           {step === 'details' && (
             <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))]" style={{ borderTop: `1px solid ${colors.foreground}15` }}>
-              <button
-                className="w-full h-12 text-lg font-semibold rounded-xl disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] flex items-center justify-center"
+              <MenuButton
+                theme={{ primary: colors.primary, foreground: colors.foreground, background: colors.background }}
                 onClick={handleSubmitOrder}
                 disabled={isSubmitting || cart.length === 0 || !deliveryValid}
-                style={{ backgroundColor: colors.primary, color: '#fff', boxShadow: `0 6px 20px 0 ${colors.primary}50` }}
               >
                 {isSubmitting ? (
                   <>
@@ -574,19 +574,18 @@ export const CheckoutDialog = memo(function CheckoutDialog({
                     {formData.paymentMethod === 'online' ? t('proceedToPayment') : t('placeOrder')} - <CurrencyFormat value={cartTotal} currency={currency as Currency} />
                   </>
                 )}
-              </button>
+              </MenuButton>
             </div>
           )}
 
           {step === 'confirmation' && (
             <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))]" style={{ borderTop: `1px solid ${colors.foreground}15` }}>
-              <button 
-                className="w-full h-12 font-semibold rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
+              <MenuButton
+                theme={{ primary: colors.primary, foreground: colors.foreground, background: colors.background }}
                 onClick={handleClose}
-                style={{ backgroundColor: colors.primary, color: '#fff', boxShadow: `0 6px 20px 0 ${colors.primary}50` }}
               >
                 {t('done')}
-              </button>
+              </MenuButton>
             </div>
           )}
         </div>

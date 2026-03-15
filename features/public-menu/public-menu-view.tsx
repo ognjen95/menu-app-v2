@@ -370,6 +370,8 @@ export function PublicMenuView({
       .reduce((total, cartItem) => total + cartItem.quantity, 0)
   }, [cart])
 
+  const currency = tenant.default_currency;
+
   return (
     <div
       className="min-h-screen"
@@ -480,7 +482,7 @@ export function PublicMenuView({
             <ShoppingCart className="h-5 w-5" />
               {t('viewOrder')} ({cartItemsCount}) - <CurrencyFormat value={cartTotal} currency={tenant.default_currency} />
           </button> */}
-          <MenuButton theme={theme} setCartOpen={setCartOpen}>
+          <MenuButton theme={theme} onClick={() => setCartOpen(true)}>
             <ShoppingCart className="h-5 w-5" />
             {t('viewOrder')} ({cartItemsCount}) - <CurrencyFormat value={cartTotal} currency={tenant.default_currency} />
           </MenuButton>
@@ -494,6 +496,7 @@ export function PublicMenuView({
         cart={cart}
         cartTotal={cartTotal}
         theme={theme}
+        currency={currency}
         cardBg={cardBg}
         borderColor={borderColor}
         mutedForeground={mutedForeground}
@@ -527,6 +530,7 @@ export function PublicMenuView({
         onClose={handleCloseItemDetail}
         onAddToCart={addToCart}
         theme={theme}
+        currency={currency}
         getTranslatedText={getTranslatedText}
       />
 

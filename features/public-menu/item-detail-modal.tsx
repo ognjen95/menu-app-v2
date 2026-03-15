@@ -23,6 +23,9 @@ import {
   Flame,
 } from 'lucide-react'
 import Image from 'next/image'
+import CurrencyFormat from '@/components/CurrencyFormat'
+import { Currency } from '@/lib/types'
+import MenuButton from './components/menu-button'
 
 // Theme type for styling
 export type Theme = {
@@ -45,6 +48,7 @@ export interface ItemDetailModalProps {
   onClose: () => void
   onAddToCart: (item: any) => void // eslint-disable-line
   theme: Theme
+  currency: string
   getTranslatedText: (id: string, field: 'name' | 'description', fallback: string, type?: 'menu_item' | 'category' | 'variant_category' | 'menu_item_variant') => string
 }
 
@@ -63,6 +67,7 @@ export const ItemDetailModal = memo(function ItemDetailModal({
   onClose,
   onAddToCart,
   theme,
+  currency,
   getTranslatedText,
 }: ItemDetailModalProps) {
   const t = useTranslations('publicMenuView')
@@ -133,11 +138,11 @@ export const ItemDetailModal = memo(function ItemDetailModal({
         {/* Price section */}
         <div className="flex items-baseline gap-2 mb-4">
           <span className="text-2xl font-bold" style={{ color: theme.primary }}>
-            €{item.base_price.toFixed(2)}
+            <CurrencyFormat value={item.base_price} currency={currency as Currency} />
           </span>
           {item.compare_price && item.compare_price > item.base_price && (
             <span className="text-lg line-through" style={{ color: mutedForeground }}>
-              €{item.compare_price.toFixed(2)}
+              <CurrencyFormat value={item.compare_price} currency={currency as Currency} />
             </span>
           )}
         </div>
@@ -149,7 +154,7 @@ export const ItemDetailModal = memo(function ItemDetailModal({
           )}
           {item.compare_price && item.compare_price > item.base_price && (
             <span className="text-xs px-2 py-1 rounded font-medium" style={{ backgroundColor: theme.accent, color: getContrastColor(theme.accent) }}>
-              {t('save')} €{(item.compare_price - item.base_price).toFixed(2)}
+              {t('save')} <CurrencyFormat value={item.compare_price - item.base_price} currency={currency as Currency} />
             </span>
           )}
         </div>
@@ -216,7 +221,7 @@ export const ItemDetailModal = memo(function ItemDetailModal({
                   style={{ border: `1px solid ${borderColor}`, color: theme.foreground }}
                 >
                   {variant.name}
-                  {variant.price_modifier > 0 && ` (+€${variant.price_modifier.toFixed(2)})`}
+                  {variant.price_modifier > 0 && <> (+<CurrencyFormat value={variant.price_modifier} currency={currency as Currency} />)</>}
                 </span>
               ))}
             </div>
@@ -259,7 +264,7 @@ export const ItemDetailModal = memo(function ItemDetailModal({
                       {getTranslatedText(variant.id, 'name', variant.name, 'menu_item_variant')}
                       {variant.price_adjustment !== 0 && (
                         <span style={{ color: mutedForeground, marginLeft: '4px' }}>
-                          {variant.price_adjustment > 0 ? '+' : ''}€{variant.price_adjustment.toFixed(2)}
+                          {variant.price_adjustment > 0 ? '+' : ''}<CurrencyFormat value={variant.price_adjustment} currency={currency as Currency} />
                         </span>
                       )}
                     </button>
@@ -286,7 +291,7 @@ export const ItemDetailModal = memo(function ItemDetailModal({
                 >
                   <span>{option.name}</span>
                   <span style={{ color: mutedForeground }}>
-                    {option.price > 0 && `+€${option.price.toFixed(2)}`}
+                    {option.price > 0 && <>+<CurrencyFormat value={option.price} currency={currency as Currency} /></>}
                   </span>
                 </label>
               ))}
@@ -297,9 +302,8 @@ export const ItemDetailModal = memo(function ItemDetailModal({
 
       {/* Fixed add to cart button */}
       <div className="p-4 border-t flex-shrink-0" style={{ borderColor, backgroundColor: theme.background }}>
-        <button
-          className="w-full h-12 rounded-xl font-semibold transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
-          style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: `0 6px 20px 0 ${theme.primary}50` }}
+        <MenuButton
+          theme={theme}
           onClick={() => {
             // Pass item with selected variants info
             onAddToCart({ 
@@ -311,8 +315,8 @@ export const ItemDetailModal = memo(function ItemDetailModal({
             onClose()
           }}
         >
-          {t('addToOrder')} - €{totalPrice.toFixed(2)}
-        </button>
+          {t('addToOrder')} - <CurrencyFormat value={totalPrice} currency={currency as Currency} />
+        </MenuButton>
       </div>
     </div>
   )

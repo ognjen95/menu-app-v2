@@ -109,13 +109,17 @@ export function PublicMenuHeader({
   }, [mobileHeaderImage])
 
   const ActionButtons = ({ className = '', floating = false }: { className?: string; floating?: boolean }) => (
-    <div className={`flex items-center ${className}`}>
+    <div 
+      className={`flex items-center ${floating ? 'rounded-full backdrop-blur-md' : ''} ${className}`}
+      style={{
+        backgroundColor: floating ? 'rgba(0,0,0,0.35)' : undefined,
+      }}
+    >
       <button
         className="p-2 rounded-md transition-colors"
         style={{
-          backgroundColor: floating ? 'rgba(0,0,0,0.3)' : (isSearchOpen ? cardBg : 'transparent'),
           color: floating ? '#fff' : theme.foreground,
-          backdropFilter: floating ? 'blur(8px)' : undefined,
+          backgroundColor: !floating && isSearchOpen ? cardBg : 'transparent',
         }}
         onClick={onSearchToggle}
         aria-label={isSearchOpen ? 'Close search' : 'Search'}
@@ -130,9 +134,7 @@ export function PublicMenuHeader({
       <button
         className={`relative p-2 rounded-md transition-colors ${cartAnimation.length > 0 ? 'animate-cart-shake' : ''}`}
         style={{
-          backgroundColor: floating ? 'rgba(0,0,0,0.3)' : 'transparent',
           color: floating ? '#fff' : theme.foreground,
-          backdropFilter: floating ? 'blur(8px)' : undefined,
         }}
         onClick={onCartOpen}
         aria-label="Cart"
@@ -166,9 +168,7 @@ export function PublicMenuHeader({
       <button
         className="p-2 rounded-md transition-colors"
         style={{
-          backgroundColor: floating ? 'rgba(0,0,0,0.3)' : 'transparent',
           color: floating ? '#fff' : theme.foreground,
-          backdropFilter: floating ? 'blur(8px)' : undefined,
         }}
         onClick={onInfoOpen}
         aria-label="Menu"

@@ -9,6 +9,9 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
+import MenuButton from './menu-button'
+import CurrencyFormat from '@/components/CurrencyFormat'
+import { Currency } from '@/lib/types'
 
 type CartItem = {
   id: string
@@ -52,6 +55,7 @@ type OrderHistoryItem = {
 
 interface CartSidebarProps {
   isOpen: boolean
+  currency: string;
   cart: CartItem[]
   cartTotal: number
   theme: Theme
@@ -77,6 +81,7 @@ interface CartSidebarProps {
 export const CartSidebar = memo(function CartSidebar(props: CartSidebarProps) {
   const {
     isOpen,
+    currency,
     cart,
     cartTotal,
     theme,
@@ -167,7 +172,7 @@ export const CartSidebar = memo(function CartSidebar(props: CartSidebarProps) {
                   <History className="h-5 w-5" />
                   <span className="font-medium">{tHistory}</span>
                   {orderHistory.length > 0 && (
-                    <span 
+                    <span
                       className="text-xs px-2 py-0.5 rounded-full"
                       style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
                     >
@@ -202,7 +207,7 @@ export const CartSidebar = memo(function CartSidebar(props: CartSidebarProps) {
                           <div className="flex items-center gap-2">
                             <span
                               className="text-xs px-2 py-0.5 rounded-full font-medium"
-                              style={{ 
+                              style={{
                                 backgroundColor: `${getStatusColor(order.status)}20`,
                                 color: getStatusColor(order.status)
                               }}
@@ -230,7 +235,7 @@ export const CartSidebar = memo(function CartSidebar(props: CartSidebarProps) {
                             <span>{formatTime(order.placed_at || order.created_at)}</span>
                           </div>
                           <span className="font-semibold text-sm" style={{ color: theme.foreground }}>
-                            €{order.total.toFixed(2)}
+                            <CurrencyFormat value={order.total} currency={currency as Currency} />
                           </span>
                         </div>
                       </div>
@@ -246,15 +251,14 @@ export const CartSidebar = memo(function CartSidebar(props: CartSidebarProps) {
           <div className="p-4 space-y-4 flex-shrink-0" style={{ borderTop: `1px solid ${borderColor}` }}>
             <div className="flex justify-between text-lg font-bold" style={{ color: theme.foreground }}>
               <span>{tTotal}</span>
-              <span>€{cartTotal.toFixed(2)}</span>
+              <CurrencyFormat value={cartTotal} currency={currency as Currency} />
             </div>
-            <button
-              className="w-full h-12 text-lg rounded-xl font-semibold transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
-              style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: `0 6px 20px 0 ${theme.primary}50` }}
+            <MenuButton
+              theme={theme}
               onClick={onCheckout}
             >
               {tPlaceOrder}
-            </button>
+            </MenuButton>
           </div>
         )}
       </SheetContent>
