@@ -15,6 +15,8 @@ import { CategorySection } from './components/category-section'
 import { PublicMenuHeader } from './public-menu-header'
 import { DIETARY_TAG_OPTIONS } from '@/lib/constants/menu-items'
 import { CookieLocale } from '@/i18n/config'
+import CurrencyFormat from '@/components/CurrencyFormat'
+import MenuButton from './components/menu-button'
 
 // Lazy load modals - not needed on initial render
 const CartSidebar = dynamic(() => import('./components/cart-sidebar').then(mod => mod.CartSidebar), { ssr: false })
@@ -286,19 +288,19 @@ export function PublicMenuView({
   // Cart functions
   const addToCart = useCallback((itemData: any) => {
     // Handle both old format (item, variant, options) and new format (item with selectedVariants)
-    const item = itemData as MenuItemWithRelations & { 
+    const item = itemData as MenuItemWithRelations & {
       selectedVariants?: Record<string, string[]>
       selectedVariantInfos?: SelectedVariantInfo[]
-      calculatedPrice?: number 
+      calculatedPrice?: number
     }
     const selectedVariants = item.selectedVariants || {}
     const selectedVariantInfos = item.selectedVariantInfos || []
     const calculatedPrice = item.calculatedPrice || item.base_price
-    
+
     // Create unique ID based on item and selected variants
     const variantIds = Object.values(selectedVariants).flat().sort().join('-')
     const cartItemId = `${item.id}-${variantIds || 'default'}`
-    
+
     const cartItem: CartItem = {
       id: cartItemId,
       item,
@@ -406,7 +408,7 @@ export function PublicMenuView({
       />
 
       {/* Menu items - with background for parallax effect */}
-      <main 
+      <main
         className="container mx-auto px-4 py-6 pb-24 relative z-10 "
         style={{ backgroundColor: theme.background }}
       >
@@ -470,16 +472,21 @@ export function PublicMenuView({
       {/* Cart floating button (mobile) */}
       {cartItemsCount > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden p-4 backdrop-blur-md" style={{ backgroundColor: `${theme.background}80` }}>
-          <button
+          {/* <button
             className="w-full h-14 text-lg rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-200 hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
             style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary), boxShadow: `0 8px 24px 0 ${theme.primary}50` }}
             onClick={() => setCartOpen(true)}
           >
             <ShoppingCart className="h-5 w-5" />
-            {t('viewOrder')} ({cartItemsCount}) - €{cartTotal.toFixed(2)}
-          </button>
+              {t('viewOrder')} ({cartItemsCount}) - <CurrencyFormat value={cartTotal} currency={tenant.default_currency} />
+          </button> */}
+          <MenuButton theme={theme} setCartOpen={setCartOpen}>
+            <ShoppingCart className="h-5 w-5" />
+            {t('viewOrder')} ({cartItemsCount}) - <CurrencyFormat value={cartTotal} currency={tenant.default_currency} />
+          </MenuButton>
         </div>
-      )}
+      )
+      }
 
       {/* Cart sidebar */}
       <CartSidebar
@@ -553,6 +560,6 @@ export function PublicMenuView({
         website={website}
         theme={theme}
       />
-    </div>
+    </div >
   )
 }
