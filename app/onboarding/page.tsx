@@ -673,7 +673,8 @@ export default function OnboardingPage() {
               </div>
 
               {/* Seed Data Option */}
-              <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
+              {/* [DEFAULT IS TRUE] DON'T SHOW THIS OPTION TO USER */}
+              {/* <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <h3 className="font-semibold">{t('seedDataTitle')}</h3>
@@ -684,7 +685,7 @@ export default function OnboardingPage() {
                     onCheckedChange={(checked) => setData(prev => ({ ...prev, seedData: checked }))}
                   />
                 </div>
-              </div>
+              </div> */}
 
               {errors.selectedLanguages && (
                 <p className="text-destructive text-sm">{errors.selectedLanguages}</p>

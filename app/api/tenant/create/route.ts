@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { createClient } from '@supabase/supabase-js'
 import { getSeedDataForType } from '@/lib/seed-data'
 import { seedTenantData } from '@/lib/services/seed-data.service'
+import { createDefaultWebsiteForTenant } from '@/lib/services/onboarding-website.service'
 import type { TenantType } from '@/lib/types'
 import { getTrialEndDate } from '@/lib/utils/subscriptions'
 
@@ -214,6 +215,17 @@ export async function POST(request: NextRequest) {
       subdomain: slug,
       is_published: false,
     })
+
+    // Create default website pages and blocks (always create for new tenants)
+    const websiteResult = await createDefaultWebsiteForTenant(tenant.id)
+    if (websiteResult.success) {
+      console.log('Default website created:', {
+        pages: websiteResult.pages.length,
+        blocksCreated: websiteResult.blocksCreated,
+      })
+    } else {
+      console.error('Default website creation errors:', websiteResult.errors)
+    }
 
     return NextResponse.json({ 
       data: { 
