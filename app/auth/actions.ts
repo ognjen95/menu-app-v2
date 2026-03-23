@@ -7,6 +7,7 @@ import { createStripeCustomer } from '@/lib/stripe'
 
 
 const PUBLIC_URL = process.env.NEXT_PUBLIC_WEBSITE_URL || "http://localhost:3000"
+const RESET_PASSWORD_URL = `${PUBLIC_URL}/forgot-password/reset`
 
 export async function resetPassword(currentState: { message: string }, formData: FormData) {
     const supabase = await createServerSupabaseClient()
@@ -34,7 +35,7 @@ export async function resetPassword(currentState: { message: string }, formData:
 export async function forgotPassword(currentState: { message: string }, formData: FormData) {
     const supabase = await createServerSupabaseClient()
     const email = formData.get('email') as string
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: '/forgot-password/reset' })
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: RESET_PASSWORD_URL })
 
     if (error) {
         return { message: error.message }
@@ -77,7 +78,7 @@ export async function signup(currentState: { message: string }, formData: FormDa
     // Create Stripe customer for this user
     try {
         const stripeCustomerId = await createStripeCustomer(signUpData.user.id, signUpData.user.email!, data.name)
-        
+
         // Store stripe_customer_id in user metadata (will be used when creating tenant)
         await supabase.auth.updateUser({
             data: { stripe_customer_id: stripeCustomerId }

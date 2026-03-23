@@ -13,7 +13,7 @@ import dynamic from 'next/dynamic'
 // Removed Framer Motion for better performance
 import { CategorySection } from './components/category-section'
 import { PublicMenuHeader } from './public-menu-header'
-import { DIETARY_TAG_OPTIONS } from '@/lib/constants/menu-items'
+// import { DIETARY_TAG_OPTIONS } from '@/lib/constants/menu-items'
 import { CookieLocale } from '@/i18n/config'
 import CurrencyFormat from '@/components/CurrencyFormat'
 import MenuButton from './components/menu-button'

@@ -4,7 +4,7 @@ import { FaFacebookF, FaInstagram, FaXTwitter, FaTiktok, FaYoutube, FaLinkedinIn
 import { SiTripadvisor } from "react-icons/si";
 import { GalleryBlock } from "../GalleryBlock";
 import Image from "next/image";
-import Link from "next/link";
+
 // Location type from database
 export interface Location {
   id: string
