@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { motion } from '@/components/ui/animated'
+import Link from 'next/link'
 
 type Website = {
   subdomain: string | null
@@ -48,53 +49,55 @@ export function TopBar({
   const t = useTranslations('websiteBuilder')
 
   return (
-    <motion.div 
-      className="fixed top-3 left-3 right-3 h-16 z-50 flex items-center justify-between px-4 bg-background/95 backdrop-blur-xl  rounded-xl"
+    <motion.div
+      className="fixed top-3 left-3 right-3 h-16 z-50 flex items-center justify-between md:px-4 bg-background/95 backdrop-blur-xl  rounded-xl"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild className="gap-1">
-          <a href="/dashboard/orders">
+          <Link href="/dashboard/orders">
             <ChevronLeft className="h-4 w-4" />
-            {t('exit')}
-          </a>
+            <span className='hidden md:block'>
+              {t('exit')}
+            </span>
+          </Link>
         </Button>
-        <div>
+        <div className='hidden md:block'>
           <h1 className="font-semibold">{t('title')}</h1>
           <p className="text-xs text-muted-foreground">
             {website?.subdomain || t('noSubdomain')}.klopay.app
           </p>
         </div>
       </div>
-      
+
       <div className="flex items-center gap-2">
         {/* Preview Target Toggle: Website / Menu */}
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-muted">
+        <div className="flex items-center gap-1 p-1 rounded-full bg-muted">
           {([['website', Globe, t('website')], ['menu', UtensilsCrossed, t('menu')]] as const).map(([target, Icon, label]) => (
             <motion.div key={target} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className={cn("h-8 gap-1.5 px-3", previewTarget === target && "bg-primary text-primary-foreground")} 
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn("h-8 gap-1.5 px-3", previewTarget === target && "bg-primary text-primary-foreground")}
                 onClick={() => setPreviewTarget(target)}
               >
                 <Icon className="h-4 w-4" />
-                <span className="text-xs font-medium">{label}</span>
+                <span className="text-xs font-medium hidden md:bloc">{label}</span>
               </Button>
             </motion.div>
           ))}
         </div>
 
         {/* Device Mode Toggle */}
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-muted">
+        <div className="flex items-center gap-1 p-1 rounded-full bg-muted hidden md:block">
           {([['desktop', Monitor], ['tablet', Tablet], ['mobile', Smartphone]] as const).map(([mode, Icon]) => (
             <motion.div key={mode} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className={cn("h-8 w-8", previewMode === mode && "bg-primary text-primary-foreground")} 
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn("h-8 w-8", previewMode === mode && "bg-primary text-primary-foreground")}
                 onClick={() => setPreviewMode(mode)}
               >
                 <Icon className="h-4 w-4" />
@@ -102,7 +105,7 @@ export function TopBar({
             </motion.div>
           ))}
         </div>
-        
+
         {refreshPreview && (
           <motion.div whileHover={{ scale: 1.05, rotate: 180 }} whileTap={{ scale: 0.95 }}>
             <Button variant="ghost" size="icon" onClick={() => refreshPreview(true)}>
@@ -110,7 +113,7 @@ export function TopBar({
             </Button>
           </motion.div>
         )}
-        
+
         {websiteUrl && (
           <Button variant="ghost" size="icon" asChild>
             <a href={websiteUrl.replace('?preview=true', '')} target="_blank">
@@ -118,18 +121,21 @@ export function TopBar({
             </a>
           </Button>
         )}
-        
-        <Badge variant={website?.is_published ? "default" : "secondary"} className="ml-2">
-          {website?.is_published ? t('live') : t('draft')}
-        </Badge>
-        
+
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button 
-            onClick={onPublish} 
-            disabled={isPublishing} 
-            size="sm" 
+          <Button
+            onClick={onPublish}
+            disabled={isPublishing}
+            size="sm"
+            className='relative'
             variant={website?.is_published ? "outline" : "default"}
           >
+
+            {!website?.is_published && (
+              <Badge variant={"secondary"} className="ml-2 absolute -top-3 -right-2 ">
+                {t('draft')}
+              </Badge>
+            )}
             {isPublishing ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
@@ -137,11 +143,11 @@ export function TopBar({
             )}
           </Button>
         </motion.div>
-        
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="ml-2" 
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="ml-2"
           onClick={() => setSidebarOpen(!sidebarOpen)}
         >
           {sidebarOpen ? <PanelRightClose className="h-5 w-5" /> : <PanelRight className="h-5 w-5" />}

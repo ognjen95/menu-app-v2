@@ -1225,6 +1225,10 @@
       "saveFailed": "Error al guardar traducciones",
       "noTranslationsToSave": "No hay traducciones para guardar"
     },
+    "unpublished": {
+      "title": "Sitio Web No Publicado",
+      "description": "Tu sitio web está actualmente en modo borrador y no es visible para el público. Publícalo para que sea visible."
+    },
     "templates": {
       "title": "Elige tu punto de partida",
       "description": "Selecciona una plantilla profesional o comienza desde cero",

@@ -46,9 +46,12 @@ export function TopBarContainer({
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['website'] }),
   })
 
+  const publicUrl = `${process.env.NEXT_PUBLIC_WEBSITE_URL}/site/${website?.subdomain}`
+
   return (
     <TopBar
       website={website}
+      websiteUrl={publicUrl}
       previewMode={previewMode}
       previewTarget={previewTarget}
       sidebarOpen={sidebarOpen}

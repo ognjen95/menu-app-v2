@@ -1225,6 +1225,10 @@
       "saveFailed": "Čuvanje prevoda nije uspelo",
       "noTranslationsToSave": "Nema prevoda za čuvanje"
     },
+    "unpublished": {
+      "title": "Sajt Nije Objavljen",
+      "description": "Tvoj sajt je trenutno u režimu nacrta i nije vidljiv javnosti. Objavi ga da bi bio dostupan."
+    },
     "templates": {
       "title": "Izaberite početnu tačku",
       "description": "Izaberite profesionalno dizajniran šablon ili krenite od nule",

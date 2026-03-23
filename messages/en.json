@@ -1225,6 +1225,10 @@
       "saveFailed": "Failed to save translations",
       "noTranslationsToSave": "No translations to save"
     },
+    "unpublished": {
+      "title": "Website Not Published",
+      "description": "Your website is currently in draft mode and not visible to the public. Publish it to make it live."
+    },
     "templates": {
       "title": "Choose Your Starting Point",
       "description": "Select a professionally designed template or start with a blank canvas",
