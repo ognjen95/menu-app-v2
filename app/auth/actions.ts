@@ -1,4 +1,5 @@
 "use server"
+
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
@@ -33,7 +34,7 @@ export async function resetPassword(currentState: { message: string }, formData:
 export async function forgotPassword(currentState: { message: string }, formData: FormData) {
     const supabase = await createServerSupabaseClient()
     const email = formData.get('email') as string
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${PUBLIC_URL}/forgot-password/reset` })
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: '/forgot-password/reset' })
 
     if (error) {
         return { message: error.message }

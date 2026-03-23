@@ -507,7 +507,7 @@ export default function OrdersPage() {
 
       {/* Page header */}
       <motion.div
-        className="flex items-center justify-between flex-wrap gap-4 w-full pb-5 md:pb-3 w-full"
+        className="flex items-center justify-between flex-wrap gap-4 w-full pb-5 md:pb-10 w-full"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -515,7 +515,6 @@ export default function OrdersPage() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('title')}</h1>
           <p className="text-sm md:text-base text-muted-foreground"> {t('description')}</p>
-
         </div>
         <div className="flex items-center gap-1 md:gap-2 flex-1 md:justify-end">
           {/* Location selector */}
@@ -711,9 +710,6 @@ export default function OrdersPage() {
           </span>
         </Button>
       </div>
-
-
-
 
       {/* Status filter tabs (multi-select) */}
       <div className="flex flex-wrap gap-2 md:gap-3 pb-3 items-center justify-between md:justify-start">
