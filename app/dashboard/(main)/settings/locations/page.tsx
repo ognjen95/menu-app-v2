@@ -82,7 +82,7 @@ export default function LocationsPage() {
     address: '',
     city: '',
     postal_code: '',
-    country: 'RS',
+    country: '',
     phone: '',
     email: '',
   })
@@ -128,7 +128,7 @@ export default function LocationsPage() {
       address: '',
       city: '',
       postal_code: '',
-      country: 'RS',
+      country: '',
       phone: '',
       email: '',
     })
@@ -152,7 +152,7 @@ export default function LocationsPage() {
       address: location.address || '',
       city: location.city || '',
       postal_code: location.postal_code || '',
-      country: location.country || 'RS',
+      country: location.country || '',
       phone: location.phone || '',
       email: location.email || '',
     })
