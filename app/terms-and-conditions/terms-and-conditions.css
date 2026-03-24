@@ -1,0 +1,77 @@
+#klopay-terms-and-conditions {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  line-height: 1.6;
+  color: var(--foreground, #1a1a1a);
+  background-color: var(--background, #ffffff);
+}
+
+#klopay-terms-and-conditions h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--foreground, #1a1a1a);
+  border-bottom: 2px solid var(--primary, #3b82f6);
+  padding-bottom: 0.5rem;
+}
+
+#klopay-terms-and-conditions h1:first-child {
+  margin-top: 0;
+}
+
+#klopay-terms-and-conditions p {
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  text-align: justify;
+}
+
+#klopay-terms-and-conditions ul {
+  margin-left: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+#klopay-terms-and-conditions li {
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+#klopay-terms-and-conditions a {
+  color: var(--primary, #3b82f6);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+#klopay-terms-and-conditions a:hover {
+  color: var(--primary-dark, #2563eb);
+  text-decoration: underline;
+}
+
+#klopay-terms-and-conditions strong {
+  font-weight: 600;
+  color: var(--foreground, #1a1a1a);
+}
+
+@media (max-width: 768px) {
+  #klopay-terms-and-conditions {
+    padding: 1.5rem;
+  }
+
+  #klopay-terms-and-conditions h1 {
+    font-size: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  #klopay-terms-and-conditions p {
+    font-size: 0.95rem;
+    text-align: left;
+  }
+
+  #klopay-terms-and-conditions ul {
+    margin-left: 1.5rem;
+  }
+}

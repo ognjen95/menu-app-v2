@@ -21,8 +21,8 @@ export function Footer() {
       { label: t('blog'), href: '#' },
     ],
     legal: [
-      { label: t('privacy'), href: '#' },
-      { label: t('terms'), href: '#' },
+      { label: t('privacy'), href: '/privacy-policy' },
+      { label: t('terms'), href: '/terms-and-conditions' },
     ],
   }
 
