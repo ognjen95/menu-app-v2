@@ -6,6 +6,7 @@ import { seedTenantData } from '@/lib/services/seed-data.service'
 import { createDefaultWebsiteForTenant } from '@/lib/services/onboarding-website.service'
 import type { TenantType } from '@/lib/types'
 import { getTrialEndDate } from '@/lib/utils/subscriptions'
+import { notifyNewTenantCreated } from '@/features/notifications/telegram'
 
 // Service role client for bypassing RLS during tenant creation
 const supabaseAdmin = createClient(
@@ -226,6 +227,19 @@ export async function POST(request: NextRequest) {
     } else {
       console.error('Default website creation errors:', websiteResult.errors)
     }
+
+    // Send Telegram notification (non-blocking, don't fail if it errors)
+    notifyNewTenantCreated({
+      tenantId: tenant.id,
+      tenantName: tenant.name,
+      tenantSlug: tenant.slug,
+      tenantType: tenant.type,
+      userEmail: user.email || '',
+      country: tenant.country || country || 'Unknown',
+      createdAt: new Date(),
+    }).catch((err) => {
+      console.error('[Telegram] Notification failed:', err)
+    })
 
     return NextResponse.json({ 
       data: { 
