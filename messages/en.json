@@ -26,6 +26,7 @@
     "total": "Total",
     "fromYesterday": "from yesterday",
     "takeaway": "Takeaway",
+    "comingSoon": "Coming Soon",
     "orderStatus": {
       "draft": "Draft",
       "placed": "Placed",

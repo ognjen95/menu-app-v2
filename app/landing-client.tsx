@@ -27,7 +27,7 @@ export function LandingPageClient() {
         {/* <TranslationsSection /> */}
         <StatisticsSection />
         <AiSection />
-        <PricingSection />
+        {/* <PricingSection /> */}
         <TestimonialsSection />
         <CtaSection />
       </main>

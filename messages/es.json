@@ -26,6 +26,7 @@
     "total": "Total",
     "fromYesterday": "respecto a ayer",
     "takeaway": "Para Llevar",
+    "comingSoon": "Próximamente",
     "orderStatus": {
       "draft": "Borrador",
       "placed": "Recibido",

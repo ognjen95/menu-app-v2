@@ -26,6 +26,7 @@
     "total": "Ukupno",
     "fromYesterday": "od juče",
     "takeaway": "Ponesi",
+    "comingSoon": "Uskoro",
     "orderStatus": {
       "draft": "Nacrt",
       "placed": "Naručeno",

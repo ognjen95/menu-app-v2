@@ -28,6 +28,7 @@ import {
   Truck,
   Info,
   Clock,
+  Star,
 } from 'lucide-react'
 import { motion } from '@/components/ui/animated'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -46,6 +47,7 @@ type TenantSettings = {
 
 export default function SettingsPage() {
   const t = useTranslations('settingsPage')
+  const tCommon = useTranslations('common')
   const { data, isLoading, refetch } = useCurrentTenant()
   const { data: locationsData, refetch: refetchLocations } = useLocations()
   const updateTenant = useUpdateTenant()
@@ -267,7 +269,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Label htmlFor="timezone">{t('timezone')}</Label>
                   <Select
                     value={formData.timezone}
@@ -285,7 +287,7 @@ export default function SettingsPage() {
                       <SelectItem value="America/Los_Angeles">America/Los Angeles (PST)</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
+                </div> */}
               </div>
               <div className="flex gap-2">
                 <Button onClick={handleSave} disabled={updateTenant.isPending}>
@@ -413,11 +415,16 @@ export default function SettingsPage() {
                 <p className="text-sm text-muted-foreground">{t('onlinePaymentsDesc')}</p>
               </div>
             </div>
-            <Switch
+            {/* UNCOMENT WHEN INTEGRATE PAYMENTS */}
+            {/* <Switch
               checked={settings.online_payments_enabled === true}
               onCheckedChange={(checked) => handleSettingToggle('online_payments_enabled', checked)}
               disabled={isSavingSettings}
-            />
+            /> */}
+            <Badge>
+              <Star className='h-5 w-5 mr-3' />
+              {tCommon('comingSoon')}
+            </Badge>
           </div>
           {settings.online_payments_enabled && (
             <div className="ml-12 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
