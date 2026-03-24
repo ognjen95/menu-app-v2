@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 import {
   Dialog,
   DialogContent,
@@ -29,9 +30,31 @@ import {
   Store,
   QrCode,
   Loader2,
+  Clock,
 } from 'lucide-react'
 import { motion, staggerContainer, staggerItemScale } from '@/components/ui/animated'
 import { LocationsGridSkeleton } from '@/components/ui/skeletons'
+
+const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
+type DayKey = typeof dayKeys[number]
+
+type DayHours = {
+  open: string
+  close: string
+  is_closed: boolean
+}
+
+type OpeningHours = Record<DayKey, DayHours>
+
+const defaultOpeningHours: OpeningHours = {
+  monday: { open: '09:00', close: '22:00', is_closed: false },
+  tuesday: { open: '09:00', close: '22:00', is_closed: false },
+  wednesday: { open: '09:00', close: '22:00', is_closed: false },
+  thursday: { open: '09:00', close: '22:00', is_closed: false },
+  friday: { open: '09:00', close: '22:00', is_closed: false },
+  saturday: { open: '10:00', close: '23:00', is_closed: false },
+  sunday: { open: '10:00', close: '21:00', is_closed: true },
+}
 
 type Location = {
   id: string
@@ -45,6 +68,7 @@ type Location = {
   email?: string
   is_active: boolean
   service_modes: string[]
+  opening_hours?: OpeningHours
   created_at: string
 }
 
@@ -62,6 +86,7 @@ export default function LocationsPage() {
     phone: '',
     email: '',
   })
+  const [openingHours, setOpeningHours] = useState<OpeningHours>(defaultOpeningHours)
 
   const { data, isLoading } = useQuery({
     queryKey: ['locations'],
@@ -70,7 +95,7 @@ export default function LocationsPage() {
 
 
   const createMutation = useMutation({
-    mutationFn: (data: typeof formData) => apiPost('/locations', data),
+    mutationFn: (data: typeof formData & { opening_hours: OpeningHours }) => apiPost('/locations', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['locations'] })
       setIsCreateOpen(false)
@@ -79,7 +104,7 @@ export default function LocationsPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, ...data }: { id: string } & typeof formData) =>
+    mutationFn: ({ id, ...data }: { id: string } & typeof formData & { opening_hours: OpeningHours }) =>
       apiPatch(`/locations/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['locations'] })
@@ -107,6 +132,17 @@ export default function LocationsPage() {
       phone: '',
       email: '',
     })
+    setOpeningHours(defaultOpeningHours)
+  }
+
+  const handleOpeningHoursChange = (day: DayKey, field: keyof DayHours, value: string | boolean) => {
+    setOpeningHours(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [field]: value,
+      },
+    }))
   }
 
   const handleEdit = (location: Location) => {
@@ -120,14 +156,21 @@ export default function LocationsPage() {
       phone: location.phone || '',
       email: location.email || '',
     })
+    // Load opening hours from location or use defaults
+    if (location.opening_hours) {
+      setOpeningHours(location.opening_hours)
+    } else {
+      setOpeningHours(defaultOpeningHours)
+    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    const dataWithHours = { ...formData, opening_hours: openingHours }
     if (editingLocation) {
-      updateMutation.mutate({ id: editingLocation.id, ...formData })
+      updateMutation.mutate({ id: editingLocation.id, ...dataWithHours })
     } else {
-      createMutation.mutate(formData)
+      createMutation.mutate(dataWithHours)
     }
   }
 
@@ -205,6 +248,45 @@ export default function LocationsPage() {
           />
         </div>
       </div>
+
+      {/* Working Hours Section */}
+      <div className="space-y-3 pt-2">
+        <div className="flex items-center gap-2">
+          <Clock className="h-4 w-4 text-muted-foreground" />
+          <Label className="text-base font-medium">{t('workingHours')}</Label>
+        </div>
+        <div className="space-y-2 max-h-[280px] overflow-y-auto pr-2">
+          {dayKeys.map((day) => (
+            <div key={day} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+              <div className="w-20 font-medium text-sm capitalize">{t(`days.${day}`)}</div>
+              <Switch
+                checked={!openingHours[day]?.is_closed}
+                onCheckedChange={(checked) => handleOpeningHoursChange(day, 'is_closed', !checked)}
+              />
+              {!openingHours[day]?.is_closed ? (
+                <div className="flex items-center gap-2 flex-1">
+                  <Input
+                    type="time"
+                    value={openingHours[day]?.open || '09:00'}
+                    onChange={(e) => handleOpeningHoursChange(day, 'open', e.target.value)}
+                    className="w-24 h-8 text-sm"
+                  />
+                  <span className="text-muted-foreground text-sm">-</span>
+                  <Input
+                    type="time"
+                    value={openingHours[day]?.close || '22:00'}
+                    onChange={(e) => handleOpeningHoursChange(day, 'close', e.target.value)}
+                    className="w-24 h-8 text-sm"
+                  />
+                </div>
+              ) : (
+                <span className="text-sm text-muted-foreground">{t('closed')}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
       <DialogFooter>
         <Button
           type="button"
@@ -251,7 +333,7 @@ export default function LocationsPage() {
               </Button>
             </motion.div>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{t('addNewLocation')}</DialogTitle>
               <DialogDescription>
@@ -325,6 +407,20 @@ export default function LocationsPage() {
                     <span>{location.email}</span>
                   </div>
                 )}
+                {location.opening_hours && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span>
+                      {(() => {
+                        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
+                        const today = days[new Date().getDay()] as DayKey
+                        const todayHours = location.opening_hours[today]
+                        if (todayHours?.is_closed) return t('closed')
+                        return `${todayHours?.open || '09:00'} - ${todayHours?.close || '22:00'}`
+                      })()}
+                    </span>
+                  </div>
+                )}
                 <div className="flex gap-2 pt-2">
                   <Button
                     variant="outline"
@@ -353,7 +449,7 @@ export default function LocationsPage() {
 
       {/* Edit dialog */}
       <Dialog open={!!editingLocation} onOpenChange={(open: boolean) => !open && setEditingLocation(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t('editLocation')}</DialogTitle>
             <DialogDescription>

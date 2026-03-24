@@ -51,7 +51,6 @@ export default function SettingsPage() {
   const { data, isLoading, refetch } = useCurrentTenant()
   const { data: locationsData, refetch: refetchLocations } = useLocations()
   const updateTenant = useUpdateTenant()
-  const updateLocation = useUpdateLocation()
   const [isEditing, setIsEditing] = useState(false)
   const [isEditingHours, setIsEditingHours] = useState(false)
   const [isSavingSettings, setIsSavingSettings] = useState(false)
@@ -85,37 +84,37 @@ export default function SettingsPage() {
     }
   }, [mainLocation])
 
-  const handleWorkingHoursChange = (day: keyof WorkingHours, field: 'open' | 'close' | 'isOpen', value: string | boolean) => {
-    setWorkingHours(prev => ({
-      ...prev,
-      [day]: {
-        ...prev[day],
-        [field]: value,
-      },
-    }))
-  }
+  // const handleWorkingHoursChange = (day: keyof WorkingHours, field: 'open' | 'close' | 'isOpen', value: string | boolean) => {
+  //   setWorkingHours(prev => ({
+  //     ...prev,
+  //     [day]: {
+  //       ...prev[day],
+  //       [field]: value,
+  //     },
+  //   }))
+  // }
 
-  const handleSaveWorkingHours = async () => {
-    if (!mainLocation) return
-    setIsSavingHours(true)
-    try {
-      // Transform WorkingHours (isOpen) to OpeningHours (is_closed) format
-      const openingHours = Object.fromEntries(
-        Object.entries(workingHours).map(([day, hours]) => [
-          day,
-          { open: hours.open, close: hours.close, is_closed: !hours.isOpen }
-        ])
-      )
-      await updateLocation.mutateAsync({
-        id: mainLocation.id,
-        opening_hours: openingHours as any,
-      })
-      refetchLocations()
-      setIsEditingHours(false)
-    } finally {
-      setIsSavingHours(false)
-    }
-  }
+  // const handleSaveWorkingHours = async () => {
+  //   if (!mainLocation) return
+  //   setIsSavingHours(true)
+  //   try {
+  //     // Transform WorkingHours (isOpen) to OpeningHours (is_closed) format
+  //     const openingHours = Object.fromEntries(
+  //       Object.entries(workingHours).map(([day, hours]) => [
+  //         day,
+  //         { open: hours.open, close: hours.close, is_closed: !hours.isOpen }
+  //       ])
+  //     )
+  //     await updateLocation.mutateAsync({
+  //       id: mainLocation.id,
+  //       opening_hours: openingHours as any,
+  //     })
+  //     refetchLocations()
+  //     setIsEditingHours(false)
+  //   } finally {
+  //     setIsSavingHours(false)
+  //   }
+  // }
 
   const handleEdit = () => {
     if (tenant) {
@@ -452,7 +451,7 @@ export default function SettingsPage() {
       </motion.div>
 
       {/* Working Hours */}
-      <motion.div
+      {/* <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.25 }}
@@ -539,7 +538,7 @@ export default function SettingsPage() {
           )}
         </CardContent>
       </Card>
-      </motion.div>
+      </motion.div> */}
 
       {/* Subscription */}
       <motion.div

@@ -820,7 +820,18 @@
     "create": "Kreiraj",
     "update": "Ažuriraj",
     "createLocation": "Kreiraj lokaciju",
-    "updateLocation": "Ažuriraj lokaciju"
+    "updateLocation": "Ažuriraj lokaciju",
+    "workingHours": "Radno vreme",
+    "closed": "Zatvoreno",
+    "days": {
+      "monday": "Ponedeljak",
+      "tuesday": "Utorak",
+      "wednesday": "Sreda",
+      "thursday": "Četvrtak",
+      "friday": "Petak",
+      "saturday": "Subota",
+      "sunday": "Nedelja"
+    }
   },
   "teamPage": {
     "title": "Tim",

@@ -18,7 +18,7 @@ export interface Location {
   longitude?: number | null
   phone?: string | null
   email?: string | null
-  opening_hours?: Record<string, { open: string; close: string; closed?: boolean }> | null
+  opening_hours?: Record<string, { open: string; close: string, is_closed?: boolean }> | null
   is_active?: boolean
 }
 
@@ -106,7 +106,7 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
   switch (block.type) {
     case 'hero':
       return (
-        <section 
+        <section
           className="animate-fade-in"
           style={{
             backgroundImage: content.image_url ? `url(${content.image_url})` : undefined,
@@ -207,7 +207,7 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
         const hasContactInfo = loc.phone || loc.email || fullAddress
 
         return (
-          <div 
+          <div
             className="animate-fade-in-up"
             style={{
               backgroundColor: theme.background,
@@ -222,9 +222,9 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
             }}>
             {/* Map embed */}
             {mapUrl && (
-              <div style={{ 
-                width: '100%', 
-                height: '180px', 
+              <div style={{
+                width: '100%',
+                height: '180px',
                 backgroundColor: `${theme.foreground}10`,
               }}>
                 <iframe
@@ -244,10 +244,10 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
             <div style={{ padding: '1.5rem' }}>
               {/* Location header */}
               {showName && (
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.75rem', 
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
                   marginBottom: '1.25rem',
                   paddingBottom: '1rem',
                   borderBottom: `1px solid ${theme.foreground}15`,
@@ -263,9 +263,9 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
                   }}>
                     <Building2 size={20} color={theme.primary} />
                   </div>
-                  <h3 style={{ 
-                    fontFamily: theme.fontHeading, 
-                    fontWeight: 600, 
+                  <h3 style={{
+                    fontFamily: theme.fontHeading,
+                    fontWeight: 600,
                     margin: 0,
                     fontSize: '1.1rem',
                   }}>
@@ -313,11 +313,11 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
                         <Phone size={16} color={theme.primary} />
                       </div>
                       <div style={{ paddingTop: '0.25rem' }}>
-                        <a 
-                          href={`tel:${loc.phone}`} 
-                          style={{ 
-                            color: theme.foreground, 
-                            textDecoration: 'none', 
+                        <a
+                          href={`tel:${loc.phone}`}
+                          style={{
+                            color: theme.foreground,
+                            textDecoration: 'none',
                             fontSize: '0.95rem',
                             display: 'block',
                           }}
@@ -344,11 +344,11 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
                         <Mail size={16} color={theme.primary} />
                       </div>
                       <div style={{ paddingTop: '0.25rem' }}>
-                        <a 
-                          href={`mailto:${loc.email}`} 
-                          style={{ 
-                            color: theme.foreground, 
-                            textDecoration: 'none', 
+                        <a
+                          href={`mailto:${loc.email}`}
+                          style={{
+                            color: theme.foreground,
+                            textDecoration: 'none',
                             fontSize: '0.95rem',
                             display: 'block',
                             wordBreak: 'break-all',
@@ -435,12 +435,12 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
       const currentDay = days[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1]
 
       // Modern hours row component
-      const HoursRow = ({ day, hours, isToday }: { 
-        day: string; 
-        hours: { open: string; close: string; closed?: boolean } | undefined;
+      const HoursRow = ({ day, hours, isToday }: {
+        day: string;
+        hours: { open: string; close: string, is_closed?: boolean } | undefined;
         isToday: boolean;
       }) => {
-        const isClosed = !hours || hours.closed
+        const isClosed = !hours || hours.is_closed
         return (
           <div style={{
             display: 'flex',
@@ -473,10 +473,10 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
                 <span style={{ color: `${theme.foreground}60`, fontStyle: 'italic' }}>{t('closed')}</span>
               ) : (
                 <>
-                  <span style={{ 
-                    width: '8px', 
-                    height: '8px', 
-                    borderRadius: '50%', 
+                  <span style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
                     backgroundColor: '#22c55e',
                     display: 'inline-block',
                   }} />
@@ -501,10 +501,10 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
           border: `1px solid ${theme.foreground}10`,
         }}>
           {showName && (
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.75rem', 
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
               marginBottom: '1.25rem',
               paddingBottom: '1rem',
               borderBottom: `1px solid ${theme.foreground}15`,
@@ -521,18 +521,18 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
                 <Building2 size={20} color={theme.primary} />
               </div>
               <div>
-                <h3 style={{ 
-                  fontFamily: theme.fontHeading, 
-                  fontWeight: 600, 
+                <h3 style={{
+                  fontFamily: theme.fontHeading,
+                  fontWeight: 600,
                   margin: 0,
                   fontSize: '1.1rem',
                 }}>
                   {loc.name}
                 </h3>
                 {loc.address && (
-                  <p style={{ 
-                    margin: 0, 
-                    fontSize: '0.85rem', 
+                  <p style={{
+                    margin: 0,
+                    fontSize: '0.85rem',
                     color: `${theme.foreground}70`,
                     marginTop: '0.25rem',
                   }}>
@@ -542,11 +542,11 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
               </div>
             </div>
           )}
-          
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.5rem', 
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
             marginBottom: '1rem',
             color: `${theme.foreground}80`,
           }}>
@@ -555,14 +555,16 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            {days.map(day => (
-              <HoursRow 
-                key={day} 
-                day={day} 
-                hours={loc.opening_hours?.[day]} 
-                isToday={day === currentDay}
-              />
-            ))}
+            {days.map(day => {
+              return (
+                <HoursRow
+                  key={day}
+                  day={day}
+                  hours={loc.opening_hours?.[day]}
+                  isToday={day === currentDay}
+                />
+              )
+            })}
           </div>
         </div>
       )
@@ -584,10 +586,10 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
       return (
         <section style={{ padding: sectionPadding }}>
           <div style={contentStyle}>
-            <h2 style={{ 
-              fontFamily: theme.fontHeading, 
-              fontSize: '2rem', 
-              marginBottom: '2rem', 
+            <h2 style={{
+              fontFamily: theme.fontHeading,
+              fontSize: '2rem',
+              marginBottom: '2rem',
               textAlign: 'center',
               fontWeight: 600,
             }}>
@@ -660,8 +662,8 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
               justifyContent: 'center',
             }}>
               {testimonials.map((testimonial, idx) => (
-                <div 
-                  key={idx} 
+                <div
+                  key={idx}
                   className="animate-scale-in"
                   style={{
                     backgroundColor: theme.background,
@@ -719,8 +721,8 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
                   }
 
                   return (
-                    <div 
-                      key={item.id} 
+                    <div
+                      key={item.id}
                       className="animate-fade-in-up"
                       style={{
                         backgroundColor: theme.secondary,
@@ -999,7 +1001,7 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
       const ctaHasImage = Boolean(content.background_image)
       const ctaTextColor = ctaHasImage ? '#fff' : theme.foreground
       return (
-        <section 
+        <section
           className="animate-fade-in"
           style={{
             padding: sectionPadding,
@@ -1070,7 +1072,7 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
       const textImageUrl = content.image_url as string | undefined
       const textImagePosition = (content.image_position as string) || 'top'
       const textAlignment = (content.alignment as 'left' | 'center' | 'right') || 'left'
-      
+
       const TextContent = () => (
         <div style={{ textAlign: textAlignment, flex: 1, minWidth: '280px' }}>
           {Boolean(content.title) && (
@@ -1083,13 +1085,13 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
           </div>
         </div>
       )
-      
+
       const TextImage = () => (
         textImageUrl ? (
           <div style={{ width: '100%', position: 'relative', aspectRatio: '16/10' }}>
-            <Image 
-              src={textImageUrl} 
-              alt="" 
+            <Image
+              src={textImageUrl}
+              alt=""
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover"
@@ -1098,7 +1100,7 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
           </div>
         ) : null
       )
-      
+
       return (
         <section className="animate-fade-in" style={{ padding: sectionPadding, backgroundColor: content.use_secondary_bg ? theme.secondary : 'transparent' }}>
           <div style={{ ...contentStyle }}>
@@ -1108,8 +1110,8 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
               </div>
             )}
             {(textImagePosition === 'left' || textImagePosition === 'right') && textImageUrl ? (
-              <div style={{ 
-                display: 'flex', 
+              <div style={{
+                display: 'flex',
                 flexDirection: textImagePosition === 'left' ? 'row' : 'row-reverse',
                 gap: '3rem',
                 alignItems: 'center',
@@ -1145,7 +1147,7 @@ export const BlockRenderer = memo(function BlockRenderer({ block, theme, menuIte
         const address = formatAddress(loc)
 
         return (
-          <div 
+          <div
             className="animate-fade-in-up"
             style={{
               backgroundColor: theme.background,

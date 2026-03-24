@@ -820,7 +820,18 @@
     "create": "Create",
     "update": "Update",
     "createLocation": "Create Location",
-    "updateLocation": "Update Location"
+    "updateLocation": "Update Location",
+    "workingHours": "Working Hours",
+    "closed": "Closed",
+    "days": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    }
   },
   "teamPage": {
     "title": "Team",
