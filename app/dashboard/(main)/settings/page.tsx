@@ -71,10 +71,17 @@ export default function SettingsPage() {
   const mainLocation = locations[0]
   const settings: TenantSettings = (tenant?.settings as TenantSettings) || {}
 
-  // Load working hours from main location
+  // Load working hours from main location (transform from opening_hours format)
   useEffect(() => {
-    if (mainLocation?.working_hours) {
-      setWorkingHours(mainLocation.working_hours as WorkingHours)
+    if (mainLocation?.opening_hours) {
+      const openingHours = mainLocation.opening_hours as unknown as Record<string, { open: string; close: string; is_closed: boolean }>
+      const transformed = Object.fromEntries(
+        Object.entries(openingHours).map(([day, hours]) => [
+          day,
+          { open: hours.open, close: hours.close, isOpen: !hours.is_closed }
+        ])
+      ) as WorkingHours
+      setWorkingHours(transformed)
     }
   }, [mainLocation])
 
@@ -92,9 +99,16 @@ export default function SettingsPage() {
     if (!mainLocation) return
     setIsSavingHours(true)
     try {
+      // Transform WorkingHours (isOpen) to OpeningHours (is_closed) format
+      const openingHours = Object.fromEntries(
+        Object.entries(workingHours).map(([day, hours]) => [
+          day,
+          { open: hours.open, close: hours.close, is_closed: !hours.isOpen }
+        ])
+      )
       await updateLocation.mutateAsync({
         id: mainLocation.id,
-        working_hours: workingHours,
+        opening_hours: openingHours as any,
       })
       refetchLocations()
       setIsEditingHours(false)

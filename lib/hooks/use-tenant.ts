@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api'
+import { apiGet, apiPost, apiPut, apiPatch, apiDelete } from '@/lib/api'
 import type { Tenant, TenantUser, Location, TenantRole } from '@/lib/types'
 
 // Query keys
@@ -123,7 +123,7 @@ export function useUpdateLocation() {
 
   return useMutation({
     mutationFn: ({ id, ...data }: Partial<Location> & { id: string }) =>
-      apiPut<{ location: Location }>(`/locations/${id}`, data),
+      apiPatch<{ location: Location }>(`/locations/${id}`, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: tenantKeys.locations() })
       queryClient.invalidateQueries({ queryKey: tenantKeys.location(variables.id) })
