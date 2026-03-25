@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase-middleware'
 import { RESERVED_SUBDOMAINS, ROOT_DOMAIN } from './lib/constants/domains'
+import { handleLocaleFromQueryParam } from '@/lib/locale-middleware'
 
 /**
  * Extract subdomain from hostname
@@ -128,6 +129,12 @@ export async function middleware(request: NextRequest) {
     }
     
     // No subdomain - continue with normal auth middleware
+    // For landing page, handle locale query param for first-time visitors
+    if (pathname === '/' || pathname === '/login') {
+        const response = await updateSession(request)
+        return handleLocaleFromQueryParam(request, response)
+    }
+    
     return await updateSession(request)
 }
 
