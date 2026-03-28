@@ -229,7 +229,7 @@ interface ConversionOptions {
  * @param options - Optional params and raw flag
  * 
  * @example
- * // Simple usage - auto-prepends NEXT_PUBLIC_GA_MEASUREMENT_ID
+ * // Simple usage - auto-prepends NEXT_PUBLIC_GA_ADS_ID (e.g., AW-17987905992)
  * trackConversion('RXGkCLDNlJEcEMjEhpFD')
  * 
  * // With additional params
@@ -251,17 +251,17 @@ export function trackConversion(conversionId: string, options?: ConversionOption
     return
   }
 
-  // Build the send_to value
+  // Build the send_to value - use Google Ads ID for conversions
   let sendTo: string
   if (options?.raw) {
     sendTo = conversionId
   } else {
-    const measurementId = currentConfig?.measurementId || process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
-    if (!measurementId) {
-      console.warn('[GA4] No measurement ID available for conversion tracking')
+    const adsId = currentConfig?.adsId || process.env.NEXT_PUBLIC_GA_ADS_ID
+    if (!adsId) {
+      console.warn('[GA4] No Google Ads ID available for conversion tracking')
       return
     }
-    sendTo = `${measurementId}/${conversionId}`
+    sendTo = `${adsId}/${conversionId}`
   }
 
   window.gtag('event', 'conversion', {

@@ -50,6 +50,7 @@ const TrackingContext = createContext<TrackingContextValue | null>(null)
 interface TrackingProviderProps {
   children: ReactNode
   measurementId?: string
+  adsId?: string
   debug?: boolean
   anonymizeIp?: boolean
   consentVersion?: string
@@ -62,6 +63,7 @@ interface TrackingProviderProps {
 export function TrackingProvider({
   children,
   measurementId,
+  adsId,
   debug = false,
   anonymizeIp = true,
   consentVersion = '1.0',
@@ -80,15 +82,17 @@ export function TrackingProvider({
 
   // Get measurement ID from props or env
   const gaId = measurementId || process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || ''
+  const gaAdsId = adsId || process.env.NEXT_PUBLIC_GA_ADS_ID
 
   const config: TrackingConfig = useMemo(
     () => ({
       measurementId: gaId,
+      adsId: gaAdsId,
       debug,
       anonymizeIp,
       consentVersion,
     }),
-    [gaId, debug, anonymizeIp, consentVersion]
+    [gaId, gaAdsId, debug, anonymizeIp, consentVersion]
   )
 
   // Load consent state on mount

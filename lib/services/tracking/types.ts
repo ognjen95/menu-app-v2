@@ -34,6 +34,7 @@ export const DEFAULT_CONSENT_STATE: ConsentState = {
  */
 export interface TrackingConfig {
   measurementId: string          // GA4 Measurement ID (G-XXXXXXXXXX)
+  adsId?: string                 // Google Ads ID (AW-XXXXXXXXXX) for conversions
   debug?: boolean                // Enable debug mode
   anonymizeIp?: boolean          // Anonymize IP addresses (recommended for EU)
   consentVersion?: string        // Current consent policy version
