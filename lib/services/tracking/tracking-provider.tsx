@@ -148,13 +148,11 @@ export function TrackingProvider({
     setHasConsent(true)
     updateGAConsent(newConsent)
 
-    // Initialize GA if not already
-    if (!isGAInitialized() && gaId) {
-      initializeGA(config, newConsent).then((success) => {
-        setIsInitialized(success)
-      })
+    // Track page view immediately after consent is granted
+    if (isGAInitialized()) {
+      gaTrackPageView()
     }
-  }, [config, gaId])
+  }, [])
 
   const rejectAll = useCallback(() => {
     const newConsent = rejectAllConsent()
