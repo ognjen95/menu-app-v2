@@ -1,228 +1,29 @@
-import {
-  TrackingConfig,
-  ConsentState,
-  GA4EventName,
-  BaseEventParams,
-  EcommerceEventParams,
-  PageViewParams,
-} from './types'
-import { getGoogleConsentMode, isBrowser } from './consent-manager'
+import { isBrowser } from './consent-manager'
 
 // =============================================================================
-// Google Analytics Service
+// Google Analytics Utilities
 // =============================================================================
-
-let isInitialized = false
-let currentConfig: TrackingConfig | null = null
-
-/**
- * Initialize the dataLayer and gtag function
- */
-function initializeDataLayer(): void {
-  if (!isBrowser()) return
-
-  window.dataLayer = window.dataLayer || []
-  
-  // Define gtag function if not exists
-  if (typeof window.gtag !== 'function') {
-    window.gtag = function gtag(...args: unknown[]) {
-      window.dataLayer.push(args)
-    }
-  }
-}
-
-/**
- * Load the Google Analytics script
- */
-function loadGAScript(measurementId: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (!isBrowser()) {
-      reject(new Error('Not in browser environment'))
-      return
-    }
-
-    // Check if script already exists
-    const existingScript = document.querySelector(
-      `script[src*="googletagmanager.com/gtag/js?id=${measurementId}"]`
-    )
-    if (existingScript) {
-      resolve()
-      return
-    }
-
-    const script = document.createElement('script')
-    script.async = true
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`
-    
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error('Failed to load GA script'))
-    
-    document.head.appendChild(script)
-  })
-}
-
-/**
- * Initialize Google Analytics with consent mode
- * Loads gtag script immediately with default consent (denied)
- * This allows Tag Assistant to detect the tag while respecting user consent
- */
-export async function initializeGA(
-  config: TrackingConfig,
-  consent: ConsentState
-): Promise<boolean> {
-  if (!isBrowser()) {
-    return false
-  }
-
-  // If already initialized, just update consent
-  if (isInitialized) {
-    updateGAConsent(consent)
-    return true
-  }
-
-  try {
-    // Initialize dataLayer first
-    initializeDataLayer()
-
-    // Set default consent to denied - will be updated when user accepts
-    window.gtag('consent', 'default', {
-      ad_storage: 'denied',
-      ad_user_data: 'denied',
-      ad_personalization: 'denied',
-      analytics_storage: 'denied',
-      functionality_storage: 'granted',
-      personalization_storage: 'denied',
-      security_storage: 'granted',
-      wait_for_update: 500, // Wait up to 500ms for consent update
-    })
-
-    // Load the GA script
-    await loadGAScript(config.measurementId)
-
-    // Initialize GA
-    window.gtag('js', new Date())
-    
-    // Configure with options
-    const configOptions: Record<string, unknown> = {
-      send_page_view: false, // We'll send manually for more control
-    }
-
-    if (config.anonymizeIp) {
-      configOptions.anonymize_ip = true
-    }
-
-    if (config.debug) {
-      configOptions.debug_mode = true
-    }
-
-    window.gtag('config', config.measurementId, configOptions)
-
-    isInitialized = true
-    currentConfig = config
-
-    if (config.debug) {
-      console.log('[GA4] Initialized successfully with:', config.measurementId)
-    }
-
-    // Now update consent to actual state
-    updateGAConsent(consent)
-
-    return true
-  } catch (error) {
-    console.error('[GA4] Failed to initialize:', error)
-    return false
-  }
-}
-
-/**
- * Update consent mode after user interaction
- */
-export function updateGAConsent(consent: ConsentState): void {
-  if (!isBrowser() || typeof window.gtag !== 'function') {
-    return
-  }
-
-  const consentMode = getGoogleConsentMode(consent)
-  window.gtag('consent', 'update', consentMode)
-
-  if (currentConfig?.debug) {
-    console.log('[GA4] Consent updated:', consentMode)
-  }
-}
-
-/**
- * Track a custom event
- */
-export function trackEvent(
-  eventName: GA4EventName,
-  params?: BaseEventParams | EcommerceEventParams
-): void {
-  if (!isBrowser() || !isInitialized) {
-    return
-  }
-
-  window.gtag('event', eventName, params)
-
-  if (currentConfig?.debug) {
-    console.log('[GA4] Event tracked:', eventName, params)
-  }
-}
-
-/**
- * Track a page view
- */
-export function trackPageView(params?: PageViewParams): void {
-  if (!isBrowser() || !isInitialized || !currentConfig) {
-    return
-  }
-
-  const pageViewParams: PageViewParams = {
-    page_title: document.title,
-    page_location: window.location.href,
-    page_path: window.location.pathname,
-    ...params,
-  }
-
-  window.gtag('event', 'page_view', {
-    ...pageViewParams,
-    send_to: currentConfig.measurementId,
-  })
-
-  if (currentConfig?.debug) {
-    console.log('[GA4] Page view tracked:', pageViewParams)
-  }
-}
+// Note: GA4 script is loaded via Script tags in app/layout.tsx with consent mode.
+// This file provides utilities for conversion tracking and advanced features.
 
 /**
  * Set user ID for cross-device tracking
  */
 export function setUserId(userId: string | null): void {
-  if (!isBrowser() || !isInitialized || !currentConfig) {
-    return
-  }
+  if (!isBrowser() || typeof window.gtag !== 'function') return
+  
+  const measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
+  if (!measurementId) return
 
-  window.gtag('config', currentConfig.measurementId, {
-    user_id: userId,
-  })
-
-  if (currentConfig?.debug) {
-    console.log('[GA4] User ID set:', userId)
-  }
+  window.gtag('config', measurementId, { user_id: userId })
 }
 
 /**
  * Set user properties
  */
 export function setUserProperties(properties: Record<string, string | number | boolean>): void {
-  if (!isBrowser() || !isInitialized) {
-    return
-  }
-
+  if (!isBrowser() || typeof window.gtag !== 'function') return
   window.gtag('set', 'user_properties', properties)
-
-  if (currentConfig?.debug) {
-    console.log('[GA4] User properties set:', properties)
-  }
 }
 
 interface ConversionOptions {
@@ -250,24 +51,14 @@ interface ConversionOptions {
  * trackConversion('AW-OTHER-ACCOUNT/XYZ123', { raw: true })
  */
 export function trackConversion(conversionId: string, options?: ConversionOptions): void {
-  if (!isBrowser()) {
-    return
-  }
-
-  // Conversions can fire even without full GA init, as long as gtag is loaded
-  if (typeof window.gtag !== 'function') {
-    if (currentConfig?.debug) {
-      console.log('[GA4] gtag not available for conversion tracking')
-    }
-    return
-  }
+  if (!isBrowser() || typeof window.gtag !== 'function') return
 
   // Build the send_to value - use Google Ads ID for conversions
   let sendTo: string
   if (options?.raw) {
     sendTo = conversionId
   } else {
-    const adsId = currentConfig?.adsId || process.env.NEXT_PUBLIC_GA_ADS_ID
+    const adsId = process.env.NEXT_PUBLIC_GA_ADS_ID
     if (!adsId) {
       console.warn('[GA4] No Google Ads ID available for conversion tracking')
       return
@@ -279,23 +70,4 @@ export function trackConversion(conversionId: string, options?: ConversionOption
     send_to: sendTo,
     ...options?.params,
   })
-
-  if (currentConfig?.debug) {
-    console.log('[GA4] Conversion tracked:', sendTo, options?.params)
-  }
-}
-
-/**
- * Check if GA is initialized
- */
-export function isGAInitialized(): boolean {
-  return isInitialized
-}
-
-/**
- * Reset GA state (for testing or consent withdrawal)
- */
-export function resetGA(): void {
-  isInitialized = false
-  currentConfig = null
 }

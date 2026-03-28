@@ -11,7 +11,6 @@ import {
 } from 'react'
 import { usePathname } from 'next/navigation'
 import {
-  TrackingConfig,
   TrackingContextValue,
   ConsentState,
   DEFAULT_CONSENT_STATE,
@@ -27,15 +26,9 @@ import {
   rejectAllConsent,
   updateConsent as updateConsentState,
   clearConsentState,
+  getGoogleConsentMode,
 } from './consent-manager'
-import {
-  initializeGA,
-  updateGAConsent,
-  trackEvent as gaTrackEvent,
-  trackPageView as gaTrackPageView,
-  isGAInitialized,
-  resetGA,
-} from './google-analytics'
+import { isBrowser } from './consent-manager'
 
 // =============================================================================
 // Context
@@ -44,16 +37,52 @@ import {
 const TrackingContext = createContext<TrackingContextValue | null>(null)
 
 // =============================================================================
+// Helper: Update gtag consent
+// =============================================================================
+
+function updateGtagConsent(consent: ConsentState): void {
+  if (!isBrowser() || typeof window.gtag !== 'function') return
+  
+  const consentMode = getGoogleConsentMode(consent)
+  window.gtag('consent', 'update', consentMode)
+}
+
+// =============================================================================
+// Helper: Track page view via gtag
+// =============================================================================
+
+function trackGtagPageView(params?: PageViewParams): void {
+  if (!isBrowser() || typeof window.gtag !== 'function') return
+  
+  const pageViewParams = {
+    page_title: document.title,
+    page_location: window.location.href,
+    page_path: window.location.pathname,
+    ...params,
+  }
+  
+  window.gtag('event', 'page_view', pageViewParams)
+}
+
+// =============================================================================
+// Helper: Track event via gtag
+// =============================================================================
+
+function trackGtagEvent(
+  eventName: GA4EventName,
+  params?: BaseEventParams | EcommerceEventParams
+): void {
+  if (!isBrowser() || typeof window.gtag !== 'function') return
+  window.gtag('event', eventName, params)
+}
+
+// =============================================================================
 // Provider Props
 // =============================================================================
 
 interface TrackingProviderProps {
   children: ReactNode
-  measurementId?: string
-  adsId?: string
   debug?: boolean
-  anonymizeIp?: boolean
-  consentVersion?: string
 }
 
 // =============================================================================
@@ -62,14 +91,9 @@ interface TrackingProviderProps {
 
 export function TrackingProvider({
   children,
-  measurementId,
-  adsId,
   debug = false,
-  anonymizeIp = true,
-  consentVersion = '1.0',
 }: TrackingProviderProps) {
   const [consent, setConsent] = useState<ConsentState>(DEFAULT_CONSENT_STATE)
-  const [isInitialized, setIsInitialized] = useState(false)
   const [hasConsent, setHasConsent] = useState<boolean | null>(null)
   const [mounted, setMounted] = useState(false)
 
@@ -80,95 +104,62 @@ export function TrackingProvider({
     setMounted(true)
   }, [])
 
-  // Get measurement ID from props or env
-  const gaId = measurementId || process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || ''
-  const gaAdsId = adsId || process.env.NEXT_PUBLIC_GA_ADS_ID
-
-  const config: TrackingConfig = useMemo(
-    () => ({
-      measurementId: gaId,
-      adsId: gaAdsId,
-      debug,
-      anonymizeIp,
-      consentVersion,
-    }),
-    [gaId, gaAdsId, debug, anonymizeIp, consentVersion]
-  )
-
-  // Load consent state on mount
+  // Load consent state on mount and update gtag consent if already granted
   useEffect(() => {
     if (!mounted) return
     const storedConsent = getConsentState()
     setConsent(storedConsent)
     setHasConsent(hasConsentDecision() ? storedConsent.analytics || storedConsent.marketing : null)
+    
+    // If consent was previously granted, update gtag
+    if (storedConsent.analytics || storedConsent.marketing) {
+      updateGtagConsent(storedConsent)
+    }
   }, [mounted])
 
-  // Check for Do Not Track browser setting
-  const respectsDNT = typeof navigator !== 'undefined' && navigator.doNotTrack === '1'
-
-  // Initialize GA immediately on mount with consent mode (respecting DNT)
-  // Script loads with default consent "denied", then updates based on user consent
+  // Track page views on route change (only if consent granted)
   useEffect(() => {
     if (!mounted) return
-    if (!gaId) {
+    if (consent.analytics) {
+      trackGtagPageView()
       if (debug) {
-        console.log('[Tracking] No measurement ID configured')
+        console.log('[Tracking] Page view tracked:', pathname)
       }
-      return
     }
-
-    // Honor Do Not Track browser setting
-    if (respectsDNT) {
-      if (debug) {
-        console.log('[Tracking] Do Not Track enabled - skipping analytics')
-      }
-      return
-    }
-
-    // Always initialize GA - consent mode handles data collection
-    if (!isGAInitialized()) {
-      initializeGA(config, consent).then((success) => {
-        setIsInitialized(success)
-      })
-    }
-  }, [mounted, config, gaId, debug, respectsDNT, consent])
-
-  // Track page views on route change
-  useEffect(() => {
-    if (!mounted) return
-    if (isInitialized && consent.analytics) {
-      gaTrackPageView()
-    }
-  }, [mounted, pathname, isInitialized, consent.analytics])
+  }, [mounted, pathname, consent.analytics, debug])
 
   // Consent actions
   const acceptAll = useCallback(() => {
     const newConsent = acceptAllConsent()
     setConsent(newConsent)
     setHasConsent(true)
-    updateGAConsent(newConsent)
-
-    // Track page view immediately after consent is granted
-    if (isGAInitialized()) {
-      gaTrackPageView()
+    updateGtagConsent(newConsent)
+    
+    // Track page view immediately after consent
+    trackGtagPageView()
+    
+    if (debug) {
+      console.log('[Tracking] Consent accepted, page view tracked')
     }
-  }, [])
+  }, [debug])
 
   const rejectAll = useCallback(() => {
     const newConsent = rejectAllConsent()
     setConsent(newConsent)
     setHasConsent(false)
-    updateGAConsent(newConsent) // Consent mode will block data collection
-  }, [])
+    updateGtagConsent(newConsent)
+    
+    if (debug) {
+      console.log('[Tracking] Consent rejected')
+    }
+  }, [debug])
 
   const updateConsent = useCallback(
-    (
-      categories: Partial<Omit<ConsentState, 'necessary' | 'timestamp' | 'version'>>
-    ) => {
+    (categories: Partial<Omit<ConsentState, 'necessary' | 'timestamp' | 'version'>>) => {
       const newConsent = updateConsentState(categories)
       setConsent(newConsent)
       setHasConsent(newConsent.analytics || newConsent.marketing)
-      updateGAConsent(newConsent) // Consent mode handles data collection
+      updateGtagConsent(newConsent)
     },
     []
   )
@@ -177,28 +168,30 @@ export function TrackingProvider({
     clearConsentState()
     setConsent(DEFAULT_CONSENT_STATE)
     setHasConsent(null)
-    resetGA()
-    setIsInitialized(false)
+    updateGtagConsent(DEFAULT_CONSENT_STATE)
   }, [])
 
-  // Tracking methods
+  // Tracking methods (only fire if consent granted)
   const trackEvent = useCallback(
     (eventName: GA4EventName, params?: BaseEventParams | EcommerceEventParams) => {
-      if (isInitialized && consent.analytics) {
-        gaTrackEvent(eventName, params)
+      if (consent.analytics) {
+        trackGtagEvent(eventName, params)
       }
     },
-    [isInitialized, consent.analytics]
+    [consent.analytics]
   )
 
   const trackPageView = useCallback(
     (params?: PageViewParams) => {
-      if (isInitialized && consent.analytics) {
-        gaTrackPageView(params)
+      if (consent.analytics) {
+        trackGtagPageView(params)
       }
     },
-    [isInitialized, consent.analytics]
+    [consent.analytics]
   )
+
+  // GA is always initialized via Script tags in layout.tsx
+  const isInitialized = mounted && typeof window !== 'undefined' && typeof window.gtag === 'function'
 
   const value: TrackingContextValue = useMemo(
     () => ({

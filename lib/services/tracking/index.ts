@@ -35,6 +35,5 @@ export {
 export {
   setUserId,
   setUserProperties,
-  isGAInitialized,
   trackConversion,
 } from './google-analytics'

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/lib/providers";
 import { NextIntlClientProvider } from 'next-intl';
@@ -7,6 +8,8 @@ import { getMessages, getLocale } from 'next-intl/server';
 import { Toaster } from 'sonner';
 import { SwRegister } from '@/components/providers/sw-register'
 import { TrackingProvider, CookieBanner } from '@/lib/services/tracking'
+
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 
 // Force dynamic rendering to ensure locale cookie is read on every request
 export const dynamic = 'force-dynamic'
@@ -134,6 +137,39 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
+      <head>
+        {GA_MEASUREMENT_ID && (
+          <>
+            <Script id="gtag-consent-default" strategy="beforeInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                
+                // Set default consent to denied (GDPR compliant)
+                gtag('consent', 'default', {
+                  'ad_storage': 'denied',
+                  'ad_user_data': 'denied',
+                  'ad_personalization': 'denied',
+                  'analytics_storage': 'denied',
+                  'functionality_storage': 'granted',
+                  'personalization_storage': 'denied',
+                  'security_storage': 'granted',
+                });
+              `}
+            </Script>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                gtag('js', new Date());
+                gtag('config', '${GA_MEASUREMENT_ID}');
+              `}
+            </Script>
+          </>
+        )}
+      </head>
       <body className={inter.className} suppressHydrationWarning>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <TrackingProvider debug={process.env.NODE_ENV !== 'production'}>
