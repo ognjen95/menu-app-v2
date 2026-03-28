@@ -1535,5 +1535,11 @@
     "cancel": "Otkaži",
     "basicInfo": "Osnovne Informacije",
     "translations": "Prevodi"
+  },
+  "errorPage": {
+    "title": "Nešto je pošlo naopako",
+    "description": "Došlo je do neočekivane greške. Pokušajte ponovo ili se vratite na kontrolnu tablu.",
+    "tryAgain": "Pokušaj ponovo",
+    "goToDashboard": "Idi na kontrolnu tablu"
   }
 }

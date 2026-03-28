@@ -1535,5 +1535,11 @@
     "cancel": "Cancelar",
     "basicInfo": "Información Básica",
     "translations": "Traducciones"
+  },
+  "errorPage": {
+    "title": "Algo salió mal",
+    "description": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo o regresa al panel de control.",
+    "tryAgain": "Intentar de nuevo",
+    "goToDashboard": "Ir al Panel"
   }
 }

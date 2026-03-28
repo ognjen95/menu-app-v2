@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,6 +14,7 @@ interface ErrorProps {
 
 export default function Error({ error, reset }: ErrorProps) {
   const router = useRouter()
+  const t = useTranslations('errorPage')
   const notificationSent = useRef(false)
 
   useEffect(() => {
@@ -49,17 +51,17 @@ export default function Error({ error, reset }: ErrorProps) {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
             <AlertTriangle className="h-6 w-6 text-destructive" />
           </div>
-          <CardTitle>Something went wrong</CardTitle>
+          <CardTitle>{t('title')}</CardTitle>
           <CardDescription>
-            An unexpected error occurred. Please try again or return to the dashboard.
+            {t('description')}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <Button onClick={reset} variant="outline" className="w-full">
-            Try again
+            {t('tryAgain')}
           </Button>
           <Button onClick={handleGoToDashboard} className="w-full">
-            Go to Dashboard
+            {t('goToDashboard')}
           </Button>
           {process.env.NODE_ENV === 'development' && error.message && (
             <p className="mt-4 text-xs text-muted-foreground bg-muted p-3 rounded-md font-mono break-all">
