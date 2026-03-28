@@ -6,6 +6,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getLocale } from 'next-intl/server';
 import { Toaster } from 'sonner';
 import { SwRegister } from '@/components/providers/sw-register'
+import { TrackingProvider, CookieBanner } from '@/lib/services/tracking'
 
 // Force dynamic rendering to ensure locale cookie is read on every request
 export const dynamic = 'force-dynamic'
@@ -135,10 +136,13 @@ export default async function RootLayout({
     <html lang={locale} suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <SwRegister>
-            <Providers>{children}</Providers>
-            <Toaster position="top-right" richColors />
-          </SwRegister>
+          <TrackingProvider debug={process.env.NODE_ENV !== 'production'}>
+            <SwRegister>
+              <Providers>{children}</Providers>
+              <Toaster position="top-right" richColors />
+              <CookieBanner />
+            </SwRegister>
+          </TrackingProvider>
         </NextIntlClientProvider>
       </body>
     </html>

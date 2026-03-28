@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { z } from 'zod'
-import { apiGet, apiPost } from '@/lib/api'
+import { apiPost } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -39,7 +39,6 @@ import {
 import { cn } from '@/lib/utils'
 import type { TenantType } from '@/lib/types'
 import { defaultWorkingHours, type WorkingHours } from '@/lib/seed-data'
-import Image from 'next/image'
 import { useAllActivePublicLanguages } from '@/features/translations'
 
 const businessTypeIcons: Record<TenantType, React.ElementType> = {

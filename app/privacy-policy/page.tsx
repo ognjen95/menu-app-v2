@@ -211,7 +211,7 @@ const page = () => {
           Local Storage
           <br />
           <br />
-          <p>Local Storage sometimes known as DOM storage, provides web apps with methods and protocols for storing client-side data. Web storage supports persistent data storage, similar to cookies but with a greatly enhanced capacity and no information stored in the HTTP request header.</p>
+          <p>Local Storage sometimes known as DOM storage, provides web apps with methods and protocols for storing client-side data. Web storage supports persistent data storage, similar to cookies but with a greatly enhanced capacity and no information stored in the HTTP request header. We use local storage to save your cookie consent preferences, language settings, and authentication tokens.</p>
         </li>
         <br />
         <li>
@@ -222,6 +222,32 @@ const page = () => {
         </li>
         <br />
       </ul>
+
+      <h1>Google Analytics and Third-Party Analytics</h1>
+      <p>We use Google Analytics, a web analytics service provided by Google LLC ("Google"), to help us understand how users interact with our website. Google Analytics uses cookies and similar technologies to collect information about your use of the website.</p>
+      <p>The information collected by Google Analytics includes:</p>
+      <ul>
+        <li>Your IP address (anonymized in compliance with EU regulations)</li>
+        <li>Browser type and version</li>
+        <li>Operating system</li>
+        <li>Referring website</li>
+        <li>Pages visited and time spent on each page</li>
+        <li>Geographic location (country/city level)</li>
+        <li>Device information</li>
+      </ul>
+      <p>This information is transmitted to and stored by Google on servers that may be located outside the European Economic Area (EEA). Google may use this information for evaluating your use of our website, compiling reports on website activity, and providing other services relating to website activity and internet usage.</p>
+      <p>For more information on how Google uses data, please visit: <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer">https://policies.google.com/technologies/partner-sites</a></p>
+
+      <h1>Your Right to Opt-Out of Tracking (EU Users)</h1>
+      <p>In accordance with the EU General Data Protection Regulation (GDPR) and the ePrivacy Directive, you have the following rights regarding cookies and tracking:</p>
+      <ul>
+        <li><strong>Consent Before Tracking:</strong> We will not place any non-essential cookies or tracking technologies on your device until you have given your explicit consent through our cookie consent banner.</li>
+        <li><strong>Withdraw Consent:</strong> You may withdraw your consent at any time by clicking on the "Cookie Settings" link in the footer of our website or by clearing your browser cookies and revisiting our site.</li>
+        <li><strong>Opt-Out of Google Analytics:</strong> You can opt-out of Google Analytics by installing the Google Analytics Opt-out Browser Add-on, available at: <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer">https://tools.google.com/dlpage/gaoptout</a></li>
+        <li><strong>Browser Settings:</strong> You can configure your browser to reject all cookies, accept all cookies, or notify you when a cookie is set.</li>
+        <li><strong>Do Not Track:</strong> We honor the "Do Not Track" (DNT) browser setting. When DNT is enabled, we will not load non-essential tracking scripts.</li>
+      </ul>
+      <p>When you first visit our website, you will be presented with a cookie consent banner that allows you to accept all cookies, reject all non-essential cookies, or customize your cookie preferences. Your consent preferences will be stored in your browser's local storage and remembered for future visits. You can change your preferences at any time.</p>
 
       <h1>Information about General Data Protection Regulation (GDPR)</h1>
       <p>We may be collecting and using information from you if you are from the European Economic Area (EEA), and in this section of our Privacy Policy we are going to explain exactly how and why is this data collected, and how we maintain this data under protection from being replicated or used in the wrong way.</p>

@@ -53,8 +53,30 @@ const TermsAndConditionsPage = () => {
       <h1>Links to Other Websites</h1>
       <p>This Terms &amp; Conditions applies only to the Services. The Services may contain links to other websites not operated or controlled by Klopay. We are not responsible for the content, accuracy or opinions expressed in such websites, and such websites are not investigated, monitored or checked for accuracy or completeness by us. Please remember that when you use a link to go from the Services to another website, our Terms &amp; Conditions are no longer in effect. Your browsing and interaction on any other website, including those that have a link on our platform, is subject to that website’s own rules and policies. Such third parties may use their own cookies or other methods to collect information about you.</p>
 
-      <h1>Cookies</h1>
+      <h1>Cookies and Tracking Technologies</h1>
       <p>Klopay uses "Cookies" to identify the areas of our website that you have visited. A Cookie is a small piece of data stored on your computer or mobile device by your web browser. We use Cookies to enhance the performance and functionality of our website but are non-essential to their use. However, without these cookies, certain functionality like videos may become unavailable or you would be required to enter your login details every time you visit the website as we would not be able to remember that you had logged in previously. Most web browsers can be set to disable the use of Cookies. However, if you disable Cookies, you may not be able to access functionality on our website correctly or at all. We never place Personally Identifiable Information in Cookies.</p>
+      
+      <h2>Types of Cookies</h2>
+      <p>We use the following categories of cookies:</p>
+      <ul>
+        <li><strong>Strictly Necessary Cookies:</strong> Essential for website functionality, authentication, and security. These cannot be disabled.</li>
+        <li><strong>Functional Cookies:</strong> Remember your preferences such as language and region settings.</li>
+        <li><strong>Analytics Cookies:</strong> Help us understand how visitors use our website through Google Analytics.</li>
+        <li><strong>Marketing Cookies:</strong> Used to deliver relevant advertisements and track campaign effectiveness.</li>
+      </ul>
+
+      <h2>Google Analytics</h2>
+      <p>We use Google Analytics to analyze website usage. Google Analytics collects data such as your IP address (anonymized), browser type, pages visited, and time spent on pages. This data is processed by Google LLC and may be transferred to servers outside the European Economic Area. By using our Service, you consent to the processing of data by Google in accordance with their privacy policy.</p>
+
+      <h2>Your Consent and Opt-Out Rights</h2>
+      <p>In compliance with EU regulations (GDPR and ePrivacy Directive), we will request your consent before placing non-essential cookies on your device. You have the right to:</p>
+      <ul>
+        <li>Accept or reject non-essential cookies when first visiting our website</li>
+        <li>Change your cookie preferences at any time via the "Cookie Settings" link</li>
+        <li>Opt-out of Google Analytics by installing the browser add-on at <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer">https://tools.google.com/dlpage/gaoptout</a></li>
+        <li>Configure your browser to block or delete cookies</li>
+      </ul>
+      <p>Your consent preferences are stored in your browser's local storage. If you clear your browser data, you will be asked to provide consent again on your next visit.</p>
 
       <h1>Changes To Our Terms &amp; Conditions</h1>
       <p>You acknowledge and agree that Klopay may stop (permanently or temporarily) providing the Service (or any features within the Service) to you or to users generally at  sole discretion, without prior notice to you. You may stop using the Service at any time. You do not need to specifically inform Klopay when you stop using the Service. You acknowledge and agree that if Klopay disables access to your account, you may be prevented from accessing the Service, your account details or any files or other materials which is contained in your account.</p>

@@ -36,6 +36,36 @@
       "served": "Served",
       "completed": "Completed",
       "cancelled": "Cancelled"
+    },
+    "cookies": {
+      "title": "We use cookies",
+      "description": "We use cookies to improve your experience and analyze site usage.",
+      "learnMore": "Learn more",
+      "accept": "Accept",
+      "acceptAll": "Accept All",
+      "reject": "Reject",
+      "rejectAll": "Reject All",
+      "settings": "Settings",
+      "savePreferences": "Save Preferences",
+      "cookieSettings": "Cookie Settings",
+      "preferences": {
+        "title": "Cookie Preferences",
+        "description": "Manage your cookie preferences. You can change these settings at any time."
+      },
+      "necessary": {
+        "title": "Necessary Cookies",
+        "description": "Required for the website to function. Cannot be disabled."
+      },
+      "analytics": {
+        "title": "Analytics Cookies",
+        "description": "Help us understand how visitors interact with our website."
+      },
+      "marketing": {
+        "title": "Marketing Cookies",
+        "description": "Used to deliver personalized advertisements."
+      },
+      "privacyPolicy": "Privacy Policy",
+      "minimalDescription": "We use cookies to enhance your experience."
     }
   },
   "auth": {

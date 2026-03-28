@@ -36,6 +36,36 @@
       "served": "Servirano",
       "completed": "Završeno",
       "cancelled": "Otkazano"
+    },
+    "cookies": {
+      "title": "Koristimo kolačiće",
+      "description": "Koristimo kolačiće da poboljšamo vaše iskustvo i analiziramo korišćenje sajta.",
+      "learnMore": "Saznajte više",
+      "accept": "Prihvati",
+      "acceptAll": "Prihvati sve",
+      "reject": "Odbij",
+      "rejectAll": "Odbij sve",
+      "settings": "Podešavanja",
+      "savePreferences": "Sačuvaj podešavanja",
+      "cookieSettings": "Podešavanja kolačića",
+      "preferences": {
+        "title": "Podešavanja kolačića",
+        "description": "Upravljajte podešavanjima kolačića. Možete promeniti ova podešavanja u bilo kom trenutku."
+      },
+      "necessary": {
+        "title": "Neophodni kolačići",
+        "description": "Potrebni za funkcionisanje sajta. Ne mogu se onemogućiti."
+      },
+      "analytics": {
+        "title": "Analitički kolačići",
+        "description": "Pomažu nam da razumemo kako posetioci koriste naš sajt."
+      },
+      "marketing": {
+        "title": "Marketing kolačići",
+        "description": "Koriste se za prikazivanje personalizovanih reklama."
+      },
+      "privacyPolicy": "Politika privatnosti",
+      "minimalDescription": "Koristimo kolačiće da poboljšamo vaše iskustvo."
     }
   },
   "auth": {
