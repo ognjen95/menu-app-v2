@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useFormState, useFormStatus } from 'react-dom'
 import { signup } from '@/app/auth/actions'
+import { useTranslations } from 'next-intl'
 
 export default function SignupForm() {
+    const t = useTranslations('auth.signup')
     const initialState = {
         message: ''
     }
@@ -16,27 +18,27 @@ export default function SignupForm() {
     return (
         <form action={formAction}>
             <div className="grid gap-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">{t('name')}</Label>
                 <Input
                     id="name"
                     type="text"
-                    placeholder="John Doe"
+                    placeholder={t('namePlaceholder')}
                     name="name"
                     required
                 />
             </div>
             <div className="grid gap-2 mt-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('email')}</Label>
                 <Input
                     id="email"
                     type="email"
-                    placeholder="m@example.com"
+                    placeholder={t('emailPlaceholder')}
                     name="email"
                     required
                 />
             </div>
             <div className="grid gap-2 mt-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('password')}</Label>
                 <Input
                     id="password"
                     type="password"
@@ -44,7 +46,7 @@ export default function SignupForm() {
                     required
                 />
             </div>
-            <Button className="w-full mt-4" type="submit" aria-disabled={pending}>  {pending ? 'Submitting...' : 'Sign up'}</Button>
+            <Button className="w-full mt-4" type="submit" aria-disabled={pending}>  {pending ? t('submitting') : t('submit')}</Button>
             {formState?.message && (
                 <p className="text-sm text-red-500 text-center py-2">{formState.message}</p>
             )}

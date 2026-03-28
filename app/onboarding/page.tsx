@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useMutation, useQuery } from '@tanstack/react-query'
@@ -40,6 +40,7 @@ import { cn } from '@/lib/utils'
 import type { TenantType } from '@/lib/types'
 import { defaultWorkingHours, type WorkingHours } from '@/lib/seed-data'
 import { useAllActivePublicLanguages } from '@/features/translations'
+import { trackConversion } from '@/lib/services/tracking'
 
 const businessTypeIcons: Record<TenantType, React.ElementType> = {
   restaurant: Utensils,
@@ -177,6 +178,11 @@ export default function OnboardingPage() {
     defaultLanguage: 'en',
     seedData: true,
   })
+
+  // Track signup conversion (user just registered and landed here)
+  useEffect(() => {
+    trackConversion('RXGkCLDNlJEcEMjTpoFD')
+  }, [])
 
   // Create validation schemas with translated messages
   const { step1Schema, step2Schema, step3Schema, step4Schema } = createValidationSchemas(t)

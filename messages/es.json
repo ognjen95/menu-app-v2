@@ -80,7 +80,14 @@
       "title": "Registrarse",
       "description": "¡Crea tu cuenta ahora!",
       "haveAccount": "¿Ya tienes cuenta? Inicia sesión",
-      "orContinueWith": "O continúa con"
+      "orContinueWith": "O continúa con",
+      "name": "Nombre",
+      "namePlaceholder": "Juan Pérez",
+      "email": "Correo electrónico",
+      "emailPlaceholder": "m@ejemplo.com",
+      "password": "Contraseña",
+      "submit": "Registrarse",
+      "submitting": "Enviando..."
     },
     "forgotPassword": {
       "title": "¿Olvidaste Tu Contraseña?",

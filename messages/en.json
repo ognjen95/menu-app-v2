@@ -80,7 +80,14 @@
       "title": "Signup",
       "description": "Create your account now!",
       "haveAccount": "Have an account? Login",
-      "orContinueWith": "Or continue with"
+      "orContinueWith": "Or continue with",
+      "name": "Name",
+      "namePlaceholder": "John Doe",
+      "email": "Email",
+      "emailPlaceholder": "m@example.com",
+      "password": "Password",
+      "submit": "Sign up",
+      "submitting": "Submitting..."
     },
     "forgotPassword": {
       "title": "Forgot Your Password?",

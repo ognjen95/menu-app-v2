@@ -214,6 +214,66 @@ export function setUserProperties(properties: Record<string, string | number | b
   }
 }
 
+interface ConversionOptions {
+  /** Additional event parameters */
+  params?: Record<string, unknown>
+  /** If true, conversionId is used as-is without prepending measurement ID */
+  raw?: boolean
+}
+
+/**
+ * Track a Google Ads conversion event
+ * Use this for conversion tracking from Google Ads campaigns
+ * 
+ * @param conversionId - The conversion label (e.g., 'RXGkCLDNlJEcEMjEhpFD') or full send_to if raw=true
+ * @param options - Optional params and raw flag
+ * 
+ * @example
+ * // Simple usage - auto-prepends NEXT_PUBLIC_GA_MEASUREMENT_ID
+ * trackConversion('RXGkCLDNlJEcEMjEhpFD')
+ * 
+ * // With additional params
+ * trackConversion('RXGkCLDNlJEcEMjEhpFD', { params: { value: 100, currency: 'USD' } })
+ * 
+ * // Raw mode for different account
+ * trackConversion('AW-OTHER-ACCOUNT/XYZ123', { raw: true })
+ */
+export function trackConversion(conversionId: string, options?: ConversionOptions): void {
+  if (!isBrowser()) {
+    return
+  }
+
+  // Conversions can fire even without full GA init, as long as gtag is loaded
+  if (typeof window.gtag !== 'function') {
+    if (currentConfig?.debug) {
+      console.log('[GA4] gtag not available for conversion tracking')
+    }
+    return
+  }
+
+  // Build the send_to value
+  let sendTo: string
+  if (options?.raw) {
+    sendTo = conversionId
+  } else {
+    const measurementId = currentConfig?.measurementId || process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
+    if (!measurementId) {
+      console.warn('[GA4] No measurement ID available for conversion tracking')
+      return
+    }
+    sendTo = `${measurementId}/${conversionId}`
+  }
+
+  window.gtag('event', 'conversion', {
+    send_to: sendTo,
+    ...options?.params,
+  })
+
+  if (currentConfig?.debug) {
+    console.log('[GA4] Conversion tracked:', sendTo, options?.params)
+  }
+}
+
 /**
  * Check if GA is initialized
  */

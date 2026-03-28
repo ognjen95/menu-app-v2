@@ -136,6 +136,23 @@ setUserProperties({
 setUserId(null)
 ```
 
+### Track Google Ads Conversions
+
+```tsx
+import { trackConversion } from '@/lib/services/tracking'
+
+// Simple - auto-prepends NEXT_PUBLIC_GA_MEASUREMENT_ID
+trackConversion('RXGkCLDNlJEcEMjTpoFD')
+
+// With additional params (e.g., conversion value)
+trackConversion('RXGkCLDNlJEcEMjTpoFD', { 
+  params: { value: 100, currency: 'USD' } 
+})
+
+// Raw mode for different Google Ads account
+trackConversion('AW-OTHER-ACCOUNT/XYZ123', { raw: true })
+```
+
 ## Cookie Banner Components
 
 ### Full Banner with Settings

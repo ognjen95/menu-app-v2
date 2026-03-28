@@ -18,6 +18,16 @@ export interface TelegramNotificationPayload {
   createdAt: Date
 }
 
+export interface TelegramErrorPayload {
+  message: string
+  stack?: string
+  digest?: string
+  url: string
+  userAgent: string
+  timestamp: Date
+  environment: 'production' | 'development'
+}
+
 export interface TelegramMessage {
   chatId: string
   text: string
@@ -37,4 +47,5 @@ export interface ITelegramAdapter {
 
 export interface ITelegramNotificationService {
   notifyNewTenant(payload: TelegramNotificationPayload): Promise<TelegramSendResult>
+  notifyError(payload: TelegramErrorPayload): Promise<TelegramSendResult>
 }

@@ -3,7 +3,7 @@
  * Pure functions for message formatting and validation
  */
 
-import type { TelegramNotificationPayload } from '../types'
+import type { TelegramNotificationPayload, TelegramErrorPayload } from '../types'
 
 /**
  * Format a new tenant notification message
@@ -75,4 +75,51 @@ export function validatePayload(payload: TelegramNotificationPayload): { valid: 
     valid: errors.length === 0,
     errors,
   }
+}
+
+/**
+ * Format an error notification message
+ */
+export function formatErrorMessage(payload: TelegramErrorPayload): string {
+  const timestamp = payload.timestamp.toLocaleString('en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'long',
+    timeZone: 'UTC',
+  })
+
+  // Truncate stack trace if too long (Telegram has 4096 char limit)
+  const maxStackLength = 2000
+  let stack = payload.stack || 'No stack trace available'
+  if (stack.length > maxStackLength) {
+    stack = stack.substring(0, maxStackLength) + '\n... (truncated)'
+  }
+
+  return `
+🚨 <b>Application Error</b>
+
+<b>Message:</b>
+<code>${escapeHtml(payload.message)}</code>
+
+📍 <b>URL:</b> ${escapeHtml(payload.url)}
+🌐 <b>Environment:</b> ${payload.environment}
+🕐 <b>Time:</b> ${timestamp} UTC
+${payload.digest ? `🔖 <b>Digest:</b> <code>${escapeHtml(payload.digest)}</code>` : ''}
+
+📱 <b>User Agent:</b>
+<code>${escapeHtml(truncateUserAgent(payload.userAgent))}</code>
+
+📋 <b>Stack Trace:</b>
+<pre>${escapeHtml(stack)}</pre>
+`.trim()
+}
+
+/**
+ * Truncate user agent string for readability
+ */
+function truncateUserAgent(userAgent: string): string {
+  if (!userAgent) return 'Unknown'
+  if (userAgent.length > 200) {
+    return userAgent.substring(0, 200) + '...'
+  }
+  return userAgent
 }

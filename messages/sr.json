@@ -80,7 +80,14 @@
       "title": "Registracija",
       "description": "Kreirajte svoj nalog sada!",
       "haveAccount": "Imate nalog? Prijavite se",
-      "orContinueWith": "Ili nastavite sa"
+      "orContinueWith": "Ili nastavite sa",
+      "name": "Ime",
+      "namePlaceholder": "Petar Petrović",
+      "email": "Email",
+      "emailPlaceholder": "m@primer.com",
+      "password": "Lozinka",
+      "submit": "Registruj se",
+      "submitting": "Slanje..."
     },
     "forgotPassword": {
       "title": "Zaboravili ste lozinku?",
