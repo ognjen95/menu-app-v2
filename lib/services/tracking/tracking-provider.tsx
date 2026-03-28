@@ -106,7 +106,8 @@ export function TrackingProvider({
   // Check for Do Not Track browser setting
   const respectsDNT = typeof navigator !== 'undefined' && navigator.doNotTrack === '1'
 
-  // Initialize GA when consent is given (respecting DNT)
+  // Initialize GA immediately on mount with consent mode (respecting DNT)
+  // Script loads with default consent "denied", then updates based on user consent
   useEffect(() => {
     if (!mounted) return
     if (!gaId) {
@@ -124,12 +125,13 @@ export function TrackingProvider({
       return
     }
 
-    if (consent.analytics && !isGAInitialized()) {
+    // Always initialize GA - consent mode handles data collection
+    if (!isGAInitialized()) {
       initializeGA(config, consent).then((success) => {
         setIsInitialized(success)
       })
     }
-  }, [mounted, consent.analytics, config, gaId, debug, respectsDNT])
+  }, [mounted, config, gaId, debug, respectsDNT, consent])
 
   // Track page views on route change
   useEffect(() => {
@@ -158,9 +160,7 @@ export function TrackingProvider({
     const newConsent = rejectAllConsent()
     setConsent(newConsent)
     setHasConsent(false)
-    updateGAConsent(newConsent)
-    resetGA()
-    setIsInitialized(false)
+    updateGAConsent(newConsent) // Consent mode will block data collection
   }, [])
 
   const updateConsent = useCallback(
@@ -170,19 +170,9 @@ export function TrackingProvider({
       const newConsent = updateConsentState(categories)
       setConsent(newConsent)
       setHasConsent(newConsent.analytics || newConsent.marketing)
-      updateGAConsent(newConsent)
-
-      // Initialize or reset GA based on analytics consent
-      if (newConsent.analytics && !isGAInitialized() && gaId) {
-        initializeGA(config, newConsent).then((success) => {
-          setIsInitialized(success)
-        })
-      } else if (!newConsent.analytics) {
-        resetGA()
-        setIsInitialized(false)
-      }
+      updateGAConsent(newConsent) // Consent mode handles data collection
     },
-    [config, gaId]
+    []
   )
 
   const resetConsent = useCallback(() => {

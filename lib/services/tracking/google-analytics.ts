@@ -63,6 +63,8 @@ function loadGAScript(measurementId: string): Promise<void> {
 
 /**
  * Initialize Google Analytics with consent mode
+ * Loads gtag script immediately with default consent (denied)
+ * This allows Tag Assistant to detect the tag while respecting user consent
  */
 export async function initializeGA(
   config: TrackingConfig,
@@ -72,21 +74,27 @@ export async function initializeGA(
     return false
   }
 
-  // Don't initialize if analytics consent not given
-  if (!consent.analytics) {
-    if (config.debug) {
-      console.log('[GA4] Skipping initialization - analytics consent not given')
-    }
-    return false
+  // If already initialized, just update consent
+  if (isInitialized) {
+    updateGAConsent(consent)
+    return true
   }
 
   try {
     // Initialize dataLayer first
     initializeDataLayer()
 
-    // Set default consent state before loading script
-    const consentMode = getGoogleConsentMode(consent)
-    window.gtag('consent', 'default', consentMode)
+    // Set default consent to denied - will be updated when user accepts
+    window.gtag('consent', 'default', {
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      analytics_storage: 'denied',
+      functionality_storage: 'granted',
+      personalization_storage: 'denied',
+      security_storage: 'granted',
+      wait_for_update: 500, // Wait up to 500ms for consent update
+    })
 
     // Load the GA script
     await loadGAScript(config.measurementId)
@@ -115,6 +123,9 @@ export async function initializeGA(
     if (config.debug) {
       console.log('[GA4] Initialized successfully with:', config.measurementId)
     }
+
+    // Now update consent to actual state
+    updateGAConsent(consent)
 
     return true
   } catch (error) {
