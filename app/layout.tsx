@@ -10,6 +10,7 @@ import { SwRegister } from '@/components/providers/sw-register'
 import { TrackingProvider, CookieBanner } from '@/lib/services/tracking'
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
+const GA_ADS_ID = process.env.NEXT_PUBLIC_GA_ADS_ID
 
 // Force dynamic rendering to ensure locale cookie is read on every request
 export const dynamic = 'force-dynamic'
@@ -165,6 +166,7 @@ export default async function RootLayout({
               {`
                 gtag('js', new Date());
                 gtag('config', '${GA_MEASUREMENT_ID}');
+                ${GA_ADS_ID ? `gtag('config', '${GA_ADS_ID}');` : ''}
               `}
             </Script>
           </>
