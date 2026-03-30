@@ -40,7 +40,7 @@ import { cn } from '@/lib/utils'
 import type { TenantType } from '@/lib/types'
 import { defaultWorkingHours, type WorkingHours } from '@/lib/seed-data'
 import { useAllActivePublicLanguages } from '@/features/translations'
-import { trackConversion } from '@/lib/services/tracking'
+import { ConversionTracking, trackConversion } from '@/lib/services/tracking'
 
 const businessTypeIcons: Record<TenantType, React.ElementType> = {
   restaurant: Utensils,
@@ -181,7 +181,7 @@ export default function OnboardingPage() {
 
   // Track signup conversion (user just registered and landed here)
   useEffect(() => {
-    trackConversion('RXGkCLDNlJEcEMjTpoFD')
+    trackConversion(ConversionTracking.RegistrationCompleted)
   }, [])
 
   // Create validation schemas with translated messages

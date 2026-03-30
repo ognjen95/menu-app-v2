@@ -141,32 +141,47 @@ export default async function RootLayout({
       <head>
         {GA_MEASUREMENT_ID && (
           <>
-            <Script id="gtag-consent-default" strategy="beforeInteractive">
+            <Script
+              id="gtag-consent-default"
+              strategy="beforeInteractive"
+              onError={() => console.warn('[GA] Failed to load default consent')}
+            >
               {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                
-                // Set default consent to denied (GDPR compliant)
-                gtag('consent', 'default', {
-                  'ad_storage': 'denied',
-                  'ad_user_data': 'denied',
-                  'ad_personalization': 'denied',
-                  'analytics_storage': 'denied',
-                  'functionality_storage': 'granted',
-                  'personalization_storage': 'denied',
-                  'security_storage': 'granted',
-                });
+                try {
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  
+                  // Set default consent to denied (GDPR compliant)
+                  gtag('consent', 'default', {
+                    'ad_storage': 'denied',
+                    'ad_user_data': 'denied',
+                    'ad_personalization': 'denied',
+                    'analytics_storage': 'denied',
+                    'functionality_storage': 'granted',
+                    'personalization_storage': 'denied',
+                    'security_storage': 'granted',
+                  });
+                } catch (e) {
+                  console.warn('[GA] Consent init failed:', e);
+                }
               `}
             </Script>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
               strategy="afterInteractive"
+              onError={() => console.warn('[GA] Failed to load gtag script')}
             />
             <Script id="google-analytics" strategy="afterInteractive">
               {`
-                gtag('js', new Date());
-                gtag('config', '${GA_MEASUREMENT_ID}');
-                ${GA_ADS_ID ? `gtag('config', '${GA_ADS_ID}');` : ''}
+                try {
+                  if (typeof gtag === 'function') {
+                    gtag('js', new Date());
+                    gtag('config', '${GA_MEASUREMENT_ID}');
+                    ${GA_ADS_ID ? `gtag('config', '${GA_ADS_ID}');` : ''}
+                  }
+                } catch (e) {
+                  console.warn('[GA] Config failed:', e);
+                }
               `}
             </Script>
           </>

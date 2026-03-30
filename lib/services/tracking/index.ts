@@ -7,7 +7,7 @@ export { TrackingProvider, useTracking, useTrackingOptional } from './tracking-p
 
 // Cookie Banner Components
 export { CookieBanner, MinimalCookieBanner, CookieSettingsButton } from './cookie-banner'
-
+export {ConversionTracking} from './constants'
 // Types
 export type {
   ConsentState,
