@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/lib/providers";
 import { NextIntlClientProvider } from 'next-intl';
@@ -8,9 +7,7 @@ import { getMessages, getLocale } from 'next-intl/server';
 import { Toaster } from 'sonner';
 import { SwRegister } from '@/components/providers/sw-register'
 import { TrackingProvider, CookieBanner } from '@/lib/services/tracking'
-
-const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
-const GA_ADS_ID = process.env.NEXT_PUBLIC_GA_ADS_ID
+import { GoogleAnalytics } from '@/components/GoogleAnalytics'
 
 // Force dynamic rendering to ensure locale cookie is read on every request
 export const dynamic = 'force-dynamic'
@@ -139,53 +136,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
-        {GA_MEASUREMENT_ID && (
-          <>
-            <Script
-              id="gtag-consent-default"
-              strategy="beforeInteractive"
-              onError={() => console.warn('[GA] Failed to load default consent')}
-            >
-              {`
-                try {
-                  window.dataLayer = window.dataLayer || [];
-                  function gtag(){dataLayer.push(arguments);}
-                  
-                  // Set default consent to denied (GDPR compliant)
-                  gtag('consent', 'default', {
-                    'ad_storage': 'denied',
-                    'ad_user_data': 'denied',
-                    'ad_personalization': 'denied',
-                    'analytics_storage': 'denied',
-                    'functionality_storage': 'granted',
-                    'personalization_storage': 'denied',
-                    'security_storage': 'granted',
-                  });
-                } catch (e) {
-                  console.warn('[GA] Consent init failed:', e);
-                }
-              `}
-            </Script>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-              strategy="afterInteractive"
-              onError={() => console.warn('[GA] Failed to load gtag script')}
-            />
-            <Script id="google-analytics" strategy="afterInteractive">
-              {`
-                try {
-                  if (typeof gtag === 'function') {
-                    gtag('js', new Date());
-                    gtag('config', '${GA_MEASUREMENT_ID}');
-                    ${GA_ADS_ID ? `gtag('config', '${GA_ADS_ID}');` : ''}
-                  }
-                } catch (e) {
-                  console.warn('[GA] Config failed:', e);
-                }
-              `}
-            </Script>
-          </>
-        )}
+        <GoogleAnalytics />
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <NextIntlClientProvider locale={locale} messages={messages}>
