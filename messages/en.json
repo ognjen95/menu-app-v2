@@ -169,7 +169,9 @@
       "createBusiness": "Create My Business"
     },
     "errors": {
+      "createFailedTitle": "Creation Failed",
       "createFailed": "Failed to create business. Please try again.",
+      "businessNameExistsTitle": "Name Already Taken",
       "businessNameExists": "Business name already exists",
       "businessNameExistsDesc": "This business name is already taken. Please choose a different name."
     }

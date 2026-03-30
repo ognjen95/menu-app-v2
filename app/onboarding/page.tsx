@@ -295,12 +295,12 @@ export default function OnboardingPage() {
 
       // Check for unique constraint violation
       if (errorMessage.includes('tenants_name_unique') || errorMessage.includes('duplicate key')) {
-        toast.error(t('onboarding.errors.businessNameExists'), {
+        toast.error(t('onboarding.errors.businessNameExistsTitle'), {
           description: t('onboarding.errors.businessNameExistsDesc')
         })
       } else {
-        toast.error(t('onboarding.errors.createFailed'), {
-          description: errorMessage
+        toast.error(t('onboarding.errors.createFailedTitle'), {
+          description: t('onboarding.errors.createFailed')
         })
       }
     },

@@ -136,6 +136,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
+        <meta name="google" content="notranslate" />
         <GoogleAnalytics />
       </head>
       <body className={inter.className} suppressHydrationWarning>

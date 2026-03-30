@@ -169,7 +169,9 @@
       "createBusiness": "Crear Mi Negocio"
     },
     "errors": {
+      "createFailedTitle": "Error de creación",
       "createFailed": "Error al crear el negocio. Por favor, inténtalo de nuevo.",
+      "businessNameExistsTitle": "Nombre ya existe",
       "businessNameExists": "El nombre del negocio ya existe",
       "businessNameExistsDesc": "Este nombre de negocio ya está en uso. Por favor, elige un nombre diferente."
     }
